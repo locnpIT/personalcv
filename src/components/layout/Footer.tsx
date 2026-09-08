@@ -14,9 +14,6 @@ export const Footer: React.FC = () => {
           <p className="mt-1 text-zinc-500">
             Backend Software Engineer · {profileData.domain}
           </p>
-          <p className="mt-1 text-zinc-600 text-[11px]">
-            Built with Next.js and deployed on Cloudflare.
-          </p>
         </div>
 
         <div className="flex items-center gap-4 text-zinc-400">
