@@ -22,7 +22,7 @@ export const Contact: React.FC = () => {
   };
 
   return (
-    <section id="contact" className="py-20 border-t border-zinc-800/80 bg-zinc-950/40">
+    <section id="contact" className="py-20 border-t border-zinc-800/80 bg-gradient-to-br from-emerald-950/20 via-zinc-950/40 to-cyan-950/10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <SectionHeader
           number="08"
@@ -121,9 +121,10 @@ export const Contact: React.FC = () => {
 
           {/* Social Profiles & Summary */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="p-6 rounded-xl border border-zinc-800/80 bg-zinc-900/40">
-              <h3 className="text-base font-bold text-zinc-100 mb-2">
-                Engineering Profiles
+            <div className="p-6 sm:p-7 rounded-xl border border-emerald-800/40 bg-zinc-950/60 shadow-xl shadow-black/20">
+              <span className="text-xs font-mono uppercase tracking-wider text-emerald-400">Next step</span>
+              <h3 className="text-2xl font-bold tracking-tight text-zinc-100 mt-2 mb-2">
+                Let&apos;s build something reliable.
               </h3>
               <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
                 Check out my code repositories on GitHub and professional network updates on LinkedIn.

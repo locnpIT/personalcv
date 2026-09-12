@@ -15,8 +15,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
       <div>
         {/* Top bar: project index & highlight metric */}
         <div className="flex items-center justify-between gap-2 mb-4">
-          <span className="font-mono text-xs text-zinc-500 font-semibold">
-            {`0${index + 1} // CASE STUDY`}
+          <span className={`font-mono text-xs font-semibold ${index === 0 ? "text-emerald-400" : "text-zinc-500"}`}>
+            {index === 0 ? "FEATURED // CASE STUDY" : `0${index + 1} // CASE STUDY`}
           </span>
           {project.highlightMetric && (
             <span className="font-mono text-[11px] text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded">
