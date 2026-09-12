@@ -4,12 +4,13 @@ import { profileData } from "@/data/profile";
 import { mainTechnologies } from "@/data/skills";
 import { TechBadge } from "@/components/ui/TechBadge";
 import { ArchitectureVisual } from "@/components/ui/ArchitectureVisual";
-import { ArrowRight, FileText, Terminal } from "lucide-react";
+import { ArrowRight, MapPin, Mail, Terminal } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/ui/Icons";
 
 export const Hero: React.FC = () => {
   return (
     <section id="top" className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden">
+      <div className="absolute left-1/2 top-20 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           {/* Left Column: Identity & Copy */}
@@ -18,6 +19,13 @@ export const Hero: React.FC = () => {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-300">
               <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
               <span>Available for Backend Engineering Roles</span>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-mono text-zinc-500">
+              <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{profileData.location}</span>
+              <span className="text-zinc-700">·</span>
+              <span>Open to remote</span>
             </div>
 
             {/* Name and Role */}
@@ -71,8 +79,8 @@ export const Hero: React.FC = () => {
                 href={profileData.resumeUrl}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-emerald-400 bg-emerald-950/30 hover:bg-emerald-950/60 border border-emerald-800/50 hover:border-emerald-700 transition-all"
               >
-                <FileText className="w-4 h-4" />
-                <span>Resume</span>
+                <Mail className="w-4 h-4" />
+                <span>Let&apos;s Talk</span>
               </a>
             </div>
 

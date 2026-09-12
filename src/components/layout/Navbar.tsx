@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { profileData } from "@/data/profile";
-import { Menu, X, FileText } from "lucide-react";
+import { Menu, X, Mail } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/ui/Icons";
 
 export const Navbar: React.FC = () => {
@@ -47,7 +47,7 @@ export const Navbar: React.FC = () => {
           </span>
           <span>{profileData.domain}</span>
           <span className="text-zinc-600 group-hover:text-zinc-500 transition-colors hidden sm:inline">
-            // backend
+            {"// backend"}
           </span>
         </Link>
 
@@ -88,15 +88,18 @@ export const Navbar: React.FC = () => {
             href={profileData.resumeUrl}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 hover:bg-emerald-900/40 hover:border-emerald-700 transition-all"
           >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Resume</span>
+            <Mail className="w-3.5 h-3.5" />
+            <span>Contact</span>
           </a>
         </div>
 
         {/* Mobile menu trigger */}
         <button
+          type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle navigation menu"
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-navigation"
           className="md:hidden p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 rounded-lg border border-zinc-800 transition-colors"
         >
           {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -105,7 +108,7 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile dropdown menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-zinc-950/95 border-b border-zinc-800/80 px-4 py-6 space-y-4 backdrop-blur-lg">
+        <div id="mobile-navigation" className="md:hidden bg-zinc-950/95 border-b border-zinc-800/80 px-4 py-6 space-y-4 backdrop-blur-lg">
           <nav className="flex flex-col space-y-3 text-base font-medium text-zinc-300">
             {navLinks.map((link) => (
               <Link
@@ -143,8 +146,8 @@ export const Navbar: React.FC = () => {
               onClick={() => setMobileMenuOpen(false)}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-mono font-medium text-emerald-400 bg-emerald-950/50 border border-emerald-800/60"
             >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Resume</span>
+              <Mail className="w-3.5 h-3.5" />
+              <span>Contact</span>
             </a>
           </div>
         </div>
