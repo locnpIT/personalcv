@@ -1,65 +1,62 @@
-import React from "react";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { skillCategories } from "@/data/skills";
-import { TechBadge } from "@/components/ui/TechBadge";
-import { Server, Database, Cpu } from "lucide-react";
-
-export const WhatIDo: React.FC = () => {
-  const iconMap: Record<string, React.ReactNode> = {
-    Server: <Server className="w-5 h-5 text-emerald-400" />,
-    Database: <Database className="w-5 h-5 text-cyan-400" />,
-    Cpu: <Cpu className="w-5 h-5 text-indigo-400" />,
-  };
-
+export function WhatIDo() {
   return (
-    <section id="what-i-do" className="py-20 border-t border-zinc-800/80 bg-zinc-950/40">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <SectionHeader
-          number="02"
-          title="What I Do"
-          subtitle="Core engineering specializations spanning application services, database internals, and cloud systems."
-        />
+<section id="services" style={{"background":"#D7E6F8","padding":"clamp(72px, 9vw, 120px) 0"}}>
+  <div style={{"maxWidth":"1200px","margin":"0 auto","padding":"0 clamp(16px, 4vw, 48px)","boxSizing":"border-box"}}>
+    <div style={{"display":"flex","alignItems":"baseline","gap":"18px","flexWrap":"wrap"}}>
+      <span style={{"fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"14px","color":"#1D56C9"}}>02</span>
+      <h2 style={{"margin":0,"fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":700,"fontSize":"clamp(38px, 4.6vw, 60px)","letterSpacing":"-0.03em","lineHeight":1}}>What I Do</h2>
+    </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {skillCategories.map((cat) => (
-            <div
-              key={cat.title}
-              className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-6 sm:p-7 hover:border-zinc-700 hover:bg-zinc-900/70 transition-all duration-200 flex flex-col justify-between"
-            >
-              <div>
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800">
-                    {iconMap[cat.icon]}
-                  </div>
-                  <span className="font-mono text-[11px] text-zinc-500 font-semibold tracking-wider">
-                    {cat.categoryTag}
-                  </span>
-                </div>
-
-                <h3 className="text-xl font-bold text-zinc-100 mb-2.5">
-                  {cat.title}
-                </h3>
-                <p className="text-sm text-zinc-400 leading-relaxed mb-6 font-normal">
-                  {cat.description}
-                </p>
-              </div>
-
-              {/* Skills Tags */}
-              <div className="pt-4 border-t border-zinc-800/70">
-                <p className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-2.5">
-                  Technologies &amp; Competencies
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {cat.skills.map((skill) => (
-                    <TechBadge key={skill} label={skill} variant="default" size="sm" />
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
+    <div style={{"marginTop":"56px","display":"grid","gridTemplateColumns":"repeat(auto-fit, minmax(min(320px, 100%), 1fr))","gap":"20px"}}>
+      <article style={{"background":"#FFFFFF","border":"1px solid #C2D6EF","borderRadius":"24px","padding":"clamp(24px, 3vw, 36px)","display":"flex","flexDirection":"column"}}>
+        <div style={{"width":"52px","height":"52px","borderRadius":"16px","background":"#E4EEFC","color":"#1D56C9","display":"flex","alignItems":"center","justifyContent":"center"}}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="2"></rect><rect x="3" y="13" width="18" height="7" rx="2"></rect><path d="M7 7.5h.01M7 16.5h.01M11 7.5h6M11 16.5h6"></path></svg>
         </div>
-      </div>
-    </section>
+        <h3 style={{"margin":"28px 0 0","fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":600,"fontSize":"27px","letterSpacing":"-0.02em"}}>Backend Engineering</h3>
+        <p style={{"margin":"12px 0 0","fontSize":"16px","lineHeight":1.65,"color":"#3A4D68","textWrap":"pretty"}}>Architecting clean, maintainable Spring Boot services with strong typing, robust error handling, domain-driven structure, and comprehensive RESTful contracts.</p>
+        <ul style={{"margin":"24px 0 0","padding":0,"listStyle":"none","fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"13.5px","color":"#0A1A33"}}>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>Java</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>Spring Boot</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>REST APIs</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>JPA / Hibernate</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>Maven / Gradle</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>Unit &amp; Integration Testing</li>
+        </ul>
+      </article>
+
+      <article style={{"background":"#FFFFFF","border":"1px solid #C2D6EF","borderRadius":"24px","padding":"clamp(24px, 3vw, 36px)","display":"flex","flexDirection":"column"}}>
+        <div style={{"width":"52px","height":"52px","borderRadius":"16px","background":"#E4EEFC","color":"#1D56C9","display":"flex","alignItems":"center","justifyContent":"center"}}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="7.5" ry="2.8"></ellipse><path d="M4.5 5.5v13c0 1.55 3.36 2.8 7.5 2.8s7.5-1.25 7.5-2.8v-13"></path><path d="M4.5 12c0 1.55 3.36 2.8 7.5 2.8s7.5-1.25 7.5-2.8"></path></svg>
+        </div>
+        <h3 style={{"margin":"28px 0 0","fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":600,"fontSize":"27px","letterSpacing":"-0.02em"}}>Data &amp; Performance</h3>
+        <p style={{"margin":"12px 0 0","fontSize":"16px","lineHeight":1.65,"color":"#3A4D68","textWrap":"pretty"}}>Optimizing relational queries, analyzing execution plans, eliminating bottlenecks, and deploying Redis in-memory data structures for ultra-low latency reads and writes.</p>
+        <ul style={{"margin":"24px 0 0","padding":0,"listStyle":"none","fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"13.5px","color":"#0A1A33"}}>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>MySQL</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>PostgreSQL</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>Redis</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>MongoDB</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>Query Optimization</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>Indexing Strategies</li>
+        </ul>
+      </article>
+
+      <article style={{"background":"#FFFFFF","border":"1px solid #C2D6EF","borderRadius":"24px","padding":"clamp(24px, 3vw, 36px)","display":"flex","flexDirection":"column"}}>
+        <div style={{"width":"52px","height":"52px","borderRadius":"16px","background":"#E4EEFC","color":"#1D56C9","display":"flex","alignItems":"center","justifyContent":"center"}}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 18.5h10.5a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.5 9.6 4.5 4.5 0 0 0 7 18.5z"></path></svg>
+        </div>
+        <h3 style={{"margin":"28px 0 0","fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":600,"fontSize":"27px","letterSpacing":"-0.02em"}}>Systems &amp; Cloud</h3>
+        <p style={{"margin":"12px 0 0","fontSize":"16px","lineHeight":1.65,"color":"#3A4D68","textWrap":"pretty"}}>Containerizing services with Docker, managing multi-instance concurrency, deploying edge proxies, and building resilient distributed patterns for production stability.</p>
+        <ul style={{"margin":"24px 0 0","padding":0,"listStyle":"none","fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"13.5px","color":"#0A1A33"}}>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>Docker</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>AWS</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>Cloudflare</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>Concurrent Programming</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>Distributed Systems</li>
+          <li style={{"padding":"11px 0","borderTop":"1px solid #E1EAF6"}}>CI/CD Pipelines</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
   );
-};
+}

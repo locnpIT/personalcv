@@ -1,170 +1,42 @@
-"use client";
-
-import React, { useState } from "react";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { profileData } from "@/data/profile";
-import { Mail, Phone, Copy, Check, Send } from "lucide-react";
-import { GithubIcon, LinkedinIcon } from "@/components/ui/Icons";
-
-export const Contact: React.FC = () => {
-  const [copiedEmail, setCopiedEmail] = useState(false);
-  const [copiedPhone, setCopiedPhone] = useState(false);
-
-  const copyToClipboard = (text: string, type: "email" | "phone") => {
-    navigator.clipboard.writeText(text);
-    if (type === "email") {
-      setCopiedEmail(true);
-      setTimeout(() => setCopiedEmail(false), 2000);
-    } else {
-      setCopiedPhone(true);
-      setTimeout(() => setCopiedPhone(false), 2000);
-    }
-  };
-
+export function Contact() {
   return (
-    <section id="contact" className="py-20 border-t border-zinc-800/80 bg-gradient-to-br from-emerald-950/20 via-zinc-950/40 to-cyan-950/10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <SectionHeader
-          number="08"
-          title="Get In Touch"
-          subtitle="Open to discussing backend engineering roles, system architecture design, and high-performance Java/Spring Boot services."
-        />
+<section id="contact" style={{"position":"relative","overflow":"hidden","background":"#041229","color":"#FFFFFF","padding":"clamp(88px, 11vw, 150px) 0 clamp(72px, 8vw, 110px)"}}>
+  <div aria-hidden="true" className="deep-ring k1" style={{"position":"absolute","right":"-420px","bottom":"-500px","width":"1100px","height":"1100px","borderRadius":"50%","border":"1px solid rgba(124, 203, 255, 0.34)","boxShadow":"0 0 40px rgba(124, 203, 255, 0.1), inset 0 0 40px rgba(124, 203, 255, 0.07)","pointerEvents":"none"}}></div>
+  <div aria-hidden="true" className="deep-ring k2" style={{"position":"absolute","right":"-420px","bottom":"-500px","width":"1100px","height":"1100px","borderRadius":"50%","border":"1px solid rgba(124, 203, 255, 0.34)","boxShadow":"0 0 40px rgba(124, 203, 255, 0.1), inset 0 0 40px rgba(124, 203, 255, 0.07)","pointerEvents":"none"}}></div>
+  <div aria-hidden="true" className="deep-ring k3" style={{"position":"absolute","right":"-420px","bottom":"-500px","width":"1100px","height":"1100px","borderRadius":"50%","border":"1px solid rgba(124, 203, 255, 0.34)","boxShadow":"0 0 40px rgba(124, 203, 255, 0.1), inset 0 0 40px rgba(124, 203, 255, 0.07)","pointerEvents":"none"}}></div>
+  <div aria-hidden="true" style={{"position":"absolute","inset":0,"pointerEvents":"none"}}>
+    <span className="bub b8" style={{"left":"6%","width":"8px","height":"8px"}}></span>
+    <span className="bub b3" style={{"left":"22%","width":"5px","height":"5px"}}></span>
+    <span className="bub b5" style={{"left":"58%","width":"11px","height":"11px"}}></span>
+    <span className="bub b2" style={{"left":"71%","width":"6px","height":"6px"}}></span>
+    <span className="bub b6" style={{"left":"86%","width":"13px","height":"13px"}}></span>
+    <span className="bub b4" style={{"left":"93%","width":"7px","height":"7px"}}></span>
+  </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Direct channels card */}
-          <div className="lg:col-span-7 space-y-4">
-            {/* Email Card */}
-            <div className="p-5 sm:p-6 rounded-xl border border-zinc-800/80 bg-zinc-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="p-3 rounded-lg bg-emerald-950/50 border border-emerald-800/50 text-emerald-400">
-                  <Mail className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="font-mono text-xs text-zinc-500 block uppercase tracking-wider">
-                    Direct Email
-                  </span>
-                  <a
-                    href={`mailto:${profileData.email}`}
-                    className="text-base sm:text-lg font-mono font-semibold text-zinc-100 hover:text-emerald-400 transition-colors"
-                  >
-                    {profileData.email}
-                  </a>
-                </div>
-              </div>
+  <div style={{"position":"relative","maxWidth":"1200px","margin":"0 auto","padding":"0 clamp(16px, 4vw, 48px)","boxSizing":"border-box"}}>
+    <p style={{"margin":0,"display":"flex","alignItems":"center","gap":"12px","fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"14px","color":"#7CCBFF"}}><span>08</span><span style={{"width":"36px","height":"1px","background":"#7CCBFF"}}></span><span>Get In Touch</span></p>
+    <h2 style={{"margin":"28px 0 0","fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":700,"fontSize":"clamp(46px, 7.6vw, 108px)","lineHeight":0.96,"letterSpacing":"-0.045em","maxWidth":"12ch","textWrap":"balance"}}>Let&apos;s build something <span style={{"color":"#7CCBFF"}}>reliable.</span></h2>
+    <p style={{"margin":"28px 0 0","fontSize":"19px","lineHeight":1.6,"color":"#B4C7E4","maxWidth":"46ch","textWrap":"pretty"}}>Check out my code repositories on GitHub and professional network updates on LinkedIn.</p>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => copyToClipboard(profileData.email, "email")}
-                  aria-label="Copy email address"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-mono font-medium text-zinc-300 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 transition-colors"
-                >
-                  {copiedEmail ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-emerald-400">Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-zinc-400" />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </button>
-                <a
-                  href={`mailto:${profileData.email}`}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-zinc-950 bg-emerald-400 hover:bg-emerald-300 transition-colors"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Send</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Phone Card */}
-            <div className="p-5 sm:p-6 rounded-xl border border-zinc-800/80 bg-zinc-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="p-3 rounded-lg bg-cyan-950/50 border border-cyan-800/50 text-cyan-400">
-                  <Phone className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="font-mono text-xs text-zinc-500 block uppercase tracking-wider">
-                    Phone / Telegram / Zalo
-                  </span>
-                  <a
-                    href={`tel:${profileData.phone.replace(/\s+/g, "")}`}
-                    className="text-base sm:text-lg font-mono font-semibold text-zinc-100 hover:text-cyan-400 transition-colors"
-                  >
-                    {profileData.phone}
-                  </a>
-                </div>
-              </div>
-
-              <button
-                onClick={() => copyToClipboard(profileData.phone, "phone")}
-                aria-label="Copy phone number"
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-mono font-medium text-zinc-300 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 transition-colors"
-              >
-                {copiedPhone ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-emerald-400">Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>Copy</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Social Profiles & Summary */}
-          <div className="lg:col-span-5 space-y-4">
-            <div className="p-6 sm:p-7 rounded-xl border border-emerald-800/40 bg-zinc-950/60 shadow-xl shadow-black/20">
-              <span className="text-xs font-mono uppercase tracking-wider text-emerald-400">Next step</span>
-              <h3 className="text-2xl font-bold tracking-tight text-zinc-100 mt-2 mb-2">
-                Let&apos;s build something reliable.
-              </h3>
-              <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
-                Check out my code repositories on GitHub and professional network updates on LinkedIn.
-              </p>
-
-              <div className="space-y-2.5">
-                <a
-                  href={profileData.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 rounded-lg bg-zinc-950 hover:bg-zinc-800/80 border border-zinc-800 transition-colors group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <GithubIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-100" />
-                    <span className="text-xs font-mono font-medium text-zinc-300 group-hover:text-zinc-100">
-                      GitHub // phuocloc-dev
-                    </span>
-                  </div>
-                  <span className="text-xs font-mono text-emerald-400">Visit ↗</span>
-                </a>
-
-                <a
-                  href={profileData.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 rounded-lg bg-zinc-950 hover:bg-zinc-800/80 border border-zinc-800 transition-colors group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <LinkedinIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-100" />
-                    <span className="text-xs font-mono font-medium text-zinc-300 group-hover:text-zinc-100">
-                      LinkedIn // phuocloc-dev
-                    </span>
-                  </div>
-                  <span className="text-xs font-mono text-emerald-400">Connect ↗</span>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <div style={{"marginTop":"64px","display":"grid","gridTemplateColumns":"repeat(auto-fit, minmax(min(460px, 100%), 1fr))","gap":"0 48px"}}>
+      <a href="mailto:npl2004qn@gmail.com" style={{"display":"flex","justifyContent":"space-between","alignItems":"center","gap":"16px","padding":"26px 0","borderTop":"1px solid rgba(164, 196, 240, 0.22)","color":"#FFFFFF","textDecoration":"none","minWidth":0}}>
+        <span style={{"display":"flex","flexDirection":"column","gap":"8px","minWidth":0}}><span style={{"fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"12px","letterSpacing":"0.14em","color":"#B4C7E4"}}>EMAIL</span><span style={{"fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":500,"fontSize":"clamp(21px, 2.3vw, 30px)","letterSpacing":"-0.015em","overflowWrap":"anywhere"}}>npl2004qn@gmail.com</span></span>
+        <span aria-hidden="true" style={{"flex":"none","width":"48px","height":"48px","borderRadius":"50%","background":"#7CCBFF","color":"#041229","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"20px"}}>↗</span>
+      </a>
+      <a href="tel:+84338361709" style={{"display":"flex","justifyContent":"space-between","alignItems":"center","gap":"16px","padding":"26px 0","borderTop":"1px solid rgba(164, 196, 240, 0.22)","color":"#FFFFFF","textDecoration":"none","minWidth":0}}>
+        <span style={{"display":"flex","flexDirection":"column","gap":"8px","minWidth":0}}><span style={{"fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"12px","letterSpacing":"0.14em","color":"#B4C7E4"}}>PHONE</span><span style={{"fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":500,"fontSize":"clamp(21px, 2.3vw, 30px)","letterSpacing":"-0.015em"}}>+84 338 361 709</span></span>
+        <span aria-hidden="true" style={{"flex":"none","width":"48px","height":"48px","borderRadius":"50%","border":"1px solid rgba(164, 196, 240, 0.4)","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"20px"}}>↗</span>
+      </a>
+      <a href="https://github.com/locnpIT" style={{"display":"flex","justifyContent":"space-between","alignItems":"center","gap":"16px","padding":"26px 0","borderTop":"1px solid rgba(164, 196, 240, 0.22)","borderBottom":"1px solid rgba(164, 196, 240, 0.22)","color":"#FFFFFF","textDecoration":"none","minWidth":0}}>
+        <span style={{"display":"flex","flexDirection":"column","gap":"8px","minWidth":0}}><span style={{"fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"12px","letterSpacing":"0.14em","color":"#B4C7E4"}}>GITHUB</span><span style={{"fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":500,"fontSize":"clamp(21px, 2.3vw, 30px)","letterSpacing":"-0.015em"}}>github.com/locnpIT</span></span>
+        <span aria-hidden="true" style={{"flex":"none","width":"48px","height":"48px","borderRadius":"50%","border":"1px solid rgba(164, 196, 240, 0.4)","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"20px"}}>↗</span>
+      </a>
+      <a href="https://www.linkedin.com/in/loc-nguyen-phuoc-82247a294/" style={{"display":"flex","justifyContent":"space-between","alignItems":"center","gap":"16px","padding":"26px 0","borderTop":"1px solid rgba(164, 196, 240, 0.22)","borderBottom":"1px solid rgba(164, 196, 240, 0.22)","color":"#FFFFFF","textDecoration":"none","minWidth":0}}>
+        <span style={{"display":"flex","flexDirection":"column","gap":"8px","minWidth":0}}><span style={{"fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"12px","letterSpacing":"0.14em","color":"#B4C7E4"}}>LINKEDIN</span><span style={{"fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":500,"fontSize":"clamp(21px, 2.3vw, 30px)","letterSpacing":"-0.015em"}}>Loc Nguyen Phuoc</span></span>
+        <span aria-hidden="true" style={{"flex":"none","width":"48px","height":"48px","borderRadius":"50%","border":"1px solid rgba(164, 196, 240, 0.4)","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"20px"}}>↗</span>
+      </a>
+    </div>
+  </div>
+</section>
   );
-};
+}

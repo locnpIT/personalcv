@@ -1,76 +1,20 @@
-import React from "react";
-import { SectionHeader } from "@/components/ui/SectionHeader";
 import { educationData } from "@/data/education";
-import { GraduationCap, Award, Calendar, MapPin, BookCheck } from "lucide-react";
 
-export const Education: React.FC = () => {
+export function Education() {
   return (
-    <section id="education" className="py-16 border-t border-zinc-800/80">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <SectionHeader
-          number="07"
-          title="Education"
-          subtitle="Formal foundation in computer science, software engineering, and database systems."
-        />
-
-        <div className="max-w-4xl">
-          <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-6 sm:p-7 hover:border-zinc-700 transition-colors">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-800/40 text-emerald-400 mt-1">
-                  <GraduationCap className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-zinc-100">
-                    {educationData.institution}
-                  </h3>
-                  <p className="text-base font-semibold text-emerald-400 mt-0.5">
-                    {educationData.degree}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-zinc-400">
-                <span className="inline-flex items-center gap-1.5 bg-zinc-950 px-2.5 py-1 rounded border border-zinc-800">
-                  <Calendar className="w-3.5 h-3.5 text-zinc-500" />
-                  {educationData.period}
-                </span>
-                <span className="inline-flex items-center gap-1.5 bg-zinc-950 px-2.5 py-1 rounded border border-zinc-800">
-                  <MapPin className="w-3.5 h-3.5 text-zinc-500" />
-                  {educationData.location}
-                </span>
-              </div>
-            </div>
-
-            {/* GPA Callout */}
-            <div className="inline-flex items-center gap-2 bg-emerald-950/50 border border-emerald-800/50 px-3.5 py-1.5 rounded-lg mb-5">
-              <Award className="w-4 h-4 text-emerald-400" />
-              <span className="text-xs font-mono text-zinc-300">
-                Cumulative GPA: <strong className="text-emerald-300 font-bold">{educationData.gpa}</strong>
-              </span>
-            </div>
-
-            {/* Relevant Coursework */}
-            {educationData.coursework && (
-              <div className="pt-4 border-t border-zinc-800/70">
-                <p className="text-xs font-mono text-zinc-500 flex items-center gap-1.5 mb-2.5 uppercase tracking-wider">
-                  <BookCheck className="w-3.5 h-3.5" /> Core Curriculum &amp; Foundations
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {educationData.coursework.map((course) => (
-                    <span
-                      key={course}
-                      className="text-xs font-mono text-zinc-400 bg-zinc-950 px-2.5 py-1 rounded border border-zinc-800"
-                    >
-                      {course}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+<article id="education" style={{"background":"#0C2A57","border":"1px solid rgba(164, 196, 240, 0.2)","borderRadius":"24px","padding":"clamp(26px, 3.4vw, 44px)","display":"flex","flexDirection":"column","gap":"16px"}}>
+      <div style={{"display":"flex","alignItems":"baseline","gap":"14px","flexWrap":"wrap"}}>
+        <span style={{"fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"14px","color":"#7CCBFF"}}>07</span>
+        <h2 style={{"margin":0,"fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":700,"fontSize":"clamp(28px, 2.8vw, 36px)","letterSpacing":"-0.025em"}}>Education</h2>
       </div>
-    </section>
+      <p style={{"margin":"18px 0 0","fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"12.5px","letterSpacing":"0.1em","color":"#B4C7E4"}}>{educationData.period}</p>
+      <h3 style={{"margin":0,"fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":500,"fontSize":"clamp(22px, 2.1vw, 27px)","lineHeight":1.3,"letterSpacing":"-0.01em"}}>{educationData.degree}</h3>
+      <p style={{"margin":0,"fontSize":"16px","lineHeight":1.55,"color":"#B4C7E4"}}>{educationData.institution}</p>
+      <div style={{"marginTop":"auto","paddingTop":"20px","borderTop":"1px solid rgba(164, 196, 240, 0.2)","display":"flex","alignItems":"baseline","flexWrap":"wrap","gap":"6px 14px"}}>
+        <span style={{"fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":700,"fontSize":"64px","lineHeight":1,"letterSpacing":"-0.04em","color":"#7CCBFF"}}>{educationData.gpa.split(" / ")[0]}</span>
+        <span style={{"fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontSize":"22px","color":"#B4C7E4"}}>/ {educationData.gpa.split(" / ")[1]}</span>
+        <span style={{"fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"12px","letterSpacing":"0.14em","color":"#B4C7E4"}}>CUMULATIVE GPA</span>
+      </div>
+    </article>
   );
-};
+}

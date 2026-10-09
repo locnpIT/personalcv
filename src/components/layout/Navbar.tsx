@@ -1,157 +1,26 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { profileData } from "@/data/profile";
-import { Menu, X, Mail } from "lucide-react";
-import { GithubIcon, LinkedinIcon } from "@/components/ui/Icons";
 
-export const Navbar: React.FC = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const navLinks = [
-    { label: "About", href: "/#about" },
-    { label: "What I Do", href: "/#what-i-do" },
-    { label: "Projects", href: "/#work" },
-    { label: "Experience", href: "/#experience" },
-    { label: "Interests", href: "/#interests" },
-    { label: "Contact", href: "/#contact" },
-  ];
-
+export function Navbar() {
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-zinc-950/85 backdrop-blur-md border-b border-zinc-800/80 py-3.5 shadow-md shadow-black/20"
-          : "bg-transparent py-5"
-      }`}
-    >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between">
-        {/* Brand identity */}
-        <Link
-          href="/"
-          className="group flex items-center gap-2.5 font-mono text-sm font-semibold tracking-tight text-zinc-100 hover:text-emerald-400 transition-colors"
-        >
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-          </span>
-          <span>{profileData.domain}</span>
-          <span className="text-zinc-600 group-hover:text-zinc-500 transition-colors hidden sm:inline">
-            {"// backend"}
-          </span>
-        </Link>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-zinc-400">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className="hover:text-zinc-100 transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Desktop Quick Links */}
-        <div className="hidden md:flex items-center gap-3">
-          <a
-            href={profileData.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="GitHub Profile"
-            className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 rounded-lg border border-transparent hover:border-zinc-800 transition-all"
-          >
-            <GithubIcon className="w-4 h-4" />
-          </a>
-          <a
-            href={profileData.linkedin}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="LinkedIn Profile"
-            className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 rounded-lg border border-transparent hover:border-zinc-800 transition-all"
-          >
-            <LinkedinIcon className="w-4 h-4" />
-          </a>
-          <a
-            href={profileData.resumeUrl}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 hover:bg-emerald-900/40 hover:border-emerald-700 transition-all"
-          >
-            <Mail className="w-3.5 h-3.5" />
-            <span>Contact</span>
-          </a>
-        </div>
-
-        {/* Mobile menu trigger */}
-        <button
-          type="button"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle navigation menu"
-          aria-expanded={mobileMenuOpen}
-          aria-controls="mobile-navigation"
-          className="md:hidden p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 rounded-lg border border-zinc-800 transition-colors"
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </div>
-
-      {/* Mobile dropdown menu */}
-      {mobileMenuOpen && (
-        <div id="mobile-navigation" className="md:hidden bg-zinc-950/95 border-b border-zinc-800/80 px-4 py-6 space-y-4 backdrop-blur-lg">
-          <nav className="flex flex-col space-y-3 text-base font-medium text-zinc-300">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="hover:text-emerald-400 transition-colors px-2 py-1.5 rounded-md hover:bg-zinc-900"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="pt-4 border-t border-zinc-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <a
-                href={profileData.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 text-zinc-400 hover:text-zinc-100 bg-zinc-900 rounded-lg border border-zinc-800"
-              >
-                <GithubIcon className="w-4 h-4" />
-              </a>
-              <a
-                href={profileData.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 text-zinc-400 hover:text-zinc-100 bg-zinc-900 rounded-lg border border-zinc-800"
-              >
-                <LinkedinIcon className="w-4 h-4" />
-              </a>
-            </div>
-            <a
-              href={profileData.resumeUrl}
-              onClick={() => setMobileMenuOpen(false)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-mono font-medium text-emerald-400 bg-emerald-950/50 border border-emerald-800/60"
-            >
-              <Mail className="w-3.5 h-3.5" />
-              <span>Contact</span>
-            </a>
-          </div>
-        </div>
-      )}
-    </header>
+<header style={{"maxWidth":"1200px","margin":"0 auto","padding":"22px clamp(16px, 4vw, 48px)","boxSizing":"border-box","display":"flex","flexWrap":"wrap","alignItems":"center","justifyContent":"space-between","gap":"12px 32px","position":"relative","zIndex":2}}>
+    <Link href="/#top" style={{"display":"flex","alignItems":"center","gap":"12px","textDecoration":"none","color":"#0A1A33","minHeight":"44px"}}>
+      <span style={{"width":"38px","height":"38px","borderRadius":"50%","background":"#1D56C9","color":"#FFFFFF","display":"flex","alignItems":"center","justifyContent":"center"}}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2.8c3.6 4.5 6.6 8.2 6.6 11.8a6.6 6.6 0 0 1-13.2 0c0-3.6 3-7.3 6.6-11.8z"></path><path d="M9 15.2a3 3 0 0 0 3 3"></path></svg>
+      </span>
+      <span style={{"fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":700,"fontSize":"20px","letterSpacing":"-0.01em"}}>Phuoc Loc</span>
+    </Link>
+    <nav aria-label="Primary" style={{"display":"flex","flexWrap":"wrap","alignItems":"center","gap":"0 26px","fontSize":"15px","fontWeight":500}}>
+      <Link href="/#about" style={{"color":"#22344F","textDecoration":"none","padding":"12px 0"}}>About</Link>
+      <Link href="/#services" style={{"color":"#22344F","textDecoration":"none","padding":"12px 0"}}>What I Do</Link>
+      <Link href="/#projects" style={{"color":"#22344F","textDecoration":"none","padding":"12px 0"}}>Projects</Link>
+      <Link href="/#experience" style={{"color":"#22344F","textDecoration":"none","padding":"12px 0"}}>Experience</Link>
+      <Link href="/#interests" style={{"color":"#22344F","textDecoration":"none","padding":"12px 0"}}>Interests</Link>
+      <Link href="/#contact" style={{"color":"#22344F","textDecoration":"none","padding":"12px 0"}}>Contact</Link>
+    </nav>
+    <div style={{"display":"flex","flexWrap":"wrap","gap":"8px"}}>
+      <a href="https://github.com/locnpIT" style={{"display":"inline-flex","alignItems":"center","gap":"6px","minHeight":"44px","padding":"0 16px","borderRadius":"999px","border":"1px solid #C3D5EE","background":"#FFFFFF","color":"#0A1A33","textDecoration":"none","fontSize":"14px","fontWeight":600}}>GitHub <span aria-hidden="true">↗</span></a>
+      <a href="https://www.linkedin.com/in/loc-nguyen-phuoc-82247a294/" style={{"display":"inline-flex","alignItems":"center","gap":"6px","minHeight":"44px","padding":"0 16px","borderRadius":"999px","border":"1px solid #C3D5EE","background":"#FFFFFF","color":"#0A1A33","textDecoration":"none","fontSize":"14px","fontWeight":600}}>LinkedIn <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
   );
-};
+}

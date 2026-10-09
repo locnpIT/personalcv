@@ -1,77 +1,42 @@
-import React from "react";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { experienceData } from "@/data/experience";
-import { TechBadge } from "@/components/ui/TechBadge";
-import { Briefcase, Calendar, MapPin, Check } from "lucide-react";
-
-export const Experience: React.FC = () => {
+export function Experience() {
   return (
-    <section id="experience" className="py-20 border-t border-zinc-800/80 bg-zinc-950/40">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <SectionHeader
-          number="04"
-          title="Experience"
-          subtitle="Production engineering contributions, service maintenance, and infrastructure scaling."
-        />
+<section id="experience" style={{"background":"#0D3168","color":"#FFFFFF","padding":"clamp(72px, 9vw, 120px) 0"}}>
+  <div style={{"maxWidth":"1200px","margin":"0 auto","padding":"0 clamp(16px, 4vw, 48px)","boxSizing":"border-box"}}>
+    <div style={{"display":"flex","alignItems":"baseline","gap":"18px","flexWrap":"wrap"}}>
+      <span style={{"fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"14px","color":"#7CCBFF"}}>04</span>
+      <h2 style={{"margin":0,"fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":700,"fontSize":"clamp(38px, 4.6vw, 60px)","letterSpacing":"-0.03em","lineHeight":1}}>Experience</h2>
+    </div>
 
-        <div className="max-w-4xl">
-          {experienceData.map((item, idx) => (
-            <div
-              key={idx}
-              className="relative pl-8 sm:pl-10 before:absolute before:left-3 before:top-2 before:bottom-0 before:w-px before:bg-gradient-to-b before:from-emerald-500 before:via-zinc-800 before:to-transparent"
-            >
-              {/* Timeline marker */}
-              <div className="absolute left-1 top-1.5 w-4 h-4 rounded-full bg-zinc-950 border-2 border-emerald-400 flex items-center justify-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              </div>
-
-              {/* Experience Card */}
-              <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-6 sm:p-8 hover:border-zinc-700/90 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-zinc-100 font-sans">
-                      {item.role}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1 text-sm font-semibold text-emerald-400">
-                      <Briefcase className="w-4 h-4" />
-                      <span>{item.company}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-zinc-400">
-                    <span className="inline-flex items-center gap-1.5 bg-zinc-950 px-2.5 py-1 rounded border border-zinc-800">
-                      <Calendar className="w-3.5 h-3.5 text-zinc-500" />
-                      {item.period}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 bg-zinc-950 px-2.5 py-1 rounded border border-zinc-800">
-                      <MapPin className="w-3.5 h-3.5 text-zinc-500" />
-                      {item.location}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Highlights */}
-                <ul className="space-y-2.5 mb-6 text-sm text-zinc-300">
-                  {item.highlights.map((highlight, hIdx) => (
-                    <li key={hIdx} className="flex items-start gap-2.5">
-                      <Check className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
-                      <span className="leading-relaxed">{highlight}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* Tech Stack */}
-                <div className="pt-4 border-t border-zinc-800/70 flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-mono text-zinc-500 mr-1">Stack:</span>
-                  {item.techStack.map((tech) => (
-                    <TechBadge key={tech} label={tech} variant="default" size="sm" />
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
+    <div style={{"marginTop":"56px","display":"grid","gridTemplateColumns":"repeat(auto-fit, minmax(min(340px, 100%), 1fr))","gap":"40px 72px","alignItems":"start","borderTop":"1px solid rgba(164, 196, 240, 0.24)","paddingTop":"40px"}}>
+      <div style={{"display":"flex","flexDirection":"column","gap":"10px"}}>
+        <p style={{"margin":0,"fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"13px","letterSpacing":"0.06em","color":"#B4C7E4"}}>04/2025 — Present</p>
+        <h3 style={{"margin":"6px 0 0","fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":600,"fontSize":"clamp(32px, 3.4vw, 44px)","letterSpacing":"-0.025em","lineHeight":1.05}}>Software Engineer</h3>
+        <p style={{"margin":0,"fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":500,"fontSize":"24px","color":"#7CCBFF"}}>Rikkeisoft</p>
+        <p style={{"margin":0,"fontSize":"16px","color":"#B4C7E4"}}>Da Nang, Vietnam</p>
+      </div>
+      <div>
+        <ul style={{"margin":0,"padding":0,"listStyle":"none","display":"flex","flexDirection":"column","gap":"18px","fontSize":"18px","lineHeight":1.6,"color":"#D6E2F4"}}>
+          <li style={{"display":"flex","gap":"16px","alignItems":"flex-start"}}><span aria-hidden="true" style={{"flex":"none","marginTop":"9px","width":"9px","height":"9px","borderRadius":"50%","border":"1.5px solid #7CCBFF"}}></span><span>Developing and maintaining scalable backend services with Spring Boot.</span></li>
+          <li style={{"display":"flex","gap":"16px","alignItems":"flex-start"}}><span aria-hidden="true" style={{"flex":"none","marginTop":"9px","width":"9px","height":"9px","borderRadius":"50%","border":"1.5px solid #7CCBFF"}}></span><span>Optimizing database queries to improve API response times and reduce database I/O.</span></li>
+          <li style={{"display":"flex","gap":"16px","alignItems":"flex-start"}}><span aria-hidden="true" style={{"flex":"none","marginTop":"9px","width":"9px","height":"9px","borderRadius":"50%","border":"1.5px solid #7CCBFF"}}></span><span>Implementing Redis-based solutions for high-throughput caching and distributed state management.</span></li>
+          <li style={{"display":"flex","gap":"16px","alignItems":"flex-start"}}><span aria-hidden="true" style={{"flex":"none","marginTop":"9px","width":"9px","height":"9px","borderRadius":"50%","border":"1.5px solid #7CCBFF"}}></span><span>Improving system reliability through structured error handling, health checks, and robust logging.</span></li>
+          <li style={{"display":"flex","gap":"16px","alignItems":"flex-start"}}><span aria-hidden="true" style={{"flex":"none","marginTop":"9px","width":"9px","height":"9px","borderRadius":"50%","border":"1.5px solid #7CCBFF"}}></span><span>Working with cross-functional teams to deliver production features on schedule.</span></li>
+        </ul>
+        <div style={{"marginTop":"32px","display":"flex","flexWrap":"wrap","alignItems":"center","gap":"10px 16px"}}>
+          <p style={{"margin":0,"fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"12px","letterSpacing":"0.14em","color":"#B4C7E4"}}>STACK</p>
+          <ul style={{"margin":0,"padding":0,"listStyle":"none","display":"flex","flexWrap":"wrap","gap":"8px","fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"12.5px","color":"#DCE7F7"}}>
+            <li style={{"padding":"6px 12px","borderRadius":"999px","background":"rgba(255, 255, 255, 0.08)"}}>Java</li>
+            <li style={{"padding":"6px 12px","borderRadius":"999px","background":"rgba(255, 255, 255, 0.08)"}}>Spring Boot</li>
+            <li style={{"padding":"6px 12px","borderRadius":"999px","background":"rgba(255, 255, 255, 0.08)"}}>MySQL</li>
+            <li style={{"padding":"6px 12px","borderRadius":"999px","background":"rgba(255, 255, 255, 0.08)"}}>Redis</li>
+            <li style={{"padding":"6px 12px","borderRadius":"999px","background":"rgba(255, 255, 255, 0.08)"}}>Docker</li>
+            <li style={{"padding":"6px 12px","borderRadius":"999px","background":"rgba(255, 255, 255, 0.08)"}}>REST APIs</li>
+            <li style={{"padding":"6px 12px","borderRadius":"999px","background":"rgba(255, 255, 255, 0.08)"}}>Git</li>
+          </ul>
         </div>
       </div>
-    </section>
+    </div>
+  </div>
+</section>
   );
-};
+}

@@ -18,17 +18,17 @@ export default function Image() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          backgroundColor: "#090d16",
+          backgroundColor: "#F4F8FD",
           padding: "60px 80px",
           fontFamily: "sans-serif",
-          border: "8px solid #10b981",
+          border: "8px solid #1D56C9",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div
             style={{
               fontSize: 24,
-              color: "#10b981",
+              color: "#1D56C9",
               fontWeight: "bold",
               fontFamily: "monospace",
             }}
@@ -38,15 +38,15 @@ export default function Image() {
           <div
             style={{
               fontSize: 18,
-              color: "#64748b",
+              color: "#3A4D68",
               fontFamily: "monospace",
-              backgroundColor: "#0f172a",
+              backgroundColor: "#E4EEFC",
               padding: "6px 16px",
-              borderRadius: "8px",
-              border: "1px solid #1e293b",
+              borderRadius: "999px",
+              border: "1px solid #C3D5EE",
             }}
           >
-            SYS: NOMINAL // 2025
+            JAVA · SPRING BOOT · REDIS
           </div>
         </div>
 
@@ -55,7 +55,7 @@ export default function Image() {
             style={{
               fontSize: 64,
               fontWeight: 900,
-              color: "#f8fafc",
+              color: "#0A1A33",
               lineHeight: 1.1,
               letterSpacing: "-0.02em",
             }}
@@ -66,7 +66,7 @@ export default function Image() {
             style={{
               fontSize: 32,
               fontWeight: 600,
-              color: "#34d399",
+              color: "#1D56C9",
               fontFamily: "monospace",
             }}
           >
@@ -75,7 +75,7 @@ export default function Image() {
           <div
             style={{
               fontSize: 22,
-              color: "#94a3b8",
+              color: "#34465F",
               maxWidth: 900,
               lineHeight: 1.4,
             }}
@@ -88,7 +88,7 @@ export default function Image() {
           style={{
             display: "flex",
             gap: 12,
-            borderTop: "1px solid #1e293b",
+            borderTop: "1px solid #C3D5EE",
             paddingTop: 24,
           }}
         >
@@ -98,11 +98,11 @@ export default function Image() {
                 key={tech}
                 style={{
                   fontSize: 16,
-                  color: "#cbd5e1",
-                  backgroundColor: "#0f172a",
+                  color: "#22344F",
+                  backgroundColor: "#E4EEFC",
                   padding: "6px 14px",
-                  borderRadius: "6px",
-                  border: "1px solid #334155",
+                  borderRadius: "999px",
+                  border: "1px solid #C3D5EE",
                   fontFamily: "monospace",
                 }}
               >

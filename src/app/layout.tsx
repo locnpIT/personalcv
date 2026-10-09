@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import "./globals.css";
 
 export const viewport: Viewport = {
-  themeColor: "#090d16",
-  colorScheme: "dark",
+  themeColor: "#F4F8FD",
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
 };
@@ -74,12 +73,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark scroll-smooth">
-      <body className="bg-[#090d16] text-zinc-100 min-h-screen flex flex-col font-sans antialiased selection:bg-emerald-500/20 selection:text-emerald-200">
-        <div className="fixed inset-0 bg-grid-pattern opacity-100 pointer-events-none z-0" />
-        <div className="relative z-10 flex flex-col min-h-screen">
-          <Navbar />
-          <div className="flex-1">{children}</div>
+    <html lang="en">
+      <body>
+        <a href="#main-content" className="skip-link">Skip to content</a>
+        <div id="top">
+          {children}
           <Footer />
         </div>
       </body>

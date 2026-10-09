@@ -1,4 +1,3 @@
-import React from "react";
 import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
 import { WhatIDo } from "@/components/sections/WhatIDo";
@@ -8,36 +7,29 @@ import { Interests } from "@/components/sections/Interests";
 import { Publication } from "@/components/sections/Publication";
 import { Education } from "@/components/sections/Education";
 import { Contact } from "@/components/sections/Contact";
+import { WaterTransition } from "@/components/ui/WaterTransition";
+import { WaterEffects } from "@/components/ui/WaterEffects";
 
 export default function HomePage() {
   return (
-    <main className="relative">
-      {/* 1. Hero */}
+    <div id="portfolio-home">
       <Hero />
-
-      {/* 2. About Me */}
-      <About />
-
-      {/* 3. What I Do */}
-      <WhatIDo />
-
-      {/* 4. Selected Engineering Work */}
-      <Projects />
-
-      {/* 5. Experience */}
-      <Experience />
-
-      {/* 6. Engineering Interests */}
-      <Interests />
-
-      {/* 7. Research & Publication */}
-      <Publication />
-
-      {/* 8. Education */}
-      <Education />
-
-      {/* 9. Contact */}
-      <Contact />
-    </main>
+      <main id="main-content">
+        <About />
+        <WhatIDo />
+        <WaterTransition />
+        <Projects />
+        <Experience />
+        <Interests />
+        <section id="research" className="section research-section">
+          <div className="container research-grid">
+            <Publication />
+            <Education />
+          </div>
+        </section>
+        <Contact />
+      </main>
+      <WaterEffects />
+    </div>
   );
 }

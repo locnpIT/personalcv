@@ -1,111 +1,70 @@
-import React from "react";
-import Link from "next/link";
-import { profileData } from "@/data/profile";
-import { mainTechnologies } from "@/data/skills";
-import { TechBadge } from "@/components/ui/TechBadge";
+import { Navbar } from "@/components/layout/Navbar";
 import { ArchitectureVisual } from "@/components/ui/ArchitectureVisual";
-import { ArrowRight, MapPin, Mail, Terminal } from "lucide-react";
-import { GithubIcon, LinkedinIcon } from "@/components/ui/Icons";
 
-export const Hero: React.FC = () => {
+export function Hero() {
   return (
-    <section id="top" className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden">
-      <div className="absolute left-1/2 top-20 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-          {/* Left Column: Identity & Copy */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Engineering Status Pill */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-300">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
-              <span>Available for Backend Engineering Roles</span>
-            </div>
+<section style={{"position":"relative","background":"#F4F8FD","overflow":"hidden"}}>
+  <div aria-hidden="true" style={{"position":"absolute","inset":0,"pointerEvents":"none","zIndex":0}}>
+    <canvas data-lake="hero" style={{"position":"absolute","left":0,"top":0,"width":"100%","height":"100%","display":"block"}}></canvas>
+    <div className="gl-fallback">
+    <div className="wd d1" style={{"left":"7%","top":"650px"}}><span className="wd-drop"></span><span className="wd-hit"></span><span className="wd-ring r1"></span><span className="wd-ring r2"></span><span className="wd-ring r3"></span><i className="wd-sp s1"></i><i className="wd-sp s2"></i><i className="wd-sp s3"></i><i className="wd-sp s4"></i><i className="wd-sp s5"></i></div>
+    <div className="wd d2" style={{"left":"53%","top":"170px"}}><span className="wd-drop"></span><span className="wd-hit"></span><span className="wd-ring r1"></span><span className="wd-ring r2"></span><span className="wd-ring r3"></span><i className="wd-sp s1"></i><i className="wd-sp s2"></i><i className="wd-sp s3"></i><i className="wd-sp s4"></i><i className="wd-sp s5"></i></div>
+    <div className="wd d3" style={{"left":"95%","top":"430px"}}><span className="wd-drop"></span><span className="wd-hit"></span><span className="wd-ring r1"></span><span className="wd-ring r2"></span><span className="wd-ring r3"></span><i className="wd-sp s1"></i><i className="wd-sp s2"></i><i className="wd-sp s3"></i><i className="wd-sp s4"></i><i className="wd-sp s5"></i></div>
+    <div style={{"display":"contents"}}>
+      <div className="wd d4" style={{"left":"30%","top":"800px"}}><span className="wd-drop"></span><span className="wd-hit"></span><span className="wd-ring r1"></span><span className="wd-ring r2"></span><span className="wd-ring r3"></span><i className="wd-sp s1"></i><i className="wd-sp s2"></i><i className="wd-sp s3"></i><i className="wd-sp s4"></i><i className="wd-sp s5"></i></div>
+      <div className="wd d5" style={{"left":"3%","top":"330px"}}><span className="wd-drop"></span><span className="wd-hit"></span><span className="wd-ring r1"></span><span className="wd-ring r2"></span><span className="wd-ring r3"></span><i className="wd-sp s1"></i><i className="wd-sp s2"></i><i className="wd-sp s3"></i><i className="wd-sp s4"></i><i className="wd-sp s5"></i></div>
+      <div className="wd d6" style={{"left":"97%","top":"820px"}}><span className="wd-drop"></span><span className="wd-hit"></span><span className="wd-ring r1"></span><span className="wd-ring r2"></span><span className="wd-ring r3"></span><i className="wd-sp s1"></i><i className="wd-sp s2"></i><i className="wd-sp s3"></i><i className="wd-sp s4"></i><i className="wd-sp s5"></i></div>
+    </div>
+    </div>
+  </div>
+  <Navbar />
 
-            <div className="flex items-center gap-2 text-xs font-mono text-zinc-500">
-              <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{profileData.location}</span>
-              <span className="text-zinc-700">·</span>
-              <span>Open to remote</span>
-            </div>
+  <div style={{"maxWidth":"1200px","margin":"0 auto","padding":"0 clamp(16px, 4vw, 48px)","boxSizing":"border-box","position":"relative","zIndex":1}}>
+    <div style={{"display":"grid","gridTemplateColumns":"repeat(auto-fit, minmax(min(460px, 100%), 1fr))","gap":"56px","alignItems":"center","padding":"56px 0 72px"}}>
 
-            {/* Name and Role */}
-            <div className="space-y-2">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-zinc-100 font-sans">
-                {profileData.name}
-              </h1>
-              <p className="text-xl sm:text-2xl font-mono font-medium text-emerald-400 tracking-tight">
-                {profileData.role}
-              </p>
-            </div>
-
-            {/* Suggested Main and Secondary Copy */}
-            <div className="space-y-3 max-w-xl">
-              <p className="text-lg sm:text-xl text-zinc-200 font-medium leading-relaxed">
-                “{profileData.heroHeadline}”
-              </p>
-              <p className="text-sm sm:text-base text-zinc-400 leading-relaxed font-normal">
-                {profileData.heroSecondary}
-              </p>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Link
-                href="#work"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-zinc-950 bg-emerald-400 hover:bg-emerald-300 transition-all shadow-md shadow-emerald-950/40"
-              >
-                <span>View My Work</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <a
-                href={profileData.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-zinc-200 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 transition-all"
-              >
-                <GithubIcon className="w-4 h-4 text-zinc-400" />
-                <span>GitHub</span>
-              </a>
-              <a
-                href={profileData.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-zinc-200 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 transition-all"
-              >
-                <LinkedinIcon className="w-4 h-4 text-zinc-400" />
-                <span>LinkedIn</span>
-              </a>
-              <a
-                href={profileData.resumeUrl}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-emerald-400 bg-emerald-950/30 hover:bg-emerald-950/60 border border-emerald-800/50 hover:border-emerald-700 transition-all"
-              >
-                <Mail className="w-4 h-4" />
-                <span>Let&apos;s Talk</span>
-              </a>
-            </div>
-
-            {/* Core Tech Stack Strip */}
-            <div className="pt-6 border-t border-zinc-800/80">
-              <div className="flex items-center gap-2 mb-3">
-                <Terminal className="w-3.5 h-3.5 text-zinc-500" />
-                <span className="font-mono text-xs text-zinc-500 font-semibold uppercase tracking-wider">
-                  Core Technologies
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {mainTechnologies.map((tech) => (
-                  <TechBadge key={tech} label={tech} variant="default" size="sm" />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Subtle Backend Architecture Visual */}
-          <div className="lg:col-span-5 flex justify-center">
-            <ArchitectureVisual />
-          </div>
+      <div style={{"position":"relative","zIndex":2,"display":"flex","flexDirection":"column","alignItems":"flex-start","minWidth":0}}>
+        <p style={{"margin":0,"display":"inline-flex","alignItems":"center","gap":"10px","padding":"8px 16px 8px 12px","borderRadius":"999px","background":"#FFFFFF","border":"1px solid #C9DAF1","fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"12.5px","color":"#22344F"}}>
+          <span style={{"width":"8px","height":"8px","borderRadius":"50%","background":"#1D56C9","boxShadow":"0 0 0 4px #D6E4F8"}}></span>
+          Available for Backend Engineering Roles
+        </p>
+        <h1 style={{"margin":"30px 0 0","fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":700,"fontSize":"clamp(52px, 8.2vw, 112px)","lineHeight":0.92,"letterSpacing":"-0.04em","color":"#0A1A33"}}>
+          <span style={{"display":"block"}}>Nguyen</span>
+          <span style={{"display":"block"}}>Phuoc Loc<span className="drip" style={{"color":"#1D56C9"}}><span className="drip-dot">.</span><i className="drip-drop"></i><i className="drip-ring"></i><i className="drip-ring r2"></i></span></span>
+        </h1>
+        <p style={{"margin":"26px 0 0","fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":600,"fontSize":"clamp(22px, 2.3vw, 30px)","letterSpacing":"-0.015em","color":"#1D56C9"}}>Backend Software Engineer</p>
+        <p style={{"margin":"14px 0 0","fontSize":"19px","lineHeight":1.6,"color":"#34465F","maxWidth":"32ch","textWrap":"pretty"}}>I build reliable backend systems with Java, Spring Boot, Redis and SQL.</p>
+        <p style={{"margin":"18px 0 0","display":"flex","flexWrap":"wrap","alignItems":"center","gap":"8px 18px","fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"13px","color":"#3A4D68"}}>
+          <span style={{"display":"inline-flex","alignItems":"center","gap":"6px"}}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"></path><circle cx="12" cy="10" r="2.3"></circle></svg>Da Nang, Vietnam</span>
+          <span>Open to remote</span>
+        </p>
+        <div style={{"marginTop":"34px","display":"flex","flexWrap":"wrap","gap":"12px"}}>
+          <a href="#projects" style={{"display":"inline-flex","alignItems":"center","gap":"10px","minHeight":"54px","padding":"0 28px","borderRadius":"999px","background":"#1D56C9","color":"#FFFFFF","textDecoration":"none","fontWeight":600,"fontSize":"16px"}}>View My Work <span aria-hidden="true">→</span></a>
+          <a href="#contact" style={{"display":"inline-flex","alignItems":"center","minHeight":"54px","padding":"0 28px","borderRadius":"999px","border":"1.5px solid #0A1A33","color":"#0A1A33","textDecoration":"none","fontWeight":600,"fontSize":"16px","boxSizing":"border-box"}}>Let&apos;s Talk</a>
         </div>
       </div>
-    </section>
+
+      <div style={{"position":"relative","minWidth":0,"perspective":"1200px"}}>
+        <div data-tilt="panel" style={{"position":"relative","transition":"transform 0.5s cubic-bezier(0.2, 0.7, 0.3, 1)","transformStyle":"preserve-3d"}}>
+        <ArchitectureVisual />
+        </div>
+      </div>
+    </div>
+
+    <div style={{"position":"relative","zIndex":2,"borderTop":"1px solid #D3E0F2","padding":"28px 0 56px","display":"flex","flexWrap":"wrap","alignItems":"center","gap":"14px 24px"}}>
+      <p style={{"margin":0,"fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"12px","letterSpacing":"0.14em","color":"#3A4D68"}}>CORE TECHNOLOGIES</p>
+      <ul style={{"margin":0,"padding":0,"listStyle":"none","display":"flex","flexWrap":"wrap","gap":"8px","fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"13.5px","color":"#0A1A33"}}>
+        <li style={{"padding":"8px 14px","borderRadius":"999px","background":"#FFFFFF","border":"1px solid #CBDBF0"}}>Java</li>
+        <li style={{"padding":"8px 14px","borderRadius":"999px","background":"#FFFFFF","border":"1px solid #CBDBF0"}}>Spring Boot</li>
+        <li style={{"padding":"8px 14px","borderRadius":"999px","background":"#FFFFFF","border":"1px solid #CBDBF0"}}>MySQL</li>
+        <li style={{"padding":"8px 14px","borderRadius":"999px","background":"#FFFFFF","border":"1px solid #CBDBF0"}}>PostgreSQL</li>
+        <li style={{"padding":"8px 14px","borderRadius":"999px","background":"#FFFFFF","border":"1px solid #CBDBF0"}}>Redis</li>
+        <li style={{"padding":"8px 14px","borderRadius":"999px","background":"#FFFFFF","border":"1px solid #CBDBF0"}}>MongoDB</li>
+        <li style={{"padding":"8px 14px","borderRadius":"999px","background":"#FFFFFF","border":"1px solid #CBDBF0"}}>Docker</li>
+        <li style={{"padding":"8px 14px","borderRadius":"999px","background":"#FFFFFF","border":"1px solid #CBDBF0"}}>AWS</li>
+        <li style={{"padding":"8px 14px","borderRadius":"999px","background":"#FFFFFF","border":"1px solid #CBDBF0"}}>Cloudflare</li>
+      </ul>
+    </div>
+  </div>
+</section>
   );
-};
+}

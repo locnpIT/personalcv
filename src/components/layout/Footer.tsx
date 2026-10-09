@@ -1,56 +1,16 @@
-import React from "react";
-import { profileData } from "@/data/profile";
-import { Mail, ArrowUp } from "lucide-react";
-import { GithubIcon, LinkedinIcon } from "@/components/ui/Icons";
+import Link from "next/link";
 
-export const Footer: React.FC = () => {
+export function Footer() {
   return (
-    <footer className="border-t border-zinc-800/80 bg-zinc-950/60 py-12 px-4 sm:px-6 text-xs text-zinc-500 font-mono">
-      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div>
-          <p className="text-zinc-400 font-medium font-sans text-sm">
-            Nguyen Phuoc Loc
-          </p>
-          <p className="mt-1 text-zinc-500">
-            Backend Software Engineer · {profileData.domain}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4 text-zinc-400">
-          <a
-            href={profileData.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="GitHub Profile"
-            className="hover:text-zinc-200 transition-colors p-1.5"
-          >
-            <GithubIcon className="w-4 h-4" />
-          </a>
-          <a
-            href={profileData.linkedin}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="LinkedIn Profile"
-            className="hover:text-zinc-200 transition-colors p-1.5"
-          >
-            <LinkedinIcon className="w-4 h-4" />
-          </a>
-          <a
-            href={`mailto:${profileData.email}`}
-            aria-label="Send Email"
-            className="hover:text-zinc-200 transition-colors p-1.5"
-          >
-            <Mail className="w-4 h-4" />
-          </a>
-          <a
-            href="#top"
-            aria-label="Back to top"
-            className="hover:text-emerald-400 transition-colors p-1.5 ml-2 border border-zinc-800 rounded hover:border-zinc-700"
-          >
-            <ArrowUp className="w-3.5 h-3.5" />
-          </a>
-        </div>
-      </div>
-    </footer>
+<footer style={{"background":"#020A1A","color":"#9DB2D2"}}>
+  <div style={{"maxWidth":"1200px","margin":"0 auto","padding":"28px clamp(16px, 4vw, 48px)","boxSizing":"border-box","display":"flex","flexWrap":"wrap","justifyContent":"space-between","alignItems":"center","gap":"12px 32px","fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace","fontSize":"12.5px"}}>
+    <span>Nguyen Phuoc Loc — Backend Software Engineer · Da Nang, Vietnam</span>
+    <nav aria-label="Footer" style={{"display":"flex","flexWrap":"wrap","gap":"0 22px"}}>
+      <a href="https://github.com/locnpIT" style={{"color":"#C9D7EC","textDecoration":"none","padding":"12px 0"}}>GitHub</a>
+      <a href="https://www.linkedin.com/in/loc-nguyen-phuoc-82247a294/" style={{"color":"#C9D7EC","textDecoration":"none","padding":"12px 0"}}>LinkedIn</a>
+      <Link href="/#top" style={{"color":"#C9D7EC","textDecoration":"none","padding":"12px 0"}}>Back to top ↑</Link>
+    </nav>
+  </div>
+</footer>
   );
-};
+}
