@@ -157,6 +157,39 @@ a:hover{color:#123E99}
 html{scroll-behavior:smooth}
 main article{transition:transform .45s cubic-bezier(.2,.7,.3,1);transform-style:preserve-3d}
 
+/* Liquid glass: CSS fallback until the hero's WebGL renderer is ready. */
+#portfolio-home .lg {
+  background: rgba(244, 248, 253, .58);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  backdrop-filter: blur(18px) saturate(1.6);
+}
+#portfolio-home .lg-l1 {
+  background: rgba(255, 255, 255, .62);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6), inset 0 1px 0 rgba(255, 255, 255, .95);
+}
+#portfolio-home .lg-l2 {
+  background: #2a63cf;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22), inset 0 1px 0 rgba(255, 255, 255, .45);
+}
+#portfolio-home .lg-l3 {
+  background: #17489b;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2), inset 0 1px 0 rgba(255, 255, 255, .38);
+}
+#portfolio-home .lg-l4 {
+  background: #0b2a5e;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18), inset 0 1px 0 rgba(255, 255, 255, .32);
+}
+#portfolio-home .lg.lg-on {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+#portfolio-home .lg-on .lg-layer { background: transparent; }
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  #portfolio-home .lg-layer { transition: transform .6s cubic-bezier(.3, 1.5, .5, 1); }
+  #portfolio-home .lg-layer:hover { transform: scale(1.018); }
+}
+
 .wd{position:absolute;width:0;height:0}
 .wd>*{position:absolute;left:0;top:0;opacity:0;animation-duration:6.4s;animation-iteration-count:infinite;animation-timing-function:linear}
 .wd-drop{width:7px;height:12px;margin:-12px 0 0 -3.5px;border-radius:50% 50% 50% 50%/62% 62% 38% 38%;background:#5F90E3;box-shadow:inset -1px -2px 2px rgba(8,36,100,.28),inset 1.5px 2px 1.5px rgba(255,255,255,.85);transform-origin:50% 100%;animation-name:wd-fall}

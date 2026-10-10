@@ -1,19 +1,19 @@
 export function ArchitectureVisual() {
   return (
-<figure className="float" style={{"position":"relative","margin":0,"background":"#FFFFFF","border":"1px solid #CFDDF1","borderRadius":"28px","padding":"20px","boxShadow":"0 48px 90px -48px rgba(10, 42, 100, 0.45)","fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace"}}>
-          <figcaption style={{"display":"flex","flexWrap":"wrap","justifyContent":"space-between","alignItems":"center","gap":"8px 16px","padding":"2px 4px 14px","fontSize":"12px","color":"#3A4D68"}}>
+<figure className="float lg" data-glass="shell" style={{"position":"relative","margin":0,"borderRadius":"28px","padding":"20px","boxShadow":"0 48px 90px -48px rgba(10, 42, 100, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.95)","fontFamily":"'JetBrains Mono', ui-monospace, Menlo, monospace"}}>
+          <figcaption style={{"display":"flex","flexWrap":"wrap","justifyContent":"space-between","alignItems":"center","gap":"8px 16px","padding":"2px 4px 14px","fontSize":"12px","color":"#22344F"}}>
             <span>sys-arch // cluster-node-01</span>
             <span style={{"display":"inline-flex","alignItems":"center","gap":"8px"}}><span style={{"width":"7px","height":"7px","borderRadius":"50%","background":"#1D56C9"}}></span>healthy (latency: ~0.8ms)</span>
           </figcaption>
 
           <div style={{"display":"flex","flexDirection":"column","gap":"8px"}}>
-            <div style={{"background":"#E4EEFC","borderRadius":"18px","padding":"16px 18px","color":"#0A1A33"}}>
+            <div className="lg-layer lg-l1" data-glass="layer" style={{"borderRadius":"18px","padding":"16px 18px","color":"#0A1A33"}}>
               <div style={{"fontSize":"11px","letterSpacing":"0.1em","color":"#2B4A7A"}}>L1 · EDGE INGRESS &amp; GATEWAY</div>
               <div style={{"marginTop":"6px","fontFamily":"'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif","fontWeight":600,"fontSize":"22px","letterSpacing":"-0.01em"}}>Cloudflare</div>
               <div style={{"marginTop":"4px","fontSize":"12px","lineHeight":1.55,"color":"#34465F"}}>TLS termination · Rate limit inspection · Anycast routing</div>
             </div>
 
-            <div style={{"background":"#2F6BD8","borderRadius":"18px","padding":"16px 18px","color":"#FFFFFF"}}>
+            <div className="lg-layer lg-l2" data-glass="layer" style={{"borderRadius":"18px","padding":"16px 18px","color":"#FFFFFF"}}>
               <div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","gap":"12px"}}>
                 <div style={{"fontSize":"11px","letterSpacing":"0.1em","color":"#DCE8FC"}}>L2 · SPRING BOOT BACKEND CORE</div>
                 <div style={{"fontSize":"10.5px","letterSpacing":"0.1em","padding":"4px 10px","borderRadius":"999px","background":"rgba(255, 255, 255, 0.18)"}}>ACTIVE</div>
@@ -27,7 +27,7 @@ export function ArchitectureVisual() {
               </div>
             </div>
 
-            <div style={{"background":"#17489B","borderRadius":"18px","padding":"16px 18px","color":"#FFFFFF"}}>
+            <div className="lg-layer lg-l3" data-glass="layer" style={{"borderRadius":"18px","padding":"16px 18px","color":"#FFFFFF"}}>
               <div style={{"display":"flex","justifyContent":"space-between","alignItems":"center","gap":"12px"}}>
                 <div style={{"fontSize":"11px","letterSpacing":"0.1em","color":"#CFDDF5"}}>L3 · REDIS MEMORY</div>
                 <div style={{"fontSize":"12px","color":"#CFDDF5"}}>~0.4ms</div>
@@ -39,7 +39,7 @@ export function ArchitectureVisual() {
               </div>
             </div>
 
-            <div style={{"background":"#0B2A5E","borderRadius":"18px","padding":"16px 18px","color":"#FFFFFF"}}>
+            <div className="lg-layer lg-l4" data-glass="layer" style={{"borderRadius":"18px","padding":"16px 18px","color":"#FFFFFF"}}>
               <div style={{"display":"flex","flexWrap":"wrap","justifyContent":"space-between","alignItems":"center","gap":"8px 12px"}}>
                 <div style={{"fontSize":"11px","letterSpacing":"0.1em","color":"#C2D3EE"}}>L4 · SQL STORAGE</div>
                 <div style={{"display":"flex","gap":"6px","fontSize":"10.5px","letterSpacing":"0.08em"}}>
@@ -51,7 +51,7 @@ export function ArchitectureVisual() {
             </div>
           </div>
 
-          <div style={{"display":"flex","flexWrap":"wrap","justifyContent":"space-between","gap":"6px 16px","padding":"14px 4px 2px","fontSize":"11.5px","color":"#3A4D68"}}>
+          <div style={{"display":"flex","flexWrap":"wrap","justifyContent":"space-between","gap":"6px 16px","padding":"14px 4px 2px","fontSize":"11.5px","color":"#22344F"}}>
             <span>SYSTEM: rate_limiter.lua executed [OK: 0.32ms]</span>
             <span style={{"color":"#1D56C9","fontWeight":500}}>NOMINAL</span>
           </div>

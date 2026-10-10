@@ -43,8 +43,8 @@ export function Hero() {
         </div>
       </div>
 
-      <div style={{"position":"relative","minWidth":0,"perspective":"1200px"}}>
-        <div data-tilt="panel" style={{"position":"relative","transition":"transform 0.5s cubic-bezier(0.2, 0.7, 0.3, 1)","transformStyle":"preserve-3d"}}>
+      <div style={{"position":"relative","minWidth":0}}>
+        <div style={{"position":"relative"}}>
         <ArchitectureVisual />
         </div>
       </div>

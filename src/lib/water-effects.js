@@ -37,6 +37,9 @@ export function initWaterEffects(root) {
       'uniform vec4 uC[5];',
       'uniform vec4 uF[6];',
       'uniform vec4 uG[6];',
+      'uniform vec4 uL[5];',
+      'uniform vec2 uLR;',
+      'uniform vec3 uLight;',
       'float caustic(vec2 p, float t) {',
       '  vec2 q = p + 0.35 * vec2(sin(p.y * 1.7 + t), cos(p.x * 1.3 - t * 0.8));',
       '  float a = sin(q.x * 2.1 + t * 0.9) + sin(q.y * 2.3 - t * 0.7) + sin((q.x + q.y) * 1.6 + t * 0.5);',
@@ -103,8 +106,7 @@ export function initWaterEffects(root) {
       '  col = mix(col, mix(bodyCol, tint, dk), aB * fade);',
       '  return col;',
       '}',
-      'vec3 topMode() {',
-      '  vec2 px = vec2(vUv.x * uRes.x, (1.0 - vUv.y) * uRes.y);',
+      'vec3 topMode(vec2 px) {',
       '  vec4 tx = texture2D(uTex, (px / uCell) / uGrid);',
       '  vec2 sl = (tx.rg - 0.5) * 8.5;',
       '  vec3 n = normalize(vec3(-sl.x * 0.9, -sl.y * 0.9, 1.0));',
@@ -147,6 +149,67 @@ export function initWaterEffects(root) {
       '        vec3 dc = mix(vec3(0.16, 0.36, 0.74), vec3(0.70, 0.83, 1.0), lit);',
       '        dc += vec3(pow(max(dot(reflect(-L, nn), vec3(0.0, 0.0, 1.0)), 0.0), 24.0) * 0.9);',
       '        col = mix(col, dc, d.w * (1.0 - smoothstep(0.82, 1.0, dd)));',
+      '      }',
+      '    }',
+      '  }',
+      '  return col;',
+      '}',
+      'vec3 sdRR(vec2 p, vec4 r, float rad) {',
+      '  vec2 hs = r.zw * 0.5;',
+      '  vec2 dp = p - r.xy - hs;',
+      '  vec2 q = abs(dp) - hs + rad;',
+      '  float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - rad;',
+      '  vec2 g = (q.x > 0.0 && q.y > 0.0) ? normalize(q) : (q.x > q.y ? vec2(1.0, 0.0) : vec2(0.0, 1.0));',
+      '  return vec3(d, g * sign(dp + 0.0001));',
+      '}',
+      'vec4 glassTint(int i) {',
+      '  if (i == 0) return vec4(0.957, 0.973, 0.992, 0.36);',
+      '  if (i == 1) return vec4(1.0, 1.0, 1.0, 0.5);',
+      '  if (i == 2) return vec4(0.038, 0.294, 0.783, 0.86);',
+      '  if (i == 3) return vec4(0.0, 0.19, 0.556, 0.88);',
+      '  return vec4(0.0, 0.076, 0.30, 0.9);',
+      '}',
+      'vec3 glassTop(vec2 px) {',
+      '  vec2 sp = px;',
+      '  float inG = 0.0;',
+      '  for (int i = 0; i < 5; i++) {',
+      '    vec4 r = uL[i];',
+      '    if (r.z > 0.0) {',
+      '      float rad = i == 0 ? uLR.x : uLR.y;',
+      '      float bw = i == 0 ? 30.0 : 16.0;',
+      '      vec3 s = sdRR(px, r, rad);',
+      '      if (s.x < 0.0) {',
+      '        float t = clamp(1.0 + s.x / bw, 0.0, 1.0);',
+      '        float k = i == 0 ? 0.9 : 0.55;',
+      '        sp -= s.yz * bw * k * t * t * t * smoothstep(0.0, 1.5, -s.x);',
+      '        if (i == 0) {',
+      '          inG = 1.0;',
+      '          sp = mix(sp, r.xy + r.zw * 0.5, 0.035);',
+      '        }',
+      '      }',
+      '    }',
+      '  }',
+      '  if (inG < 0.5) return topMode(px);',
+      '  sp += vec2(sin(px.y * 0.035 + uTime * 1.3), cos(px.x * 0.03 + uTime * 1.1)) * 1.2;',
+      '  vec3 col = topMode(sp);',
+      '  vec2 c0 = uL[0].xy + uL[0].zw * 0.5;',
+      '  vec2 Ld = normalize(mix(vec2(-0.55, -0.84), normalize(uLight.xy - c0 + 0.001), uLight.z) + 0.0001);',
+      '  for (int i = 0; i < 5; i++) {',
+      '    vec4 r = uL[i];',
+      '    if (r.z > 0.0) {',
+      '      float rad = i == 0 ? uLR.x : uLR.y;',
+      '      float bw = i == 0 ? 30.0 : 16.0;',
+      '      vec3 s = sdRR(px, r, rad);',
+      '      if (s.x < 0.0) {',
+      '        float t = clamp(1.0 + s.x / bw, 0.0, 1.0);',
+      '        vec4 tc = glassTint(i);',
+      '        col = mix(col, tc.rgb, tc.a * (1.0 - (i == 0 ? 0.5 : 0.16) * smoothstep(0.5, 1.0, t)));',
+      '        float f = dot(s.yz, Ld);',
+      '        float rim = smoothstep(0.5, 1.0, t);',
+      '        float st = i == 0 ? 1.0 : (i == 1 ? 0.8 : 0.6);',
+      '        col += vec3(0.95, 0.98, 1.0) * rim * rim * max(f, 0.0) * (i == 0 ? 0.45 : 0.6) * st;',
+      '        col += vec3(0.48, 0.80, 1.0) * rim * rim * max(-f, 0.0) * (i < 2 ? 0.24 : 0.1) * st;',
+      '        col = mix(col, vec3(1.0), (1.0 - smoothstep(0.0, 1.3, -s.x)) * (0.3 + 0.4 * max(f, 0.0)) * st);',
       '      }',
       '    }',
       '  }',
@@ -210,7 +273,7 @@ export function initWaterEffects(root) {
       '  return col;',
       '}',
       'void main() {',
-      '  vec3 col = uMode < 0.5 ? topMode() : perspMode();',
+      '  vec3 col = uMode < 0.5 ? glassTop(vec2(vUv.x * uRes.x, (1.0 - vUv.y) * uRes.y)) : perspMode();',
       '  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);',
       '}'
     ].join('\n');
@@ -239,7 +302,7 @@ export function initWaterEffects(root) {
     gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
     const U = {};
-    ['uTex', 'uRes', 'uTime', 'uMode', 'uGrid', 'uCell', 'uTile', 'uTanH', 'uPitch', 'uLift', 'uCamH', 'uCam', 'uA', 'uB', 'uC', 'uF', 'uG'].forEach((k) => { U[k] = gl.getUniformLocation(prog, k); });
+    ['uTex', 'uRes', 'uTime', 'uMode', 'uGrid', 'uCell', 'uTile', 'uTanH', 'uPitch', 'uLift', 'uCamH', 'uCam', 'uA', 'uB', 'uC', 'uF', 'uG', 'uL', 'uLR', 'uLight'].forEach((k) => { U[k] = gl.getUniformLocation(prog, k); });
 
     const tex = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0);
@@ -386,6 +449,29 @@ export function initWaterEffects(root) {
     const FA = new Float32Array(24), FB = new Float32Array(24);
     const fish = [];
     let pointer = null, burst = null;
+
+    const GLR = new Float32Array(20);
+    let glassEls = null, lightW = 0, lightX = 0, lightY = 0;
+    function measureGlass() {
+      GLR.fill(0);
+      if (persp) return;
+      if (!glassEls || !glassEls.length || !glassEls[0].isConnected) {
+        const sh = root.querySelector('[data-glass="shell"]');
+        glassEls = sh ? [sh].concat(Array.prototype.slice.call(sh.querySelectorAll('[data-glass="layer"]'), 0, 4)) : [];
+      }
+      if (!glassEls.length) return;
+      const cr = canvas.getBoundingClientRect();
+      const s = canvas.clientWidth ? cr.width / canvas.clientWidth : 1;
+      for (let i = 0; i < glassEls.length; i++) {
+        const el = glassEls[i];
+        if (i === 0 && !el.classList.contains('lg-on')) el.classList.add('lg-on');
+        const r = el.getBoundingClientRect();
+        GLR[i * 4] = (r.left - cr.left) / s;
+        GLR[i * 4 + 1] = (r.top - cr.top) / s;
+        GLR[i * 4 + 2] = r.width / s;
+        GLR[i * 4 + 3] = r.height / s;
+      }
+    }
 
     function initFish() {
       fish.length = 0;
@@ -561,6 +647,11 @@ export function initWaterEffects(root) {
       gl.uniform4fv(U.uC, C);
       gl.uniform4fv(U.uF, FA);
       gl.uniform4fv(U.uG, FB);
+      if (!persp) {
+        gl.uniform4fv(U.uL, GLR);
+        gl.uniform2f(U.uLR, 28, 18);
+        gl.uniform3f(U.uLight, lightX, lightY, lightW);
+      }
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
 
@@ -584,7 +675,12 @@ export function initWaterEffects(root) {
         if (n === 3) simAcc = 0;
       }
       updateDrops(on ? dt : 0);
-      if (!persp) updateFish(on ? dt : 0);
+      if (!persp) {
+        updateFish(on ? dt : 0);
+        if (pointer) { lightX = pointer.x; lightY = pointer.y; }
+        lightW += ((pointer ? 1 : 0) - lightW) * Math.min(1, (on ? dt : 1) * 3);
+        measureGlass();
+      }
       upload();
       draw();
       if (on && visible && !document.hidden) raf = requestAnimationFrame(frame);
@@ -602,10 +698,6 @@ export function initWaterEffects(root) {
     function onMove(e) {
       if (!live()) return;
       const p = toLocal(e);
-      if (!persp && self._tiltEl && (!e.pointerType || e.pointerType === 'mouse')) {
-        const nx = p[0] / w * 2 - 1, ny = p[1] / h * 2 - 1;
-        self._tiltEl.style.transform = 'rotateX(' + (-ny * 6).toFixed(2) + 'deg) rotateY(' + (nx * 8).toFixed(2) + 'deg)';
-      }
       if (p[0] < 0 || p[1] < 0 || p[0] > w || p[1] > h) { lastG = null; return; }
       if (persp) {
         const hit = unproject(p[0], p[1]);
@@ -628,7 +720,7 @@ export function initWaterEffects(root) {
     function onLeave() {
       lastG = null;
       pointer = null;
-      if (!persp && self._tiltEl) self._tiltEl.style.transform = '';
+      kick();
     }
     function onDown(e) {
       if (!live()) return;
@@ -651,6 +743,8 @@ export function initWaterEffects(root) {
       dead = true;
       if (raf) cancelAnimationFrame(raf);
       host.classList.add('no-gl');
+      canvas.style.visibility = 'hidden';
+      if (glassEls && glassEls[0]) glassEls[0].classList.remove('lg-on');
     }
     function onMotionChange() {
       if (raf) cancelAnimationFrame(raf);
@@ -669,6 +763,10 @@ export function initWaterEffects(root) {
     if (window.ResizeObserver) {
       ro = new ResizeObserver(() => { resize(); kick(); });
       ro.observe(canvas);
+      if (!persp) {
+        const shell = root.querySelector('[data-glass="shell"]');
+        if (shell) ro.observe(shell);
+      }
     } else {
       window.addEventListener('resize', onWinResize);
     }
@@ -682,11 +780,14 @@ export function initWaterEffects(root) {
 
     resize();
     kick();
+    document.fonts?.ready.then(kick);
 
     return {
       kick: kick,
       destroy: function () {
         dead = true;
+        if (glassEls && glassEls[0]) glassEls[0].classList.remove('lg-on');
+        canvas.style.visibility = '';
         if (raf) cancelAnimationFrame(raf);
         raf = 0;
         host.removeEventListener('pointermove', onMove);
@@ -737,20 +838,21 @@ export function initWaterEffects(root) {
     };
   }
 
-  APP._tiltEl = root.querySelector('[data-tilt]');
   const lakes = [];
   [['hero', 'top'], ['dive', 'persp']].forEach(([name, mode]) => {
     const canvas = root.querySelector('canvas[data-lake="' + name + '"]');
     if (!canvas) return;
     let lake = null;
     try { lake = makeLake(canvas, mode); } catch { lake = null; }
-    if (lake) lakes.push(lake);
+    if (lake) {
+      (canvas.closest('section') || canvas.parentElement).classList.remove('no-gl');
+      lakes.push(lake);
+    }
     else (canvas.closest('section') || canvas.parentElement).classList.add('no-gl');
   });
   const detachTilt = attachTilt(root);
   return () => {
     lakes.forEach((lake) => lake.destroy());
     detachTilt();
-    if (APP._tiltEl) APP._tiltEl.style.transform = '';
   };
 }
