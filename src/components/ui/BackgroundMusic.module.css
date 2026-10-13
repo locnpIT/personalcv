@@ -1,0 +1,35 @@
+.toggle {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #1d56c933;
+  border-radius: 999px;
+  background: #f4f8fdf2;
+  color: var(--blue);
+  box-shadow: 0 6px 24px #0a1a331a;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 180ms, color 180ms;
+}
+
+.toggle[aria-pressed="true"] {
+  background: var(--blue);
+  color: white;
+}
+
+.toggle:hover {
+  background: #dceafb;
+  color: var(--blue);
+}
+
+.toggle:disabled {
+  opacity: 0.65;
+  cursor: default;
+}

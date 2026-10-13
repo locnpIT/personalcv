@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Footer } from "@/components/layout/Footer";
+import { BackgroundMusic } from "@/components/ui/BackgroundMusic";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -80,6 +81,7 @@ export default function RootLayout({
           {children}
           <Footer />
         </div>
+        <BackgroundMusic />
       </body>
     </html>
   );
