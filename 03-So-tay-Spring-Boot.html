@@ -1,0 +1,1545 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sổ tay Spring Boot core</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sổ tay kỹ thuật hai cột (dùng chung với Sổ tay JVM) — mục lục dính bên trái, nội dung đọc bên phải; mỗi chương mở bằng khung "Phỏng vấn sẽ hỏi" */
+:root{
+  --bg:#F2F5F9; --surface:#FFFFFF; --sunk:#E7EDF5; --ink:#0E1A2C; --muted:#4F5F77; --line:#D2DBE7;
+  --accent:#1B5BD4; --accent-ink:#FFFFFF; --accent-soft:#DCE7FB;
+  --s1:#1D5FD6; --s2:#C2620A; --s3:#8A3FA8;
+  --eden:#2F6FE0; --surv:#0F8FB3; --old:#3A3F9E; --dead:#9AA7B8;
+  --ok:#17845A; --ok-soft:#D9F1E6; --warn:#A86A00; --warn-soft:#FBEBCB; --bad:#C23434; --bad-soft:#F9DDDD;
+  --code-bg:#0F1A2B; --code-ink:#D6E2F2; --code-dim:#7F93AE; --code-hl:#8EC1FF; --code-str:#9FD8B8; --code-warn:#FFB4A8;
+  --f-ui:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0A111D; --surface:#101A2A; --sunk:#0D1624; --ink:#E2E9F4; --muted:#93A3BB; --line:#223149;
+  --accent:#5B96F5; --accent-ink:#081120; --accent-soft:#15284A;
+  --s1:#4A86E8; --s2:#CC7222; --s3:#A963C4;
+  --eden:#4A86E8; --surv:#2AA8C9; --old:#7A7FE0; --dead:#4D5B70;
+  --ok:#3FBF8A; --ok-soft:#10301F; --warn:#E0A33A; --warn-soft:#33270E; --bad:#F06A6A; --bad-soft:#3A1717;
+  --code-bg:#060C16; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0A111D; --surface:#101A2A; --sunk:#0D1624; --ink:#E2E9F4; --muted:#93A3BB; --line:#223149;
+  --accent:#5B96F5; --accent-ink:#081120; --accent-soft:#15284A;
+  --s1:#4A86E8; --s2:#CC7222; --s3:#A963C4;
+  --eden:#4A86E8; --surv:#2AA8C9; --old:#7A7FE0; --dead:#4D5B70;
+  --ok:#3FBF8A; --ok-soft:#10301F; --warn:#E0A33A; --warn-soft:#33270E; --bad:#F06A6A; --bad-soft:#3A1717;
+  --code-bg:#060C16; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:16px;line-height:1.65}
+a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+:not(pre)>code{background:var(--sunk);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+h1,h2,h3,h4{margin:0;text-wrap:balance;line-height:1.25}
+p{margin:0}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.shell{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:24px 80px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px}
+@media (max-width:980px){.shell{grid-template-columns:1fr;gap:0}}
+
+/* mục lục */
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:4px}
+.toc .brand{font-weight:800;font-size:1rem;letter-spacing:-.01em;margin-bottom:12px}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.toc a{display:flex;gap:10px;text-decoration:none;color:var(--muted);font-size:.86rem;padding:5px 8px;border-radius:6px;line-height:1.35}
+.toc a span{font-family:var(--f-mono);font-size:.74rem;min-width:18px;color:var(--muted);padding-top:2px}
+.toc a:hover{background:var(--sunk);color:var(--ink)}
+.toc a.on{background:var(--accent-soft);color:var(--ink);font-weight:600}
+@media (max-width:980px){
+  .toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;max-height:none;background:var(--bg);margin-inline:-20px;padding:10px 20px;border-bottom:1px solid var(--line)}
+  .toc .brand{display:none}
+  .toc ol{flex-direction:row;overflow-x:auto;gap:4px;scrollbar-width:none}
+  .toc a{white-space:nowrap;font-size:.8rem}
+}
+
+main{min-width:0;display:flex;flex-direction:column;gap:64px}
+.hero{display:flex;flex-direction:column;gap:14px;padding-top:8px}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.hero h1{font-size:clamp(2rem,4.6vw,3.1rem);font-weight:800;letter-spacing:-.025em}
+.hero .lede{font-size:1.08rem;color:var(--muted);max-width:66ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.facts span{font-family:var(--f-mono);font-size:.76rem;background:var(--surface);border:1px solid var(--line);padding:4px 10px;border-radius:999px;color:var(--muted)}
+
+section.ch{display:flex;flex-direction:column;gap:20px;scroll-margin-top:72px}
+.ch-head{display:flex;flex-direction:column;gap:6px;border-top:2px solid var(--ink);padding-top:14px}
+.ch-head h2{font-size:clamp(1.45rem,2.6vw,1.9rem);font-weight:800;letter-spacing:-.015em}
+.ch-head p{color:var(--muted);max-width:68ch}
+h3{font-size:1.12rem;font-weight:700;margin-top:6px}
+h4{font-size:.98rem;font-weight:700}
+.prose{display:flex;flex-direction:column;gap:12px;max-width:72ch}
+.prose ul,.prose ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+
+.ask{background:var(--accent-soft);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.ask b{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.ask ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:3px}
+.callout{border-left:3px solid var(--accent);padding:10px 14px;background:var(--surface);border-radius:0 8px 8px 0;max-width:76ch}
+.callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-color:var(--ok);background:var(--ok-soft)}
+.callout b.t{display:block;margin-bottom:2px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+
+pre.code{background:var(--code-bg);color:var(--code-ink);border-radius:var(--r);padding:14px 16px;overflow-x:auto;font-family:var(--f-mono);font-size:.8rem;line-height:1.6;margin:0;max-width:100%}
+pre.code .c{color:var(--code-dim)} pre.code .h{color:var(--code-hl);font-weight:600} pre.code .s{color:var(--code-str)} pre.code .w{color:var(--code-warn);font-weight:600}
+.real{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--ok);font-weight:600;letter-spacing:.03em}
+.real::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.cap{font-size:.84rem;color:var(--muted);max-width:76ch}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--sunk)}
+td.n{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td code{white-space:nowrap}
+
+/* kiến trúc */
+.arch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.arch{grid-template-columns:1fr}}
+.arch .blk{border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.arch .blk h4{font-size:.9rem}
+.arch .blk p{font-size:.84rem;color:var(--muted)}
+.arch .lane{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--f-mono);font-size:.8rem}
+.arch .lane span{background:var(--sunk);padding:5px 10px;border-radius:6px}
+.arch .lane i{color:var(--muted);font-style:normal}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill.shared{background:var(--accent-soft);color:var(--accent)}
+
+/* vùng nhớ tương tác */
+.mem{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px}
+.mem>*{min-width:0}
+@media (max-width:860px){.mem{grid-template-columns:1fr}}
+@media (max-width:520px){.areas{grid-template-columns:1fr}}
+.area{min-width:0}
+.chip{overflow-wrap:anywhere}
+.codelines{background:var(--code-bg);border-radius:var(--r);padding:10px 0;font-family:var(--f-mono);font-size:.8rem;overflow-x:auto}
+.codelines button{display:block;width:100%;text-align:left;background:transparent;border:0;color:var(--code-ink);padding:4px 14px;white-space:pre;font-family:inherit;font-size:inherit;border-left:3px solid transparent}
+.codelines button:hover{background:#ffffff0d}
+.codelines button.on{background:#5b96f526;border-left-color:var(--code-hl)}
+.codelines .ln{color:var(--code-dim);margin-right:12px}
+.areas{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.area{border:1px dashed var(--line);border-radius:8px;padding:10px;min-height:96px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.area.heap{grid-column:1/-1}
+.area h4{font-size:.82rem;display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.area .items{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:.74rem;padding:3px 8px;border-radius:6px;background:var(--sunk);border:1px solid var(--line);transition:background-color .3s,border-color .3s}
+.chip.new{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.chip.gone{text-decoration:line-through;opacity:.5}
+.memnote{margin-top:10px;font-size:.9rem}
+
+/* object layout */
+.objrow{display:flex;flex-wrap:wrap;gap:3px;align-items:stretch;font-family:var(--f-mono);font-size:.72rem}
+.objrow div{padding:6px 8px;border-radius:4px;display:flex;flex-direction:column;justify-content:center;min-height:44px}
+.objrow .hdr{background:var(--accent);color:var(--accent-ink)}
+.objrow .kl{background:var(--s3);color:#fff}
+.objrow .fld{background:var(--sunk);border:1px solid var(--line)}
+.objrow .pad{background:repeating-linear-gradient(45deg,var(--sunk),var(--sunk) 4px,var(--surface) 4px,var(--surface) 8px);border:1px dashed var(--line);color:var(--muted)}
+.objrow small{opacity:.85}
+.objrow div{min-width:58px}
+
+/* GC simulator */
+.sim{display:flex;flex-direction:column;gap:14px}
+.sim-ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 13px;font-weight:500;font-size:.88rem}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.sim-ctrl label{font-size:.86rem;color:var(--muted);display:flex;gap:6px;align-items:center}
+.sim-ctrl input[type=range]{width:110px;accent-color:var(--accent)}
+.heapviz{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
+.heapviz .old{grid-column:1/-1}
+@media (max-width:640px){.heapviz{grid-template-columns:1fr 1fr}.heapviz .eden{grid-column:1/-1}}
+.gen{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);min-width:0}
+.gen h4{font-size:.8rem;display:flex;justify-content:space-between;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.gen h4 small{font-family:var(--f-mono);color:var(--muted);font-weight:400}
+.gen.to h4::after{content:"đích copy kế tiếp";font-size:.68rem;font-weight:500;color:var(--surv)}
+.cells{display:grid;gap:4px}
+.eden .cells{grid-template-columns:repeat(8,minmax(0,1fr))}
+.surv .cells{grid-template-columns:repeat(4,minmax(0,1fr))}
+.old .cells{grid-template-columns:repeat(16,minmax(0,1fr))}
+@media (max-width:640px){.old .cells{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.cell{aspect-ratio:1;border-radius:4px;background:var(--sunk);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.66rem;color:#fff;font-weight:600;transition:background-color .25s,transform .25s;max-width:100%}
+.cell.e{background:var(--eden)} .cell.s{background:var(--surv)} .cell.o{background:var(--old)}
+.cell.lt{box-shadow:inset 0 0 0 2px var(--warn)}
+.cell.dead{background:var(--dead);color:transparent}
+.cell.dying{background:var(--bad);transform:scale(.8)}
+.sim-stats{display:flex;flex-wrap:wrap;gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:110px}
+.stat b{display:block;font-family:var(--f-mono);font-size:1.15rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.74rem;color:var(--muted)}
+.simlog{background:var(--code-bg);color:var(--code-ink);font-family:var(--f-mono);font-size:.76rem;border-radius:8px;padding:10px 12px;height:150px;overflow:auto;display:flex;flex-direction:column;gap:3px}
+.simlog .w{color:var(--code-warn)} .simlog .h{color:var(--code-hl)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.oom{display:none;background:var(--bad-soft);border:1px solid var(--bad);border-radius:8px;padding:10px 12px;font-family:var(--f-mono);font-size:.82rem;color:var(--bad)}
+.oom.show{display:block}
+
+/* G1 regions */
+.regions{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px}
+@media (max-width:640px){.regions{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.rg{aspect-ratio:1;border-radius:3px;font-family:var(--f-mono);font-size:.6rem;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+.rg.E{background:var(--eden)} .rg.S{background:var(--surv)} .rg.O{background:var(--old)} .rg.H{background:var(--s2)} .rg.F{background:var(--sunk);color:var(--muted)}
+.rg.C{outline:2px solid var(--bad);outline-offset:-2px}
+
+/* charts */
+.chart{position:relative;min-width:0}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .grid line{stroke:var(--line);stroke-width:1}
+.chart .ax text,.chart text.ax{fill:var(--muted);font-family:var(--f-mono);font-size:10.5px}
+.chart text.lbl{font-family:var(--f-ui);font-size:11.5px;font-weight:600}
+.chart text.val{fill:var(--ink);font-family:var(--f-mono);font-size:11px}
+.chart .hit{fill:transparent}
+.chart .xh{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.78rem;box-shadow:0 6px 18px #0b16281f;min-width:150px;z-index:3;display:none}
+.tip .tt{font-weight:700;margin-bottom:3px}
+.tip .tr{display:flex;justify-content:space-between;gap:12px;font-family:var(--f-mono);font-size:.74rem}
+.tip .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.chart-legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+.chart-title{font-weight:700;font-size:.95rem;margin-bottom:2px}
+
+/* container calc */
+.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px}
+@media (max-width:860px){.calc{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.82rem;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.field label output{font-family:var(--f-mono);font-weight:600;color:var(--accent)}
+.field input[type=range]{width:100%;accent-color:var(--accent)}
+.field small{color:var(--muted);font-size:.76rem}
+.fields{display:flex;flex-direction:column;gap:12px}
+.budget{display:flex;flex-direction:column;gap:12px}
+.bar{position:relative;height:38px;border-radius:6px;background:var(--sunk);overflow:visible;display:flex}
+.bar .seg{height:100%;border-right:2px solid var(--surface);transition:width .3s}
+.bar .seg:first-child{border-radius:6px 0 0 6px}
+.bar .limit{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink)}
+.bar .limit span{position:absolute;top:-20px;transform:translateX(-50%);font-family:var(--f-mono);font-size:.7rem;white-space:nowrap;color:var(--ink)}
+.brows{display:flex;flex-direction:column;gap:4px;font-size:.84rem}
+.brows div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:3px}
+.brows i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.brows b{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.verdict{border-radius:8px;padding:10px 12px;font-weight:600;font-size:.9rem;display:flex;gap:8px;align-items:flex-start}
+.verdict.ok{background:var(--ok-soft);color:var(--ok)} .verdict.warn{background:var(--warn-soft);color:var(--warn)} .verdict.bad{background:var(--bad-soft);color:var(--bad)}
+.verdict span{color:var(--ink);font-weight:400}
+
+/* playbooks */
+.pb{display:flex;flex-direction:column;gap:12px}
+.pb .sym{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sev{font-family:var(--f-mono);font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.04em}
+.sev.bad{background:var(--bad-soft);color:var(--bad)} .sev.warn{background:var(--warn-soft);color:var(--warn)}
+.steps{counter-reset:s;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px}
+.steps li::before{content:counter(s);font-family:var(--f-mono);font-size:.74rem;font-weight:700;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-top:2px}
+
+/* gc log annotate */
+.logline{font-family:var(--f-mono);font-size:.8rem;background:var(--code-bg);color:var(--code-ink);border-radius:8px;padding:12px 14px;overflow-x:auto;white-space:nowrap}
+.logline span{border-bottom:2px solid;padding-bottom:1px}
+.logline .a1{border-color:var(--s1)} .logline .a2{border-color:var(--surv)} .logline .a3{border-color:var(--s2)} .logline .a4{border-color:var(--s3)} .logline .a5{border-color:var(--ok)}
+.anno{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;font-size:.84rem}
+.anno div{border-top:3px solid;padding-top:6px}
+
+/* Q&A */
+.qa{display:flex;flex-direction:column;gap:8px}
+.qa details{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.qa summary{cursor:pointer;padding:12px 14px;font-weight:600;list-style:none;display:flex;gap:10px;align-items:flex-start}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{content:"+";font-family:var(--f-mono);color:var(--accent);font-weight:700;width:14px;flex:none}
+.qa details[open] summary::before{content:"−"}
+.qa .ans{padding:0 16px 14px 38px;display:flex;flex-direction:column;gap:8px;font-size:.94rem}
+.qa .ans ul{margin:0;padding-left:20px}
+.lvl{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:10px;font-weight:700}
+.trap{font-family:var(--f-mono);font-size:.66rem;background:var(--warn-soft);color:var(--warn);padding:1px 6px;border-radius:4px;margin-left:auto;flex:none;align-self:center}
+.foot{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padding-top:16px}
+
+/* ===== thêm cho sổ tay concurrency ===== */
+.states{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:860px){.states{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:460px){.states{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stnode{border:1px solid var(--line);border-radius:8px;padding:10px 8px;text-align:center;background:var(--surface);font-family:var(--f-mono);font-size:.74rem;font-weight:600;transition:background-color .25s,border-color .25s,color .25s;min-width:0;overflow-wrap:anywhere}
+.stnode small{display:block;font-family:var(--f-ui);font-weight:400;color:var(--muted);font-size:.72rem;margin-top:3px}
+.stnode.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.stnode.on small{color:var(--accent-ink);opacity:.85}
+.sim-ctrl .btn:disabled{opacity:.4;cursor:default}
+.seg-ctl{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg-ctl button{border:0;background:transparent;color:var(--muted);padding:7px 12px;font-size:.86rem;border-right:1px solid var(--line)}
+.seg-ctl button:last-child{border-right:0}
+.seg-ctl button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.race{display:grid;grid-template-columns:minmax(0,1fr) 170px minmax(0,1fr);gap:12px;align-items:stretch}
+@media (max-width:700px){.race{grid-template-columns:1fr 1fr}.race .memcol{grid-column:1/-1;grid-row:1;flex-direction:row}}
+.thr{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:8px;min-width:0}
+.thr h4{display:flex;justify-content:space-between;gap:6px;font-size:.88rem;flex-wrap:wrap}
+.thr .badge{font-family:var(--f-mono);font-size:.68rem;padding:2px 7px;border-radius:4px;background:var(--sunk);color:var(--muted)}
+.thr .badge.run{background:var(--accent-soft);color:var(--accent)}
+.thr .badge.blk{background:var(--warn-soft);color:var(--warn)}
+.thr .badge.ok{background:var(--ok-soft);color:var(--ok)}
+.thr ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font-family:var(--f-mono);font-size:.76rem}
+.thr li{padding:4px 8px;border-radius:5px;color:var(--muted);border:1px solid transparent}
+.thr li.cur{border-color:var(--accent);color:var(--ink);background:var(--accent-soft)}
+.thr li.done{color:var(--ok)}
+.thr .reg{font-family:var(--f-mono);font-size:.78rem;background:var(--sunk);border-radius:5px;padding:5px 8px}
+.memcol{display:flex;flex-direction:column;gap:10px;justify-content:center}
+.ram{border:2px solid var(--ink);border-radius:10px;padding:12px;text-align:center;background:var(--surface);flex:1}
+.ram span{display:block;font-size:.72rem;color:var(--muted)}
+.ram b{display:block;font-family:var(--f-mono);font-size:2.2rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.ram small{font-family:var(--f-mono);color:var(--muted)}
+.ram.flash{animation:ramf .6s ease}
+@keyframes ramf{0%{background:var(--accent-soft)}100%{background:var(--surface)}}
+.lockbox{border:1px dashed var(--line);border-radius:8px;padding:8px;text-align:center;font-family:var(--f-mono);font-size:.76rem;color:var(--muted);flex:1}
+.lockbox.held{border-style:solid;border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.cache-diag{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cache-diag .core{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;background:var(--surface);min-width:0}
+.cache-diag .core span{font-size:.8rem;color:var(--muted)}
+.cache-diag .lv{font-family:var(--f-mono);font-size:.76rem;background:var(--sunk);border-radius:5px;padding:5px 8px;overflow-wrap:anywhere}
+.cache-diag i{font-style:normal;font-weight:700;color:var(--s2)}
+.cache-diag i.nw{color:var(--ok)}
+.cache-diag .ram-wide{grid-column:1/-1;border:2px solid var(--ink);border-radius:8px;padding:10px;text-align:center;font-family:var(--f-mono);font-size:.8rem}
+.adder{display:flex;flex-direction:column;gap:8px;margin:4px 0}
+.cells-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.cells-row span{border:1px solid var(--line);border-radius:6px;padding:6px;text-align:center;font-family:var(--f-mono);font-size:.7rem;color:var(--muted);background:var(--surface)}
+.cells-row b{display:block;font-size:1rem;color:var(--ink)}
+.adder .sum{font-family:var(--f-mono);font-size:.82rem;text-align:center;background:var(--accent-soft);border-radius:6px;padding:6px}
+.sel{font:inherit;font-size:.84rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 6px}
+.poolviz{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,.8fr);gap:10px}
+@media (max-width:760px){.poolviz{grid-template-columns:1fr}}
+.workers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.worker{border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-family:var(--f-mono);font-size:.72rem;display:flex;flex-direction:column;gap:4px;min-height:52px;background:var(--surface)}
+.worker.core{border:2px solid var(--accent)}
+.worker .pg{height:6px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.worker .pg i{display:block;height:100%;background:var(--accent);transition:width .4s}
+.worker.idle{color:var(--muted)}
+.worker.new{animation:ramf .8s ease}
+.queue{display:flex;flex-direction:column;gap:4px}
+.qslot{border:1px dashed var(--line);border-radius:5px;padding:4px 8px;font-family:var(--f-mono);font-size:.72rem;color:var(--muted);min-height:26px}
+.qslot.full{border-style:solid;border-color:var(--surv);color:var(--ink);background:var(--sunk)}
+.caller{font-family:var(--f-mono);font-size:.76rem;border:1px dashed var(--line);border-radius:6px;padding:8px;color:var(--muted)}
+.caller.busy{border-style:solid;border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+
+/* ===== hình động bổ sung ===== */
+.anim{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.anim svg{width:100%;min-width:520px;height:auto;display:block}
+.anim text{font-family:var(--f-ui);font-size:13px;fill:var(--ink)}
+.anim text.mono{font-family:var(--f-mono);font-size:12px}
+.anim text.dim{fill:var(--muted);font-size:11.5px}
+.anim text.big{font-family:var(--f-mono);font-size:22px;font-weight:600}
+.anim text.bad{fill:var(--bad);font-weight:600}
+.anim text.ok{fill:var(--ok);font-weight:600}
+.anim text.warn{fill:var(--warn);font-weight:600}
+.anim .bx{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.anim .bx.hot{stroke:var(--accent);stroke-width:2.5}
+.anim .bx.ram{stroke:var(--ink);stroke-width:2}
+.anim .bx.held{fill:var(--warn-soft);stroke:var(--warn);stroke-width:2}
+.anim .bx.cell{fill:var(--surface);stroke:var(--s1);stroke-width:1.5}
+.anim .reg{fill:var(--sunk);stroke:none;transition:fill .2s}
+.anim .reg.ping{fill:var(--accent-soft)}
+.anim .pk{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.anim .pk.old{fill:var(--s2)}
+.anim .edge-own{stroke:var(--accent);stroke-width:3;fill:none}
+.anim .edge-wait{stroke:var(--bad);stroke-width:3;fill:none;stroke-dasharray:8 6;animation:dashmove .8s linear infinite}
+@keyframes dashmove{to{stroke-dashoffset:-28}}
+.anim .th{stroke:var(--surface);stroke-width:3;transition:fill .3s}
+.anim .th.run{fill:var(--accent)} .anim .th.blk{fill:var(--warn)} .anim .th.done{fill:var(--ok)} .anim .th.dead{fill:var(--bad)}
+.anim .fl{stroke-width:3;animation:flfade .65s ease-out forwards}
+.anim .fl.ok{stroke:var(--ok)} .anim .fl.fail{stroke:var(--bad);stroke-dasharray:5 4}
+@keyframes flfade{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
+.anim .mark{animation:flfade .9s ease-out forwards;font-weight:700}
+.anim marker path{fill:var(--muted)}
+@media (prefers-reduced-motion: reduce){.anim .edge-wait{animation:none}}
+.vt-wrap{display:flex;flex-direction:column;gap:10px}
+.vt-carriers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.carrier{border:2px solid var(--ink);border-radius:10px;padding:10px;background:var(--surface);min-height:92px;display:flex;flex-direction:column;gap:6px;transition:border-color .3s,background-color .3s}
+.carrier h4{font-size:.82rem;display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.carrier h4 small{font-family:var(--f-mono);font-weight:400;color:var(--muted)}
+.carrier.pinned{border-color:var(--bad);background:var(--bad-soft)}
+.carrier .slot{min-height:40px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vt-row{border:1px dashed var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);min-width:0}
+.vt-row h4{font-size:.78rem;color:var(--muted);font-weight:600;margin-bottom:6px}
+.vt-row .chips{display:flex;flex-wrap:wrap;gap:6px;min-height:34px}
+.vtchip{font-family:var(--f-mono);font-size:.72rem;border-radius:6px;padding:4px 8px;background:var(--accent-soft);border:1px solid var(--accent);color:var(--ink);display:inline-flex;flex-direction:column;line-height:1.3;will-change:transform}
+.vtchip small{color:var(--muted);font-size:.66rem}
+.vtchip.io{background:var(--sunk);border-color:var(--line)}
+.vtchip.done{background:var(--ok-soft);border-color:var(--ok)}
+.vtchip.pin{border-style:dashed}
+.vtchip.pinwait{background:var(--bad-soft);border-color:var(--bad)}
+
+/* ===== thêm cho sổ tay Spring Boot ===== */
+.spring{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--s3);font-weight:600;letter-spacing:.03em}
+.spring::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--s3)}
+.w-txt{color:var(--bad);font-weight:700}
+.anim .bx.ok{fill:var(--ok-soft);stroke:var(--ok);stroke-width:2}
+.anim .bx.bad{fill:var(--bad-soft);stroke:var(--bad);stroke-width:2.5}
+/* lifecycle */
+.lc-track{position:relative;padding:8px 6px 30px}
+.lc-line{position:absolute;left:24px;right:24px;top:24px;height:4px;background:var(--sunk);border-radius:2px}
+.lc-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.lc-dots{position:relative;display:flex;justify-content:space-between;gap:2px}
+.lc-dot{background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:6px;width:11%;min-width:0;color:var(--muted)}
+.lc-dot span{width:32px;height:32px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.78rem;font-weight:700;transition:all .3s}
+.lc-dot small{font-size:.7rem;text-align:center;line-height:1.2;overflow-wrap:anywhere}
+.lc-dot.done span{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.lc-dot.cur span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);transform:scale(1.15)}
+.lc-dot.cur small{color:var(--ink);font-weight:700}
+.lc-bean{display:none}
+@media (max-width:640px){.lc-dot small{display:none}.lc-dot span{width:26px;height:26px}}
+.lc-detail{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.lc-detail h4{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+.lc-detail h4 code{font-weight:400}
+/* cache 3 cấp */
+.c3-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:860px){.c3-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.c3-box{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);min-height:110px;min-width:0}
+.c3-box h4{font-size:.8rem;display:flex;flex-direction:column;margin-bottom:8px}
+.c3-box h4 small{font-weight:400;color:var(--muted);font-size:.72rem}
+.c3-box .chips{display:flex;flex-wrap:wrap;gap:6px}
+/* auto-config */
+.ac-opts{display:flex;flex-direction:column;gap:6px}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:.9rem;cursor:pointer}
+.chk input{margin-top:4px;accent-color:var(--accent)}
+.ac-out{display:flex;flex-direction:column;gap:4px}
+.cond{display:grid;grid-template-columns:20px minmax(0,1fr);gap:6px;font-family:var(--f-mono);font-size:.74rem;padding:5px 8px;border-radius:5px;overflow-wrap:anywhere}
+.cond.ok{background:var(--ok-soft)} .cond.ok b{color:var(--ok)}
+.cond.no{background:var(--sunk)} .cond.no b{color:var(--bad)}
+/* tx flow */
+.flow{display:flex;flex-direction:column;gap:6px}
+.flow div{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;font-size:.92rem;padding:6px 8px;border-radius:6px;background:var(--bg)}
+.flow b{width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.76rem}
+.traps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:760px){.traps{grid-template-columns:1fr}}
+.trap-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:0 12px;min-width:0}
+.trap-card summary{cursor:pointer;padding:10px 0;font-weight:600;list-style:none;display:flex;gap:10px;align-items:center}
+.trap-card summary::-webkit-details-marker{display:none}
+.trap-card .tn{font-family:var(--f-mono);font-size:.74rem;width:22px;height:22px;border-radius:50%;background:var(--bad-soft);color:var(--bad);display:flex;align-items:center;justify-content:center;flex:none}
+.trap-card[open]{padding-bottom:12px}
+.trap-card p{font-size:.9rem;margin-top:6px}
+/* propagation */
+.pp-presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pp-presets .btn{font-size:.8rem;padding:5px 10px}
+.pp-ctrl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
+@media (max-width:860px){.pp-ctrl{grid-template-columns:1fr 1fr}}
+@media (max-width:480px){.pp-ctrl{grid-template-columns:1fr}}
+.pp-ctrl .sel{width:100%}
+.pp-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px}
+@media (max-width:860px){.pp-main{grid-template-columns:1fr}}
+.pp-tx #pp-verdict{flex-direction:column;gap:4px}
+.pp-tx{display:flex;flex-direction:column;gap:10px;min-width:0}
+.txcard{border:2px dashed var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;transition:all .3s;background:var(--surface)}
+.txcard h4{font-size:.78rem;color:var(--muted)}
+.txcard b{font-family:var(--f-mono);font-size:.9rem}
+.txcard small{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.txcard.act{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
+.txcard.sus{border-style:solid;border-color:var(--muted);background:var(--sunk)}
+.txcard.rbo{border-style:solid;border-color:var(--warn);background:var(--warn-soft)}
+.txcard.com{border-style:solid;border-color:var(--ok);background:var(--ok-soft)}
+.txcard.rb{border-style:solid;border-color:var(--bad);background:var(--bad-soft)}
+.pp-db{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dbt{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);min-width:0}
+.dbt h4{font-family:var(--f-mono);font-size:.74rem;color:var(--muted);margin-bottom:6px}
+.dbrow{display:block;font-family:var(--f-mono);font-size:.74rem;padding:5px 8px;border-radius:5px;transition:all .3s}
+.dbrow.pend{border:1px dashed var(--accent);background:var(--accent-soft)}
+.dbrow.saved{border:1px solid var(--ok);background:var(--ok-soft);color:var(--ok);font-weight:600}
+.dbrow.lost{border:1px solid var(--bad);background:var(--bad-soft);color:var(--bad);text-decoration:line-through}
+.pp-timeline{list-style:none;margin:0;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--code-bg);border-radius:8px;max-height:430px;overflow:auto;counter-reset:ev}
+.pp-timeline li{font-family:var(--f-mono);font-size:.76rem;color:var(--code-ink);counter-increment:ev;display:grid;grid-template-columns:22px minmax(0,1fr);gap:6px}
+.pp-timeline li::before{content:counter(ev);color:var(--code-dim)}
+.pp-timeline li.w{color:var(--code-warn)} .pp-timeline li.ok{color:var(--code-str)} .pp-timeline li.h{color:var(--code-hl)}
+.pp-timeline li.cap{display:block;color:var(--code-dim);font-family:var(--f-ui)}
+.pp-timeline li.cap::before{content:none}
+/* request pipeline */
+.rq-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px}
+@media (max-width:860px){.rq-grid{grid-template-columns:1fr}}
+.pipe{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.pipe li{display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px;align-items:center;font-size:.86rem;padding:7px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);transition:all .3s}
+.pipe .pi{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.pipe li.pass{border-color:var(--accent);background:var(--accent-soft)}
+.pipe li.back{border-color:var(--ok);background:var(--ok-soft)}
+.pipe li.err{border-color:var(--bad);background:var(--bad-soft);font-weight:600}
+.pipe li.skip{opacity:.4;border-style:dashed}
+.pipe li.cur{box-shadow:0 0 0 3px var(--accent);transform:translateX(6px)}
+.rq-side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.resp{border:2px dashed var(--line);border-radius:8px;padding:12px;font-family:var(--f-mono);font-weight:600;text-align:center}
+.resp.ok{border-style:solid;border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.resp.warn{border-style:solid;border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+.resp.bad{border-style:solid;border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+/* property precedence */
+.pr-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.pr-grid{grid-template-columns:1fr}}
+.srcs{display:flex;flex-direction:column;gap:6px}
+.src{display:grid;grid-template-columns:24px 20px minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);cursor:pointer;transition:all .3s}
+.src .rank{font-family:var(--f-mono);font-size:.74rem;color:var(--muted)}
+.src span b{display:block;font-size:.88rem}
+.src code{font-size:.74rem}
+.src small{display:block;color:var(--warn);font-size:.74rem}
+.src em{font-style:normal;font-family:var(--f-mono);font-size:.72rem;font-weight:700;color:var(--accent-ink);background:var(--accent);padding:2px 8px;border-radius:999px}
+.src.win{border-color:var(--accent);background:var(--accent-soft)}
+.src.off{opacity:.5}
+.chk.prof{padding:6px 2px}
+.pr-result{border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--bg);display:flex;flex-direction:column;gap:6px}
+.bignum{font-family:var(--f-mono);font-size:2.6rem;font-weight:600;color:var(--accent);line-height:1}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="toc" aria-label="Mục lục">
+  <div class="brand">Sổ tay Spring Boot</div>
+  <ol id="toc">
+    <li><a href="#map"><span>00</span>Bản đồ và cách học</a></li>
+    <li><a href="#ioc"><span>01</span>IoC và Dependency Injection</a></li>
+    <li><a href="#life"><span>02</span>Vòng đời bean</a></li>
+    <li><a href="#scope"><span>03</span>Scope của bean</a></li>
+    <li><a href="#cycle"><span>04</span>Vòng phụ thuộc và cache 3 cấp</a></li>
+    <li><a href="#auto"><span>05</span>Auto-configuration và khởi động</a></li>
+    <li><a href="#aop"><span>06</span>AOP và proxy</a></li>
+    <li><a href="#tx"><span>07</span>@Transactional chuyên sâu</a></li>
+    <li><a href="#prop"><span>08</span>Mô phỏng propagation</a></li>
+    <li><a href="#mvc"><span>09</span>Một request đi qua Spring MVC</a></li>
+    <li><a href="#error"><span>10</span>Exception và validation</a></li>
+    <li><a href="#config"><span>11</span>Cấu hình và profile</a></li>
+    <li><a href="#events"><span>12</span>Event, async, scheduling</a></li>
+    <li><a href="#interview"><span>13</span>Câu hỏi phỏng vấn</a></li>
+    <li><a href="#lab"><span>14</span>Lab tự chạy và cách kể</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero" id="top">
+  <div class="eyebrow">Spring Boot 3 · Spring Framework 6 · Java 21</div>
+  <h1>Sổ tay Spring Boot core</h1>
+  <p class="lede">Từ container tạo bean thế nào, vì sao <code>@Transactional</code> có lúc không chạy, tới một request đi qua những lớp nào trước khi vào controller. Mỗi chương có hình động hoặc mô phỏng để bấm, và rất nhiều ví dụ code sai/đúng. Nhãn <span class="real">ĐO THẬT</span> là chương trình Java mình đã chạy; nhãn <span class="spring">LOG SPRING</span> là thông điệp Spring Boot 3.x in ra, bạn kiểm chứng lại bằng phần lab ở cuối.</p>
+  <div class="facts"><span>8 hình động và mô phỏng</span><span>14 chương</span><span>12 bẫy @Transactional</span><span>36 câu hỏi phỏng vấn</span></div>
+</header>
+
+<!-- 00 -->
+<section class="ch" id="map">
+  <div class="ch-head"><div class="eyebrow">Chương 00</div><h2>Bản đồ và cách học</h2>
+    <p>Phỏng vấn Spring Boot thường đi theo một đường: hỏi khái niệm, rồi hỏi "bên dưới nó làm gì", rồi đưa một đoạn code có bẫy và hỏi kết quả.</p></div>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Tầng</th><th>Họ kiểm tra</th><th>Chương</th></tr></thead>
+    <tbody>
+      <tr><td><b>1. Khái niệm</b></td><td>IoC, DI, bean, scope, annotation hay dùng</td><td>01 – 03</td></tr>
+      <tr><td><b>2. Cơ chế bên trong</b></td><td>Vòng đời bean, cache 3 cấp, auto-config, proxy</td><td>02, 04 – 06</td></tr>
+      <tr><td><b>3. Bẫy thực chiến</b></td><td>@Transactional không chạy, propagation, rollback, filter và interceptor, exception</td><td>07 – 12</td></tr>
+      <tr><td><b>4. Câu chuyện của bạn</b></td><td>"Bạn đã gặp lỗi transaction nào?", "thiết kế xử lý lỗi API ra sao?"</td><td>14</td></tr>
+    </tbody></table></div>
+  <div class="callout warn"><b class="t">Câu trả lời "đánh bại nhà tuyển dụng" luôn có ba lớp</b>(1) Nó là gì, (2) bên dưới Spring làm thế nào, (3) bẫy hay gặp và cách tránh. Ví dụ hỏi <code>@Transactional</code>: "Spring tạo proxy bọc bean (1); proxy gọi TransactionInterceptor, lấy connection gắn vào ThreadLocal, commit hoặc rollback theo exception (2); vì vậy gọi nội bộ trong cùng class hoặc ném checked exception thì không rollback (3)." Toàn bộ sổ tay viết theo khung này.</div>
+</section>
+
+<!-- 01 -->
+<section class="ch" id="ioc">
+  <div class="ch-head"><div class="eyebrow">Chương 01</div><h2>IoC và Dependency Injection</h2>
+    <p>Thay vì class tự <code>new</code> những thứ nó cần, một container tạo sẵn và đưa vào. Quyền điều khiển việc tạo object bị "đảo ngược" từ code của bạn sang container.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>IoC là gì? DI là gì? Khác nhau thế nào?</li><li>Constructor, setter, field injection: dùng cái nào, vì sao?</li><li>Có hai bean cùng kiểu thì Spring chọn cái nào?</li><li>BeanFactory khác ApplicationContext ra sao?</li></ul></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Không có IoC</h4>
+<pre class="code"><span class="h">class</span> OrderService {
+  <span class="c">// tự tạo: dính chặt vào MySQL, SMTP</span>
+  <span class="h">private final</span> OrderRepository repo = <span class="h">new</span> MySqlOrderRepository();
+  <span class="h">private final</span> MailService mail = <span class="h">new</span> SmtpMailService(<span class="s">"smtp.x"</span>);
+}
+<span class="c">// test: không thay được bằng bản giả</span>
+<span class="c">// đổi sang SES: phải sửa OrderService</span></pre></div>
+    <div class="card prose"><h4>Có IoC + constructor injection</h4>
+<pre class="code">@Service
+<span class="h">class</span> OrderService {
+  <span class="h">private final</span> OrderRepository repo;
+  <span class="h">private final</span> MailService mail;
+  <span class="c">// chỉ một constructor: không cần @Autowired</span>
+  OrderService(OrderRepository repo, MailService mail) {
+    <span class="h">this</span>.repo = repo; <span class="h">this</span>.mail = mail;
+  }
+}
+<span class="c">// test: new OrderService(fakeRepo, fakeMail)</span></pre></div>
+  </div>
+  <div class="card sim" id="di">
+    <h3 style="margin:0">Hình động: container dựng bean và tiêm dependency</h3>
+    <div class="sim-ctrl">
+      <span class="seg-ctl" role="radiogroup" aria-label="Tình huống" id="di-mode">
+        <button type="button" data-m="ok" aria-pressed="true">Đồ thị bình thường</button>
+        <button type="button" data-m="cycle" aria-pressed="false">Có vòng phụ thuộc A → B → C → A</button>
+      </span>
+      <button class="btn primary" type="button" id="di-run">Chạy</button>
+      <button class="btn" type="button" id="di-reset">Làm lại</button>
+    </div>
+    <div class="anim"><svg id="di-svg" viewBox="0 0 640 290" role="img" aria-label="Đồ thị phụ thuộc giữa các bean"></svg></div>
+    <div class="simlog" id="di-log" aria-live="polite" style="height:130px"></div>
+    <p class="cap">Thứ tự trong hình là output thật của một container mini mình tự viết theo đúng thuật toán của Spring: muốn tạo bean nào thì tạo đệ quy các dependency của constructor trước, tạo xong mới gọi constructor, rồi chạy init và BeanPostProcessor.</p>
+  </div>
+  <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Output của container mini</h4>
+<pre class="code">  constructor OrderRepository
+  BeanPostProcessor.before(OrderRepository)
+  BeanPostProcessor.after(OrderRepository)
+  constructor MailService
+  ...
+  constructor Cart#1 (prototype)
+  constructor OrderService(repo, mail, cart) <span class="c">← đã có đủ dependency</span>
+  BeanPostProcessor.before(OrderService)
+  @PostConstruct OrderService.init() <span class="c">← lúc này dependency đã sẵn sàng</span>
+  BeanPostProcessor.after(OrderService) <span class="c">← AOP tạo proxy @Transactional ở bước này</span>
+  == context sẵn sàng: 3 singleton</pre></div>
+  <div class="prose"><h3>Ba cách tiêm và vì sao chọn constructor</h3></div>
+  <div class="tblwrap"><table><thead><tr><th></th><th>Constructor</th><th>Setter</th><th>Field (<code>@Autowired</code> trên field)</th></tr></thead><tbody>
+    <tr><td>Field có thể <code>final</code> (bất biến)</td><td>Có</td><td>Không</td><td>Không</td></tr>
+    <tr><td>Thiếu dependency</td><td>Lỗi ngay lúc khởi động</td><td>Có thể <code>null</code> lúc chạy</td><td>Có thể <code>null</code> lúc chạy</td></tr>
+    <tr><td>Viết unit test không cần Spring</td><td>Dễ: <code>new</code> là xong</td><td>Được</td><td>Khó, phải dùng reflection</td></tr>
+    <tr><td>Lộ ra class có quá nhiều dependency</td><td>Có: constructor 8 tham số là dấu hiệu nên tách class</td><td>Không</td><td>Không, dễ "nhồi" thêm</td></tr>
+    <tr><td>Vòng phụ thuộc</td><td>Không giải được, báo lỗi ngay (tốt)</td><td>Giải được bằng cache 3 cấp</td><td>Giải được bằng cache 3 cấp</td></tr>
+    <tr><td>Khi dùng</td><td><b>Mặc định cho mọi dependency bắt buộc</b></td><td>Dependency tuỳ chọn</td><td>Code test, code cũ</td></tr>
+  </tbody></table></div>
+  <div class="prose"><h3>Có nhiều bean cùng kiểu thì sao?</h3>
+    <p>Spring tìm theo <b>kiểu</b> trước. Có hơn một ứng viên thì xét lần lượt: <code>@Qualifier</code> → <code>@Primary</code> → tên tham số trùng tên bean. Không quyết được thì báo <code>NoUniqueBeanDefinitionException</code>. Không có bean nào thì báo <code>NoSuchBeanDefinitionException</code>.</p></div>
+<pre class="code"><span class="h">interface</span> PaymentGateway { String method(); Receipt pay(Order o); }
+@Component <span class="h">class</span> CardGateway   <span class="h">implements</span> PaymentGateway { <span class="h">public</span> String method() { <span class="h">return</span> <span class="s">"CARD"</span>; } ... }
+@Component <span class="h">class</span> PayPayGateway <span class="h">implements</span> PaymentGateway { <span class="h">public</span> String method() { <span class="h">return</span> <span class="s">"PAYPAY"</span>; } ... }
+
+@Service
+<span class="h">class</span> CheckoutService {
+  <span class="h">private final</span> Map&lt;String, PaymentGateway&gt; gateways;
+  <span class="c">// Mẹo hay: tiêm TẤT CẢ bean cùng kiểu vào List, rồi dựng Map → Strategy pattern không cần if/else</span>
+  CheckoutService(List&lt;PaymentGateway&gt; all) {
+    <span class="h">this</span>.gateways = all.stream().collect(toMap(PaymentGateway::method, g -&gt; g));
+  }
+  Receipt pay(Order o) { <span class="h">return</span> gateways.get(o.paymentMethod()).pay(o); }
+}
+<span class="c">// thêm phương thức thanh toán mới = thêm một class @Component, không sửa CheckoutService</span></pre>
+  <div class="callout"><b class="t">BeanFactory và ApplicationContext</b><code>BeanFactory</code> là giao diện gốc, chỉ biết tạo và trả bean (mặc định tạo lười khi được gọi). <code>ApplicationContext</code> mở rộng nó: tạo sẵn mọi singleton lúc khởi động, có event, i18n, đọc resource, tự đăng ký BeanPostProcessor. Spring Boot luôn dùng ApplicationContext; cụ thể với web là <code>AnnotationConfigServletWebServerApplicationContext</code>.</div>
+</section>
+
+<!-- 02 -->
+<section class="ch" id="life">
+  <div class="ch-head"><div class="eyebrow">Chương 02</div><h2>Vòng đời bean</h2>
+    <p>Bấm "Bước tiếp" để đưa một bean đi qua từng giai đoạn. Mỗi giai đoạn cho biết lúc đó bạn được dùng những gì và hook nào chạy.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Kể vòng đời của một bean.</li><li>@PostConstruct chạy khi nào? Vì sao không làm việc đó trong constructor?</li><li>BeanPostProcessor là gì? AOP proxy được tạo lúc nào?</li></ul></div>
+  <div class="card sim" id="lc">
+    <div class="lc-track" id="lc-track"></div>
+    <div class="lc-detail" id="lc-detail"></div>
+    <div class="sim-ctrl">
+      <button class="btn" type="button" id="lc-prev">Bước trước</button>
+      <button class="btn primary" type="button" id="lc-next">Bước tiếp</button>
+      <button class="btn" type="button" id="lc-auto">Tự chạy</button>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Bẫy: dùng dependency trong constructor khi tiêm bằng field</h4>
+<pre class="code">@Service
+<span class="h">class</span> PriceCache {
+  @Autowired PriceRepository repo;    <span class="c">// field injection</span>
+  PriceCache() {
+    <span class="w">repo.findAll();</span>                  <span class="c">// NullPointerException: field chưa được tiêm</span>
+  }
+  @PostConstruct
+  <span class="h">void</span> warmUp() { repo.findAll(); }   <span class="c">// đúng: lúc này mọi thứ đã sẵn sàng</span>
+}</pre></div>
+    <div class="card prose"><h4>Bẫy: gọi method @Transactional trong @PostConstruct</h4>
+<pre class="code">@Service
+<span class="h">class</span> SeedService {
+  @PostConstruct
+  <span class="h">void</span> init() { seed(); }       <span class="c">// chạy KHÔNG có transaction</span>
+  @Transactional
+  <span class="h">public void</span> seed() { ... }
+}</pre>
+      <p>@PostConstruct chạy ở bước 5, còn proxy chỉ được tạo ở bước 7. Thêm nữa đây là gọi nội bộ. Muốn chạy việc có transaction lúc khởi động: dùng <code>@EventListener(ApplicationReadyEvent.class)</code> trong một bean khác, hoặc <code>ApplicationRunner</code>.</p></div>
+  </div>
+<pre class="code"><span class="c">// Viết một BeanPostProcessor: đo thời gian khởi tạo, hoặc tự bọc proxy như AOP làm</span>
+@Component
+<span class="h">class</span> SlowBeanReporter <span class="h">implements</span> BeanPostProcessor {
+  <span class="h">private final</span> Map&lt;String, Long&gt; start = <span class="h">new</span> ConcurrentHashMap&lt;&gt;();
+  <span class="h">public</span> Object postProcessBeforeInitialization(Object bean, String name) {
+    start.put(name, System.nanoTime()); <span class="h">return</span> bean;
+  }
+  <span class="h">public</span> Object postProcessAfterInitialization(Object bean, String name) {
+    <span class="h">long</span> ms = (System.nanoTime() - start.remove(name)) / 1_000_000;
+    <span class="h">if</span> (ms &gt; 200) log.warn(<span class="s">"Bean {} khởi tạo mất {} ms"</span>, name, ms);
+    <span class="h">return</span> bean;   <span class="c">// trả về object khác ở đây = thay bean bằng proxy</span>
+  }
+}</pre>
+</section>
+
+<!-- 03 -->
+<section class="ch" id="scope">
+  <div class="ch-head"><div class="eyebrow">Chương 03</div><h2>Scope của bean</h2>
+    <p>Scope quyết định container tạo bao nhiêu instance và sống bao lâu.</p></div>
+  <div class="tblwrap"><table><thead><tr><th>Scope</th><th>Số instance</th><th>Container gọi @PreDestroy?</th><th>Dùng khi</th></tr></thead><tbody>
+    <tr><td><code>singleton</code> (mặc định)</td><td>Một cho cả container</td><td>Có</td><td>Service, repository, controller: phải không có trạng thái</td></tr>
+    <tr><td><code>prototype</code></td><td>Mới mỗi lần lấy</td><td><b>Không</b>, bạn tự dọn</td><td>Object có trạng thái, dùng ngắn</td></tr>
+    <tr><td><code>request</code></td><td>Một mỗi HTTP request</td><td>Có</td><td>Dữ liệu theo request (thường dùng tham số tốt hơn)</td></tr>
+    <tr><td><code>session</code></td><td>Một mỗi HTTP session</td><td>Có</td><td>Giỏ hàng lưu ở server (ít dùng với API stateless)</td></tr>
+    <tr><td><code>application</code></td><td>Một mỗi ServletContext</td><td>Có</td><td>Hiếm</td></tr>
+  </tbody></table></div>
+  <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Bẫy: prototype tiêm vào singleton</h4>
+<pre class="code">OrderService lần 1 == lần 2 ? true | cart.id = 1, 1   <span class="w">(prototype nhưng luôn là MỘT cart)</span>
+Lấy Cart trực tiếp 2 lần: id = 2, 3</pre>
+    <p class="cap" style="margin-top:8px">Singleton chỉ được tạo một lần, nên prototype tiêm vào nó cũng chỉ được lấy một lần. Mọi request dùng chung một <code>Cart</code>.</p></div>
+<pre class="code"><span class="c">// Cách 1 (nên dùng): ObjectProvider, lấy bản mới mỗi lần cần</span>
+@Service
+<span class="h">class</span> OrderService {
+  <span class="h">private final</span> ObjectProvider&lt;Cart&gt; carts;
+  OrderService(ObjectProvider&lt;Cart&gt; carts) { <span class="h">this</span>.carts = carts; }
+  <span class="h">void</span> checkout() { Cart cart = carts.getObject(); ... }
+}
+<span class="c">// Cách 2: @Lookup trên một method abstract/rỗng, Spring ghi đè bằng CGLIB</span>
+<span class="c">// Cách 3: scoped proxy: @Scope(value = "prototype", proxyMode = ScopedProxyMode.TARGET_CLASS)</span>
+<span class="c">//         (mỗi lần GỌI METHOD là một instance mới: dễ gây bất ngờ, ít dùng)</span>
+<span class="c">// Request scope tiêm vào singleton bắt buộc có scoped proxy, Spring tự làm với @RequestScope</span></pre>
+  <div class="callout bad"><b class="t">Singleton không có nghĩa là thread-safe</b>Bean singleton được mọi request dùng chung đồng thời. Lưu dữ liệu của request vào field là lỗi lộ dữ liệu giữa người dùng (sổ tay concurrency đo được 171 384 / 200 000 lần chào nhầm người). Quy tắc: field của bean chỉ chứa dependency (final) và cấu hình bất biến.</div>
+</section>
+
+<!-- 04 -->
+<section class="ch" id="cycle">
+  <div class="ch-head"><div class="eyebrow">Chương 04</div><h2>Vòng phụ thuộc và cache 3 cấp</h2>
+    <p>Câu hỏi "senior" kinh điển: Spring giải vòng phụ thuộc thế nào, và vì sao constructor injection thì không giải được.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Hai bean phụ thuộc nhau thì chuyện gì xảy ra?</li><li>Ba cấp cache là gì? Vì sao cần cấp 3 thay vì 2?</li><li>Spring Boot 2.6 thay đổi gì về vòng phụ thuộc?</li></ul></div>
+  <div class="card"><span class="spring">LOG SPRING</span><h4 style="margin:6px 0">Spring Boot 2.6 trở đi: cấm mặc định</h4>
+<pre class="code">***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+The dependencies of some of the beans in the application context form a cycle:
+
+┌─────┐
+|  orderService defined in file [.../OrderService.class]
+↑     ↓
+|  paymentService defined in file [.../PaymentService.class]
+└─────┘
+
+Action:
+
+<span class="w">Relying upon circular references is discouraged and they are prohibited by default.</span>
+Update your application to remove the dependency cycle between beans. As a last resort, it
+may be possible to break the cycle automatically by setting
+spring.main.allow-circular-references to true.</pre></div>
+  <div class="card sim" id="c3">
+    <h3 style="margin:0">Hình động: A và B tiêm field lẫn nhau, khi bật allow-circular-references</h3>
+    <div class="c3-grid">
+      <div class="c3-box"><h4>Cấp 1 · singletonObjects<small>bean hoàn chỉnh</small></h4><div class="chips" id="c3-l1"></div></div>
+      <div class="c3-box"><h4>Cấp 2 · earlySingletonObjects<small>bean dùng sớm, chưa xong</small></h4><div class="chips" id="c3-l2"></div></div>
+      <div class="c3-box"><h4>Cấp 3 · singletonFactories<small>"nhà máy" tạo tham chiếu sớm</small></h4><div class="chips" id="c3-l3"></div></div>
+      <div class="c3-box"><h4>Đang tạo<small>singletonsCurrentlyInCreation</small></h4><div class="chips" id="c3-cur"></div></div>
+    </div>
+    <div class="lc-detail" id="c3-note"></div>
+    <div class="sim-ctrl">
+      <button class="btn" type="button" id="c3-prev">Bước trước</button>
+      <button class="btn primary" type="button" id="c3-next">Bước tiếp</button>
+      <button class="btn" type="button" id="c3-auto">Tự chạy</button>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Vì sao cần cấp 3 (factory) mà không chỉ cấp 2?</h4>
+      <p>Nếu A cần AOP proxy, thì thứ B nhận phải là <b>proxy của A</b>, không phải A gốc. Nhưng bình thường proxy chỉ được tạo ở cuối vòng đời (bước BeanPostProcessor after). Factory ở cấp 3 cho phép tạo proxy <b>sớm</b> chỉ khi thật sự có người cần tham chiếu sớm (<code>getEarlyBeanReference</code>), còn bình thường vẫn để AOP tạo proxy đúng lúc.</p></div>
+    <div class="card prose"><h4>Cách sửa đúng thay vì bật cờ</h4>
+      <ul><li><b>Thiết kế lại</b>: tách phần dùng chung sang bean thứ ba mà cả hai cùng phụ thuộc.</li><li><b>Event</b>: A publish event, B lắng nghe, không ai giữ tham chiếu tới ai.</li><li><b>@Lazy</b> trên tham số constructor: Spring tiêm một proxy lười, object thật chỉ tạo lúc dùng lần đầu.</li><li>Vòng phụ thuộc thường là dấu hiệu hai class đang làm việc của nhau; nói được điều này khi phỏng vấn là ghi điểm.</li></ul></div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section class="ch" id="auto">
+  <div class="ch-head"><div class="eyebrow">Chương 05</div><h2>Auto-configuration và quá trình khởi động</h2>
+    <p>Vì sao chỉ thêm <code>spring-boot-starter-data-jpa</code> là có ngay DataSource, EntityManager, TransactionManager mà không viết một dòng cấu hình nào.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>@SpringBootApplication gồm những gì?</li><li>Auto-configuration hoạt động thế nào? Làm sao ghi đè?</li><li>Viết một starter riêng thế nào?</li></ul></div>
+<pre class="code">@SpringBootApplication  <span class="c">// = 3 annotation:</span>
+  @SpringBootConfiguration   <span class="c">// là @Configuration</span>
+  @EnableAutoConfiguration   <span class="c">// nạp các class auto-config được liệt kê trong file imports</span>
+  @ComponentScan             <span class="c">// quét package hiện tại và các package con</span>
+
+<span class="c">// Boot 3: danh sách nằm ở</span>
+META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+<span class="c">// Boot 2 dùng META-INF/spring.factories</span>
+
+<span class="c">// Mỗi auto-config là một @Configuration có điều kiện, ví dụ rút gọn:</span>
+@AutoConfiguration
+@ConditionalOnClass({ DataSource.<span class="h">class</span>, EmbeddedDatabaseType.<span class="h">class</span> })
+@EnableConfigurationProperties(DataSourceProperties.<span class="h">class</span>)
+<span class="h">public class</span> DataSourceAutoConfiguration {
+  @Bean
+  <span class="h">@ConditionalOnMissingBean</span>(DataSource.<span class="h">class</span>)   <span class="c">// bạn tự khai báo DataSource thì cái này lùi lại</span>
+  DataSource dataSource(DataSourceProperties p) { ... }
+}</pre>
+  <div class="card sim" id="ac">
+    <h3 style="margin:0">Mô phỏng: Spring Boot quyết định tạo DataSource nào</h3>
+    <div class="ac-opts" id="ac-opts"></div>
+    <div class="ac-out" id="ac-out"></div>
+  </div>
+  <div class="tblwrap"><table><thead><tr><th>Điều kiện</th><th>Ý nghĩa</th></tr></thead><tbody>
+    <tr><td><code>@ConditionalOnClass</code></td><td>Có class này trên classpath (đã thêm thư viện)</td></tr>
+    <tr><td><code>@ConditionalOnMissingBean</code></td><td>Người dùng chưa tự khai báo bean kiểu này. Đây là cơ chế "bạn khai báo thì tôi lùi lại"</td></tr>
+    <tr><td><code>@ConditionalOnProperty</code></td><td>Có property với giá trị nhất định, ví dụ <code>feature.x.enabled=true</code></td></tr>
+    <tr><td><code>@ConditionalOnWebApplication</code></td><td>Đang chạy ứng dụng web</td></tr>
+    <tr><td><code>@ConditionalOnBean</code></td><td>Đã có bean nào đó</td></tr>
+  </tbody></table></div>
+  <div class="prose">
+    <p><b>Xem auto-config nào đã chạy, nào không, và vì sao:</b> chạy với <code>--debug</code> (in "CONDITIONS EVALUATION REPORT" với hai phần Positive matches và Negative matches), hoặc gọi <code>/actuator/conditions</code>. Muốn tắt hẳn một auto-config: <code>@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)</code>.</p>
+    <h3>SpringApplication.run() làm gì</h3>
+    <ol>
+      <li>Xác định loại ứng dụng (servlet, reactive, không web) dựa trên classpath.</li>
+      <li>Tạo <code>Environment</code>: đọc biến môi trường, tham số dòng lệnh, <code>application.yml</code>, profile.</li>
+      <li>In banner, tạo <code>ApplicationContext</code>.</li>
+      <li><b>refresh()</b>: chạy <code>BeanFactoryPostProcessor</code> (quét component, nạp auto-config, đọc <code>@Configuration</code> thành BeanDefinition) → đăng ký <code>BeanPostProcessor</code> → khởi động Tomcat nhúng → tạo mọi singleton không lazy.</li>
+      <li>Gọi <code>ApplicationRunner</code> và <code>CommandLineRunner</code>.</li>
+      <li>Phát <code>ApplicationReadyEvent</code>: lúc này mới nên nhận traffic.</li>
+    </ol>
+  </div>
+<pre class="code"><span class="c">// Tự viết starter: thư viện rate-limit dùng chung cho nhiều service</span>
+@AutoConfiguration
+@ConditionalOnClass(StringRedisTemplate.<span class="h">class</span>)
+@ConditionalOnProperty(prefix = <span class="s">"ratelimit"</span>, name = <span class="s">"enabled"</span>, havingValue = <span class="s">"true"</span>, matchIfMissing = <span class="h">true</span>)
+@EnableConfigurationProperties(RateLimitProperties.<span class="h">class</span>)
+<span class="h">public class</span> RateLimitAutoConfiguration {
+  @Bean @ConditionalOnMissingBean
+  RateLimiter rateLimiter(StringRedisTemplate redis, RateLimitProperties p) { <span class="h">return new</span> RedisLuaRateLimiter(redis, p); }
+}
+<span class="c">// + một dòng tên class trong file AutoConfiguration.imports của module starter</span></pre>
+</section>
+
+<!-- 06 -->
+<section class="ch" id="aop">
+  <div class="ch-head"><div class="eyebrow">Chương 06</div><h2>AOP và proxy</h2>
+    <p>Nền móng của <code>@Transactional</code>, <code>@Async</code>, <code>@Cacheable</code>, <code>@PreAuthorize</code>, <code>@Retryable</code>. Hiểu proxy là hiểu vì sao chúng có lúc không chạy.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>AOP là gì? Aspect, advice, pointcut, join point?</li><li>JDK dynamic proxy khác CGLIB thế nào? Spring Boot dùng cái nào?</li><li>Vì sao gọi method nội bộ thì @Transactional không có tác dụng?</li></ul></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Thuật ngữ</h4>
+      <ul><li><b>Aspect</b>: một mối quan tâm cắt ngang (log, transaction, bảo mật), đóng gói thành class.</li><li><b>Join point</b>: điểm có thể chèn code vào; trong Spring AOP chỉ là <b>lời gọi method</b>.</li><li><b>Pointcut</b>: biểu thức chọn join point, ví dụ <code>@annotation(Timed)</code>.</li><li><b>Advice</b>: code chèn vào: <code>@Before</code>, <code>@AfterReturning</code>, <code>@AfterThrowing</code>, <code>@After</code>, <code>@Around</code>.</li><li><b>Weaving</b>: ghép aspect vào code. Spring AOP ghép lúc chạy bằng proxy; AspectJ ghép lúc biên dịch hoặc lúc nạp class.</li></ul></div>
+    <div class="card prose"><h4>Ví dụ: đo thời gian mọi method có @Timed</h4>
+<pre class="code">@Aspect @Component
+<span class="h">class</span> TimingAspect {
+  @Around(<span class="s">"@annotation(timed)"</span>)
+  Object time(ProceedingJoinPoint pjp, Timed timed) <span class="h">throws</span> Throwable {
+    <span class="h">long</span> t0 = System.nanoTime();
+    <span class="h">try</span> {
+      <span class="h">return</span> pjp.proceed();        <span class="c">// gọi method thật</span>
+    } <span class="h">finally</span> {
+      log.info(<span class="s">"{} mất {} ms"</span>, pjp.getSignature().toShortString(),
+               (System.nanoTime() - t0) / 1_000_000);
+    }
+  }
+}</pre></div>
+  </div>
+  <div class="card sim" id="px">
+    <h3 style="margin:0">Hình động: lời gọi đi qua proxy và lời gọi nội bộ</h3>
+    <div class="sim-ctrl">
+      <button class="btn primary" type="button" data-s="ext">Controller gọi placeOrder()</button>
+      <button class="btn" type="button" data-s="self">Self-inject: gọi self.saveAudit()</button>
+      <button class="btn" type="button" id="px-reset">Làm lại</button>
+    </div>
+    <div class="anim"><svg id="px-svg" viewBox="0 0 640 250" role="img" aria-label="Controller, proxy và object thật"></svg></div>
+    <div class="simlog" id="px-log" aria-live="polite" style="height:130px"></div>
+  </div>
+  <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Ba kiểu proxy, cùng code <code>placeOrder()</code> gọi <code>this.saveAudit()</code></h4>
+<pre class="code">== 1. JDK dynamic proxy, class = $Proxy0
+   jdk instanceof OrderServiceImpl ? <span class="w">false</span>
+  [proxy] BEGIN TX placeOrder
+    [target] placeOrder() chạy, gọi this.saveAudit()
+    [target] saveAudit() chạy, this = OrderServiceImpl    <span class="c">← không đi qua proxy</span>
+  [proxy] COMMIT placeOrder
+
+== 2. Proxy lớp con + uỷ quyền cho target (cách Spring CGLIB làm)
+  [proxy] BEGIN TX placeOrder
+    [target] placeOrder() chạy, gọi this.saveAudit()
+    [target] saveAudit() chạy, this = OrderServiceImpl    <span class="c">← vẫn không đi qua proxy</span>
+  [proxy] COMMIT placeOrder
+
+== 3. Lớp con không uỷ quyền (this = proxy)
+  [sub] BEGIN TX placeOrder
+    [target] placeOrder() chạy, gọi this.saveAudit()
+  <span class="h">[sub] BEGIN TX saveAudit</span>                                <span class="c">← lần này có</span>
+    [target] saveAudit() chạy, this = OrderServiceSubclassOnly
+  [sub] COMMIT saveAudit
+  [sub] COMMIT placeOrder</pre>
+    <p class="cap" style="margin-top:8px">Spring CGLIB dù là lớp con nhưng vẫn <b>gọi sang một object target riêng</b>, nên <code>this</code> bên trong là object gốc, không phải proxy. Kiểu 3 là cách AspectJ weaving hoặc class <code>@Configuration</code> (chế độ <code>proxyBeanMethods = true</code>) hoạt động, vì thế <code>@Bean</code> gọi lẫn nhau trong <code>@Configuration</code> vẫn trả về cùng một singleton.</p></div>
+  <div class="tblwrap"><table><thead><tr><th></th><th>JDK dynamic proxy</th><th>CGLIB</th></tr></thead><tbody>
+    <tr><td>Cách tạo</td><td>Class mới cài đặt cùng interface</td><td>Lớp con sinh lúc chạy</td></tr>
+    <tr><td>Yêu cầu</td><td>Bean phải có interface</td><td>Class không <code>final</code>; method không <code>final</code>, không <code>private</code></td></tr>
+    <tr><td>Tiêm theo class cụ thể</td><td>Lỗi: proxy không phải instance của class (đo thật: <code>instanceof</code> = false)</td><td>Được</td></tr>
+    <tr><td>Spring Boot</td><td colspan="2">Mặc định <b>CGLIB</b> từ Boot 2.0 (<code>spring.aop.proxy-target-class=true</code>), chính vì lý do tiêm theo class ở trên. Tên class dạng <code>OrderService$$SpringCGLIB$$0</code></td></tr>
+  </tbody></table></div>
+  <div class="prose"><h3>Bốn cách xử lý gọi nội bộ</h3></div>
+<pre class="code"><span class="c">// 1. Tách method sang bean khác (sạch nhất)</span>
+@Service <span class="h">class</span> AuditService { @Transactional(propagation = REQUIRES_NEW) <span class="h">public void</span> save(...) {} }
+
+<span class="c">// 2. Tự tiêm chính mình qua proxy (dùng @Lazy để tránh vòng phụ thuộc)</span>
+@Service <span class="h">class</span> OrderService {
+  <span class="h">private final</span> OrderService self;
+  OrderService(@Lazy OrderService self) { <span class="h">this</span>.self = self; }
+  <span class="h">public void</span> placeOrder() { ...; self.saveAudit(); }
+}
+
+<span class="c">// 3. Dùng TransactionTemplate: transaction viết bằng code, không phụ thuộc proxy</span>
+transactionTemplate.executeWithoutResult(status -&gt; auditRepo.save(log));
+
+<span class="c">// 4. AopContext.currentProxy() kèm @EnableAspectJAutoProxy(exposeProxy = true): được nhưng làm code dính Spring</span></pre>
+</section>
+
+<!-- 07 -->
+<section class="ch" id="tx">
+  <div class="ch-head"><div class="eyebrow">Chương 07</div><h2>@Transactional chuyên sâu</h2>
+    <p>Chương quan trọng nhất của sổ tay. Gần như chắc chắn bị hỏi, và là nơi phân biệt người đã debug lỗi transaction thật với người chỉ đọc tài liệu.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>@Transactional hoạt động thế nào bên dưới?</li><li>Exception nào thì rollback? Checked exception thì sao?</li><li>Kể các trường hợp @Transactional không có tác dụng.</li><li>Propagation REQUIRED, REQUIRES_NEW, NESTED khác nhau thế nào?</li><li>readOnly = true có tác dụng gì?</li></ul></div>
+  <div class="card">
+    <h4 style="margin-bottom:8px">Bên dưới một lời gọi <code>@Transactional</code></h4>
+    <div class="flow" id="txflow">
+      <div><b>1</b>Controller gọi <code>orderService.placeOrder()</code>, thật ra là gọi <b>proxy</b></div>
+      <div><b>2</b>Proxy chuyển cho <code>TransactionInterceptor</code>, đọc thuộc tính: propagation, isolation, timeout, readOnly, rollbackFor</div>
+      <div><b>3</b><code>PlatformTransactionManager.getTransaction()</code> (với JPA là <code>JpaTransactionManager</code>): lấy connection từ HikariCP, <code>setAutoCommit(false)</code></div>
+      <div><b>4</b>Gắn connection và EntityManager vào <b>ThreadLocal</b> (<code>TransactionSynchronizationManager</code>); mọi repository trong cùng thread tự dùng chung connection này</div>
+      <div><b>5</b>Gọi method thật</div>
+      <div><b>6</b>Không lỗi → <code>commit()</code> (Hibernate flush trước). Lỗi → xét luật rollback → <code>rollback()</code> hoặc vẫn <code>commit()</code></div>
+      <div><b>7</b>Gỡ khỏi ThreadLocal, trả connection về pool, chạy callback <code>afterCommit</code></div>
+    </div>
+    <p class="cap" style="margin-top:8px">Bước 4 giải thích nhiều bẫy cùng lúc: transaction gắn với <b>thread</b>, nên code chạy ở thread khác (<code>@Async</code>, <code>CompletableFuture</code>, <code>parallelStream</code>) nằm ngoài transaction.</p>
+  </div>
+  <div class="prose"><h3>Luật rollback mặc định</h3></div>
+  <div class="tblwrap"><table><thead><tr><th>Ném ra</th><th>Mặc định</th><th>Ví dụ</th></tr></thead><tbody>
+    <tr><td><code>RuntimeException</code> và lớp con</td><td><b>Rollback</b></td><td><code>IllegalStateException</code>, <code>DataIntegrityViolationException</code></td></tr>
+    <tr><td><code>Error</code></td><td><b>Rollback</b></td><td><code>OutOfMemoryError</code></td></tr>
+    <tr><td>Checked exception (<code>Exception</code> không phải Runtime)</td><td><span class="w-txt">Commit!</span></td><td><code>IOException</code>, exception nghiệp vụ tự viết <code>extends Exception</code></td></tr>
+  </tbody></table></div>
+<pre class="code"><span class="h">public class</span> InsufficientPointsException <span class="h">extends</span> Exception { }   <span class="c">// checked</span>
+
+@Transactional
+<span class="h">public void</span> redeem(Long memberId, <span class="h">int</span> points) <span class="h">throws</span> InsufficientPointsException {
+  pointLogRepo.save(PointLog.redeem(memberId, -points));          <span class="c">// đã ghi log</span>
+  <span class="h">if</span> (balance(memberId) &lt; points) <span class="h">throw new</span> InsufficientPointsException();
+}   <span class="c">// <span class="w">transaction vẫn COMMIT, log trừ điểm sai vẫn nằm trong DB</span></span>
+
+<span class="c">// Sửa: khai báo rõ</span>
+@Transactional(rollbackFor = Exception.<span class="h">class</span>)
+<span class="c">// hoặc cho exception nghiệp vụ kế thừa RuntimeException (cách phổ biến trong Spring)</span></pre>
+  <div class="prose"><h3>12 trường hợp @Transactional "không chạy"</h3></div>
+  <div class="traps" id="traps"></div>
+  <div class="grid2">
+    <div class="card prose"><h4>readOnly = true làm được gì</h4>
+      <ul><li>Hibernate đặt flush mode MANUAL: không dirty checking, không giữ bản sao snapshot của entity, tiết kiệm CPU và bộ nhớ khi đọc nhiều.</li><li>Gọi <code>Connection.setReadOnly(true)</code>: một số driver và DB tối ưu theo.</li><li>Dùng để định tuyến sang DB replica (với <code>AbstractRoutingDataSource</code>).</li><li><b>Không</b> chặn ghi một cách tuyệt đối ở mọi DB; đừng dựa vào nó để bảo mật.</li></ul>
+<pre class="code">@Service
+@Transactional(readOnly = <span class="h">true</span>)        <span class="c">// mặc định cả class chỉ đọc</span>
+<span class="h">class</span> OrderQueryService {
+  List&lt;OrderDto&gt; history(...) { ... }
+  @Transactional                         <span class="c">// method ghi ghi đè lại</span>
+  <span class="h">void</span> markViewed(...) { ... }
+}</pre></div>
+    <div class="card prose"><h4>Open Session in View</h4>
+      <p><span class="spring">LOG SPRING</span> Mặc định Spring Boot in cảnh báo khi khởi động:</p>
+<pre class="code">WARN ... JpaBaseConfiguration$JpaWebConfiguration :
+spring.jpa.open-in-view is enabled by default. Therefore,
+database queries may be performed during view rendering.
+Explicitly configure spring.jpa.open-in-view to disable
+this warning</pre>
+      <p>Bật (mặc định): EntityManager mở suốt request, nên lazy loading ở controller hay lúc Jackson serialize vẫn chạy, nhưng giữ connection lâu và sinh query N+1 ngầm. Tắt (<code>false</code>, khuyên dùng cho API): truy cập lazy ngoài transaction ném <code>LazyInitializationException</code>, buộc bạn lấy dữ liệu đủ bằng <code>JOIN FETCH</code>, <code>@EntityGraph</code> hoặc DTO projection.</p></div>
+  </div>
+  <div class="callout bad"><b class="t">Transaction dài là kẻ giết connection pool</b>Gọi HTTP sang dịch vụ khác, gửi mail, upload S3 bên trong <code>@Transactional</code> giữ connection DB suốt thời gian chờ. Pool HikariCP mặc định có 10 connection: chỉ cần 10 request cùng chờ một API chậm là mọi request khác báo <code>Connection is not available, request timed out after 30000ms</code>. Đưa việc gọi ra ngoài trước hoặc sau transaction, hoặc dùng <code>@TransactionalEventListener(phase = AFTER_COMMIT)</code>.</div>
+</section>
+
+<!-- 08 -->
+<section class="ch" id="prop">
+  <div class="ch-head"><div class="eyebrow">Chương 08</div><h2>Mô phỏng propagation</h2>
+    <p><code>OrderService.placeOrder()</code> lưu đơn hàng rồi gọi <code>AuditService.log()</code> (một bean khác, nên đi qua proxy) để lưu nhật ký. Chọn cấu hình, bấm Chạy, xem transaction nào mở, cái gì được lưu, và caller nhận exception gì.</p></div>
+<pre class="code">@Service <span class="h">class</span> OrderService {
+  @Transactional                                  <span class="c">// ① outer</span>
+  <span class="h">public void</span> placeOrder(Order o) {
+    orderRepo.save(o);
+    <span class="h">try</span> { auditService.log(o); }                  <span class="c">// ② inner, propagation = ?</span>
+    <span class="h">catch</span> (Exception e) { <span class="c">/* có bắt hay không? */</span> }
+    <span class="c">// ③ có ném lỗi sau đó không?</span>
+  }
+}
+@Service <span class="h">class</span> AuditService {
+  @Transactional(propagation = ?)
+  <span class="h">public void</span> log(Order o) <span class="h">throws</span> Exception { auditRepo.save(...); <span class="c">/* có ném lỗi không? */</span> }
+}</pre>
+  <div class="card sim" id="pp">
+    <div class="pp-presets" id="pp-presets"></div>
+    <div class="pp-ctrl">
+      <div class="field"><label for="pp-outer">① placeOrder()</label><select id="pp-outer" class="sel"><option value="REQ">@Transactional (REQUIRED)</option><option value="NONE">không có @Transactional</option></select></div>
+      <div class="field"><label for="pp-prop">② log() propagation</label><select id="pp-prop" class="sel"><option>REQUIRED</option><option>REQUIRES_NEW</option><option>NESTED</option><option>SUPPORTS</option><option>MANDATORY</option><option>NOT_SUPPORTED</option><option>NEVER</option></select></div>
+      <div class="field"><label for="pp-ex">log() ném lỗi</label><select id="pp-ex" class="sel"><option value="none">không</option><option value="rt">RuntimeException</option><option value="chk">checked Exception</option></select></div>
+      <div class="field"><label class="chk"><input type="checkbox" id="pp-catch"> placeOrder bắt exception của log()</label><label class="chk"><input type="checkbox" id="pp-after"> ③ placeOrder ném RuntimeException sau đó</label></div>
+    </div>
+    <div class="sim-ctrl"><button class="btn primary" type="button" id="pp-run">Chạy</button></div>
+    <div class="pp-main">
+      <div class="pp-tx">
+        <div class="txcard" id="pp-t1"></div>
+        <div class="txcard" id="pp-t2"></div>
+        <div class="pp-db">
+          <div class="dbt"><h4>bảng orders</h4><div id="pp-orders" class="dbrows"></div></div>
+          <div class="dbt"><h4>bảng audit_log</h4><div id="pp-audit" class="dbrows"></div></div>
+        </div>
+        <div class="verdict" id="pp-verdict" style="display:none"></div>
+      </div>
+      <ol class="pp-timeline" id="pp-tl" aria-live="polite"></ol>
+    </div>
+  </div>
+  <div class="tblwrap"><table><thead><tr><th>Propagation</th><th>Đã có transaction</th><th>Chưa có transaction</th><th>Dùng khi</th></tr></thead><tbody>
+    <tr><td><code>REQUIRED</code> (mặc định)</td><td>Tham gia</td><td>Tạo mới</td><td>Hầu hết trường hợp</td></tr>
+    <tr><td><code>REQUIRES_NEW</code></td><td>Treo cái cũ, tạo mới (connection thứ hai)</td><td>Tạo mới</td><td>Audit log, đếm số lần thử: phải lưu dù nghiệp vụ chính lỗi</td></tr>
+    <tr><td><code>NESTED</code></td><td>Savepoint trong transaction hiện có</td><td>Tạo mới</td><td>Một phần được phép thất bại riêng. Cần JDBC savepoint: chạy tốt với <code>DataSourceTransactionManager</code> (JdbcTemplate, MyBatis); với JPA không được hỗ trợ đầy đủ</td></tr>
+    <tr><td><code>SUPPORTS</code></td><td>Tham gia</td><td>Chạy không transaction</td><td>Method chỉ đọc, không quan trọng</td></tr>
+    <tr><td><code>MANDATORY</code></td><td>Tham gia</td><td>Ném <code>IllegalTransactionStateException</code></td><td>Bắt buộc phải được gọi từ trong transaction</td></tr>
+    <tr><td><code>NOT_SUPPORTED</code></td><td>Treo cái cũ, chạy không transaction</td><td>Chạy không transaction</td><td>Gọi việc chậm không cần transaction</td></tr>
+    <tr><td><code>NEVER</code></td><td>Ném <code>IllegalTransactionStateException</code></td><td>Chạy không transaction</td><td>Hiếm</td></tr>
+  </tbody></table></div>
+  <div class="card"><span class="spring">LOG SPRING</span><h4 style="margin:6px 0">Bẫy nổi tiếng nhất: REQUIRED + bắt exception</h4>
+<pre class="code">org.springframework.transaction.<span class="w">UnexpectedRollbackException</span>:
+  Transaction silently rolled back because it has been marked as rollback-only</pre>
+    <p class="cap" style="margin-top:8px">Inner tham gia cùng transaction và ném RuntimeException, interceptor của inner đánh dấu cả transaction là <b>rollback-only</b>. Outer bắt lỗi và kết thúc bình thường, tưởng sẽ commit, nhưng lúc commit thấy dấu rollback-only nên rollback toàn bộ và ném exception này. Đơn hàng mất dù code "đã xử lý lỗi". Chọn preset đầu tiên trong mô phỏng để xem.</p></div>
+</section>
+
+<!-- 09 -->
+<section class="ch" id="mvc">
+  <div class="ch-head"><div class="eyebrow">Chương 09</div><h2>Một request đi qua Spring MVC</h2>
+    <p>Chọn một tình huống và xem request đi qua từng lớp, dừng ở đâu, và ai trả response.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>DispatcherServlet làm gì?</li><li>Filter khác Interceptor khác AOP thế nào? Dùng cái nào cho việc gì?</li><li>Lỗi trong filter có được @ControllerAdvice bắt không?</li></ul></div>
+  <div class="card sim" id="rq">
+    <div class="sim-ctrl" id="rq-scen"></div>
+    <div class="rq-grid">
+      <ol class="pipe" id="rq-pipe"></ol>
+      <div class="rq-side">
+        <div class="resp" id="rq-resp">Chưa gửi request</div>
+        <div class="simlog" id="rq-log" aria-live="polite" style="height:300px"></div>
+      </div>
+    </div>
+  </div>
+  <div class="tblwrap"><table><thead><tr><th></th><th>Filter</th><th>HandlerInterceptor</th><th>AOP (@Aspect)</th></tr></thead><tbody>
+    <tr><td>Thuộc về</td><td>Servlet (Tomcat), ngoài Spring MVC</td><td>Spring MVC</td><td>Spring container</td></tr>
+    <tr><td>Chạy quanh</td><td>Mọi request, kể cả file tĩnh, lỗi 404</td><td>Request đã tìm được handler</td><td>Lời gọi method của bean bất kỳ</td></tr>
+    <tr><td>Biết handler/method nào xử lý</td><td>Không</td><td>Có (<code>HandlerMethod</code>)</td><td>Có, kèm tham số</td></tr>
+    <tr><td>Được @ControllerAdvice bắt lỗi</td><td><b>Không</b></td><td>Có</td><td>Có (nếu bean được controller gọi)</td></tr>
+    <tr><td>Dùng cho</td><td>Bảo mật (Spring Security), CORS, nén, log request ID, đọc body nhiều lần</td><td>Kiểm tra quyền theo handler, rate limit theo endpoint, đo thời gian xử lý</td><td>Transaction, cache, retry, log nghiệp vụ, đo hiệu năng service</td></tr>
+  </tbody></table></div>
+<pre class="code"><span class="c">// Rate limit theo annotation bằng interceptor (như dự án L* của bạn)</span>
+@Component
+<span class="h">class</span> RateLimitInterceptor <span class="h">implements</span> HandlerInterceptor {
+  <span class="h">public boolean</span> preHandle(HttpServletRequest req, HttpServletResponse res, Object handler) {
+    <span class="h">if</span> (!(handler <span class="h">instanceof</span> HandlerMethod hm)) <span class="h">return true</span>;
+    RateLimit rl = hm.getMethodAnnotation(RateLimit.<span class="h">class</span>);
+    <span class="h">if</span> (rl == <span class="h">null</span> || limiter.tryAcquire(key(req, hm), rl)) <span class="h">return true</span>;
+    res.setStatus(429);
+    <span class="h">return false</span>;                  <span class="c">// dừng ở đây: controller không chạy</span>
+  }
+}
+@Configuration
+<span class="h">class</span> WebConfig <span class="h">implements</span> WebMvcConfigurer {
+  <span class="h">public void</span> addInterceptors(InterceptorRegistry r) { r.addInterceptor(rateLimit).addPathPatterns(<span class="s">"/api/**"</span>); }
+}</pre>
+</section>
+
+<!-- 10 -->
+<section class="ch" id="error">
+  <div class="ch-head"><div class="eyebrow">Chương 10</div><h2>Xử lý exception và validation</h2>
+    <p>Một API tốt trả lỗi nhất quán, đúng mã HTTP, không lộ stack trace.</p></div>
+<pre class="code"><span class="c">// DTO có ràng buộc</span>
+<span class="h">record</span> CreateOrderRequest(
+  @NotNull Long restaurantId,
+  @Min(1) @Max(20) <span class="h">int</span> people,
+  @Future LocalDateTime time,
+  @Size(max = 100) String note) {}
+
+@PostMapping(<span class="s">"/orders"</span>)
+ResponseEntity&lt;OrderDto&gt; create(<span class="h">@Valid</span> @RequestBody CreateOrderRequest req) { ... }
+
+<span class="c">// Một chỗ xử lý lỗi cho cả ứng dụng; Boot 3 có sẵn ProblemDetail (RFC 9457)</span>
+@RestControllerAdvice
+<span class="h">class</span> ApiErrors {
+  @ExceptionHandler(MethodArgumentNotValidException.<span class="h">class</span>)
+  ProblemDetail invalid(MethodArgumentNotValidException e) {
+    ProblemDetail p = ProblemDetail.forStatus(400);
+    p.setTitle(<span class="s">"Dữ liệu không hợp lệ"</span>);
+    p.setProperty(<span class="s">"errors"</span>, e.getFieldErrors().stream()
+        .collect(toMap(FieldError::getField, FieldError::getDefaultMessage, (a, b) -&gt; a)));
+    <span class="h">return</span> p;
+  }
+  @ExceptionHandler(SlotUnavailableException.<span class="h">class</span>)
+  ProblemDetail conflict(SlotUnavailableException e) { <span class="h">return</span> ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage()); }
+
+  @ExceptionHandler(Exception.<span class="h">class</span>)
+  ProblemDetail unknown(Exception e) {
+    log.error(<span class="s">"Unhandled"</span>, e);                         <span class="c">// log đầy đủ ở server</span>
+    <span class="h">return</span> ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, <span class="s">"Đã có lỗi, vui lòng thử lại"</span>); <span class="c">// không lộ chi tiết</span>
+  }
+}</pre>
+  <div class="grid2">
+    <div class="card prose"><h4>@Valid và @Validated</h4>
+      <ul><li><code>@Valid</code> (Jakarta): kiểm tra object, đi sâu vào object con. Dùng trên tham số controller.</li><li><code>@Validated</code> (Spring): hỗ trợ <b>nhóm</b> ràng buộc (ví dụ <code>OnCreate</code>, <code>OnUpdate</code>), và đặt trên class để bật kiểm tra tham số method của service (<code>@Validated</code> class + <code>@NotNull</code> tham số), lỗi là <code>ConstraintViolationException</code>.</li><li>Lỗi validation của <code>@RequestBody</code> là <code>MethodArgumentNotValidException</code>; của <code>@RequestParam</code>/<code>@PathVariable</code> (Boot 3.2+) là <code>HandlerMethodValidationException</code>.</li></ul></div>
+    <div class="card prose"><h4>Thứ tự tìm handler lỗi</h4>
+      <ol><li><code>@ExceptionHandler</code> trong chính controller.</li><li><code>@ControllerAdvice</code> (có thể nhiều, dùng <code>@Order</code>), chọn handler khớp kiểu exception <b>gần nhất</b>.</li><li><code>ResponseStatusException</code> / <code>@ResponseStatus</code> trên class exception.</li><li>Không ai xử lý: Spring Boot chuyển tới <code>/error</code> (<code>BasicErrorController</code>).</li></ol>
+      <p>Lỗi xảy ra trong <b>filter</b> (ví dụ Spring Security từ chối) không đi qua DispatcherServlet nên không tới @ControllerAdvice; xử lý bằng <code>AuthenticationEntryPoint</code> / <code>AccessDeniedHandler</code> của Security.</p></div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="ch" id="config">
+  <div class="ch-head"><div class="eyebrow">Chương 11</div><h2>Cấu hình và profile</h2>
+    <p>Cùng một property có thể được khai báo ở nhiều nơi. Bật tắt các nguồn bên dưới để xem giá trị nào thắng.</p></div>
+  <div class="card sim" id="pr">
+    <div class="pr-grid">
+      <div class="srcs" id="pr-srcs"></div>
+      <div class="pr-result" id="pr-res"></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>@Value và @ConfigurationProperties</h4>
+<pre class="code"><span class="c">// @Value: từng giá trị lẻ</span>
+@Value(<span class="s">"${mail.retry:3}"</span>) <span class="h">int</span> retry;
+
+<span class="c">// @ConfigurationProperties: cả nhóm, có kiểu, có validate</span>
+@ConfigurationProperties(prefix = <span class="s">"booking"</span>)
+@Validated
+<span class="h">record</span> BookingProperties(
+  @NotNull Duration holdTime,      <span class="c">// booking.hold-time: 5m</span>
+  @Min(1) <span class="h">int</span> maxPeople,             <span class="c">// booking.max-people: 20</span>
+  List&lt;String&gt; blockedAreas) {}
+<span class="c">// bật: @ConfigurationPropertiesScan trên class main</span></pre>
+      <p>Ưu tiên <code>@ConfigurationProperties</code>: gom nhóm, có kiểu (<code>Duration</code>, <code>DataSize</code>), relaxed binding (<code>hold-time</code>, <code>holdTime</code>, <code>BOOKING_HOLDTIME</code> đều khớp), validate lúc khởi động, có gợi ý trong IDE.</p></div>
+    <div class="card prose"><h4>Profile</h4>
+<pre class="code"><span class="c"># application.yml: phần chung</span>
+<span class="c"># application-staging.yml, application-prod.yml: phần riêng</span>
+<span class="c"># chọn profile khi chạy:</span>
+SPRING_PROFILES_ACTIVE=prod java -jar app.jar
+
+@Bean @Profile(<span class="s">"!prod"</span>)    <span class="c">// chỉ tạo khi KHÔNG phải prod</span>
+DataSeeder seeder() { ... }</pre>
+      <p>Bí mật (mật khẩu DB, API key) không để trong file yml của repo; trên ECS lấy từ biến môi trường được nạp từ AWS Secrets Manager hoặc SSM Parameter Store.</p></div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="ch" id="events">
+  <div class="ch-head"><div class="eyebrow">Chương 12</div><h2>Event, async và scheduling</h2>
+    <p>Ba công cụ để tách việc phụ ra khỏi luồng chính. Chi tiết về thread pool đã có trong sổ tay concurrency.</p></div>
+<pre class="code"><span class="c">// Phát event trong transaction</span>
+@Transactional
+<span class="h">public</span> Reservation confirm(Long id) {
+  Reservation r = repo.findById(id).orElseThrow();
+  r.confirm();
+  events.publishEvent(<span class="h">new</span> ReservationConfirmed(r.getId(), r.getMemberId()));
+  <span class="h">return</span> r;
+}
+
+<span class="c">// Nghe event: chỉ chạy khi transaction COMMIT thành công</span>
+@Component
+<span class="h">class</span> ReservationNotifier {
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @Async
+  <span class="h">void</span> on(ReservationConfirmed e) { mail.sendConfirmation(e); }
+}
+<span class="c">// Rollback → không gửi mail. Dùng @EventListener thường thì mail đi ngay cả khi rollback.</span>
+<span class="c">// Lưu ý: trong AFTER_COMMIT, transaction cũ đã kết thúc; muốn ghi DB thì cần REQUIRES_NEW.</span>
+<span class="c">// Event chỉ nằm trong bộ nhớ: app sập sau commit là mất. Việc quan trọng dùng outbox table + job.</span></pre>
+  <div class="tblwrap"><table><thead><tr><th>Công cụ</th><th>Mặc định cần nhớ</th><th>Bẫy</th></tr></thead><tbody>
+    <tr><td><code>@EventListener</code></td><td>Chạy đồng bộ, cùng thread, cùng transaction với người phát</td><td>Listener ném lỗi làm hỏng cả luồng chính</td></tr>
+    <tr><td><code>@TransactionalEventListener</code></td><td>Mặc định <code>AFTER_COMMIT</code></td><td>Phát ngoài transaction thì listener bị bỏ qua (trừ khi <code>fallbackExecution = true</code>)</td></tr>
+    <tr><td><code>@Async</code></td><td>Cần <code>@EnableAsync</code>; pool mặc định 8 thread, hàng đợi không giới hạn</td><td>Gọi nội bộ không async; mất transaction và SecurityContext</td></tr>
+    <tr><td><code>@Scheduled</code></td><td>Cần <code>@EnableScheduling</code>; scheduler <b>1 thread</b></td><td>Job chậm làm trễ mọi job khác; chạy trên mọi instance (cần ShedLock)</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- 13 -->
+<section class="ch" id="interview">
+  <div class="ch-head"><div class="eyebrow">Chương 13</div><h2>36 câu hỏi phỏng vấn và cách trả lời</h2>
+    <p>Tự trả lời thành tiếng trước khi mở đáp án. Nhãn "bẫy" là câu hay bị trả lời sai.</p></div>
+  <div class="qa" id="qa"></div>
+</section>
+
+<!-- 14 -->
+<section class="ch" id="lab">
+  <div class="ch-head"><div class="eyebrow">Chương 14</div><h2>Lab tự chạy và cách kể khi phỏng vấn</h2>
+    <p>Một project nhỏ chứa đủ các bẫy trong sổ tay. Chạy trên máy của bạn để tận mắt thấy các dòng <span class="spring">LOG SPRING</span> ở trên, và có câu chuyện thật để kể.</p></div>
+  <div class="card pb">
+    <h3 style="margin:0">Dựng project</h3>
+    <ol class="steps">
+      <li><div>start.spring.io: Spring Boot 3.x, Java 21, dependency: <b>Spring Web, Spring Data JPA, H2 Database, Validation, Spring Boot Actuator</b>. Thêm <code>spring-boot-starter-aop</code> nếu muốn viết aspect.</div></li>
+      <li><div><code>application.yml</code>: <code>logging.level.org.springframework.transaction.interceptor: TRACE</code> và <code>logging.level.org.springframework.orm.jpa.JpaTransactionManager: DEBUG</code> để thấy từng lần mở, tham gia, commit, rollback transaction.</div></li>
+      <li><div>Tạo entity <code>Order</code>, <code>AuditLog</code> và hai service như chương 08. Viết test cho từng preset của mô phỏng, kiểm tra số dòng trong hai bảng bằng <code>count()</code>.</div></li>
+    </ol>
+  </div>
+<pre class="code">@SpringBootTest
+<span class="h">class</span> PropagationTest {
+  @Autowired OrderService orders; @Autowired OrderRepository orderRepo; @Autowired AuditRepository auditRepo;
+
+  @Test <span class="h">void</span> requiredCaughtException_rollsBackEverything() {
+    assertThrows(UnexpectedRollbackException.<span class="h">class</span>, () -&gt; orders.placeOrderCatchingAudit(<span class="h">new</span> Order()));
+    assertEquals(0, orderRepo.count());
+    assertEquals(0, auditRepo.count());
+  }
+
+  @Test <span class="h">void</span> requiresNew_keepsAuditWhenOrderFails() {
+    assertThrows(RuntimeException.<span class="h">class</span>, () -&gt; orders.placeOrderThenFail(<span class="h">new</span> Order()));
+    assertEquals(0, orderRepo.count());
+    assertEquals(1, auditRepo.count());   <span class="c">// audit đã commit trong transaction riêng</span>
+  }
+}
+<span class="c">// Lưu ý: KHÔNG đặt @Transactional trên class test này, vì test có @Transactional</span>
+<span class="c">// sẽ bọc mọi thứ trong một transaction và tự rollback cuối test, che mất hành vi thật.</span></pre>
+  <div class="grid3">
+    <div class="card pb"><h4>Thử thêm</h4><ol class="steps"><li><div>Gọi nội bộ <code>this.saveAudit()</code>, xem log TRACE không có dòng "Getting transaction".</div></li><li><div>In <code>orderService.getClass()</code> để thấy <code>$$SpringCGLIB$$0</code>.</div></li><li><div>Tạo vòng phụ thuộc hai service để thấy thông báo APPLICATION FAILED TO START.</div></li></ol></div>
+    <div class="card pb"><h4>Đo connection pool</h4><ol class="steps"><li><div>Thêm <code>Thread.sleep(2000)</code> giả lập gọi API trong <code>@Transactional</code>.</div></li><li><div>K6 bắn 50 người dùng, xem <code>hikaricp.connections.pending</code> và lỗi timeout.</div></li><li><div>Đưa phần chờ ra ngoài transaction, đo lại p95.</div></li></ol></div>
+    <div class="card pb"><h4>Xử lý lỗi API</h4><ol class="steps"><li><div>Viết <code>@RestControllerAdvice</code> trả ProblemDetail.</div></li><li><div>Gửi request thiếu trường, sai kiểu JSON, id không tồn tại.</div></li><li><div>Kiểm tra mọi lỗi có cùng định dạng, không lộ stack trace.</div></li></ol></div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Cách kể theo STAR</h4>
+      <p><b>S:</b> "Khi làm luồng trừ điểm, em thấy có trường hợp lỗi nghiệp vụ mà log trừ điểm vẫn nằm trong DB."</p>
+      <p><b>T:</b> "Em cần hiểu vì sao transaction không rollback."</p>
+      <p><b>A:</b> "Bật log TRACE của TransactionInterceptor thì thấy transaction commit; nguyên nhân là exception nghiệp vụ kế thừa Exception (checked), mà Spring mặc định chỉ rollback với RuntimeException. Em đổi exception sang unchecked, rà lại các chỗ dùng try/catch quanh method @Transactional để tránh UnexpectedRollbackException, và viết test kiểm tra số dòng sau rollback."</p>
+      <p><b>R:</b> "Không còn log sai; team thống nhất quy tắc exception nghiệp vụ kế thừa RuntimeException."</p>
+      <p class="cap">Đây là khung mẫu. Chỉ kể nếu bạn đã gặp hoặc đã tự dựng lại trong lab, và nói rõ đó là lab.</p></div>
+    <div class="card prose"><h4>Những gì từ dự án thật của bạn nói được ngay</h4>
+      <ul><li>Rate limit bằng <b>HandlerInterceptor</b> + annotation: nói được vì sao chọn interceptor thay vì filter (cần biết handler nào, cấu hình theo endpoint).</li><li>Job gửi mail điểm: vì sao chạy bằng ECS Scheduled Task thay vì <code>@Scheduled</code> (nhiều instance, scheduler 1 thread).</li><li>Tối ưu query 13 s → 100 ms: liên hệ <code>readOnly = true</code> và open-in-view cho API đọc lịch sử.</li><li>Cột trạng thái mail trong <code>log_mileage</code>: cập nhật sau khi gửi, tức là việc "gửi rồi mới ghi" nằm ngoài transaction.</li></ul></div>
+  </div>
+  <p class="foot">Nhãn ĐO THẬT: chương trình Java 21 chạy trong môi trường của mình (proxy JDK, proxy kiểu CGLIB, container mini mô phỏng thuật toán tạo bean của Spring). Nhãn LOG SPRING: thông điệp Spring Boot 3.x in ra, không chạy được ở đây vì môi trường chặn tải thư viện từ Maven Central; dùng phần lab để tự kiểm chứng.</p>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NS='http://www.w3.org/2000/svg';
+function S(tag,a,p){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function T(txt,a,p){const e=S('text',a,p);e.textContent=txt;return e;}
+function logTo(id,msg,cls){const d=document.createElement('div');if(cls)d.className=cls;d.textContent=msg;const l=$(id);l.appendChild(d);while(l.children.length>80)l.firstChild.remove();l.scrollTop=l.scrollHeight;}
+const wait=ms=>new Promise(r=>setTimeout(r,RM?Math.min(ms,60):ms));
+function flip(container,render){const before={};if(!RM)container.querySelectorAll('[data-id]').forEach(e=>before[e.dataset.id]=e.getBoundingClientRect());render();
+  if(!RM)container.querySelectorAll('[data-id]').forEach(e=>{const b=before[e.dataset.id];if(!b){e.animate([{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'none'}],{duration:350});return;}const a=e.getBoundingClientRect();const dx=b.left-a.left,dy=b.top-a.top;if(Math.abs(dx)+Math.abs(dy)>2)e.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:500,easing:'cubic-bezier(.2,.8,.2,1)'});});}
+
+/* ===== mục lục ===== */
+const links=$$('#toc a');const secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));const on=links.find(l=>l.classList.contains('on'));if(on&&innerWidth<980)on.scrollIntoView({block:'nearest',inline:'center'});}});},{rootMargin:'-30% 0px -60% 0px'});
+secs.forEach(s=>s&&io.observe(s));
+
+/* ===== 01. container dựng bean ===== */
+(function(){
+  const svg=$('#di-svg');let mode='ok',run=0;
+  const G={ok:{nodes:{OS:[320,55,'OrderService','singleton · @Transactional'],REPO:[120,205,'OrderRepository','singleton'],MAIL:[320,205,'MailService','singleton'],CART:[520,205,'Cart','prototype']},edges:[['OS','REPO'],['OS','MAIL'],['OS','CART']]},
+           cycle:{nodes:{A:[320,55,'A','new A(B b)'],B:[520,205,'B','new B(C c)'],C:[120,205,'C','new C(A a)']},edges:[['A','B'],['B','C'],['C','A']]}};
+  const STEPS={ok:[
+    ['OS','creating',null,'getBean(OrderService): constructor cần OrderRepository, MailService, Cart → tạo chúng trước.'],
+    ['REPO','creating','OS-REPO','getBean(OrderRepository): không cần gì thêm → gọi constructor.'],
+    ['REPO','done',null,'OrderRepository: chạy BeanPostProcessor, đặt vào cache singleton.'],
+    ['MAIL','creating','OS-MAIL','getBean(MailService) → gọi constructor.'],
+    ['MAIL','done',null,'MailService xong, vào cache singleton.'],
+    ['CART','creating','OS-CART','getBean(Cart): scope prototype → tạo bản mới, KHÔNG lưu cache.'],
+    ['CART','done',null,'Cart#1 xong. Container không theo dõi prototype nữa (không gọi @PreDestroy).'],
+    ['OS','done',null,'Đủ 3 dependency → new OrderService(repo, mail, cart).'],
+    ['OS','ready',null,'@PostConstruct init() → BeanPostProcessor.after: có @Transactional nên bọc proxy CGLIB → sẵn sàng.']],
+   cycle:[
+    ['A','creating','A-B','getBean(A): constructor cần B → tạo B trước. A được đánh dấu "đang tạo".'],
+    ['B','creating','B-C','getBean(B): constructor cần C → tạo C trước.'],
+    ['C','creating','C-A','getBean(C): constructor cần A → getBean(A)…'],
+    ['A','bad','all','A đang ở trạng thái "đang tạo" → vòng phụ thuộc A → B → C → A. Chưa có object nào được tạo ra để phá vòng → APPLICATION FAILED TO START.']]};
+  let st={},hot=new Set();
+  function draw(){svg.innerHTML='';const g=G[mode];
+    S('defs',{},svg).innerHTML='<marker id="di-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker><marker id="di-ahh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker><marker id="di-ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--bad)"/></marker>';
+    for(const [a,b] of g.edges){const A=g.nodes[a],B=g.nodes[b];const k=a+'-'+b;const on=hot.has(k)||hot.has('all');const bad=hot.has('all');
+      const ang=Math.atan2(B[1]-A[1],B[0]-A[0]);const x1=A[0]+Math.cos(ang)*70,y1=A[1]+Math.sin(ang)*28,x2=B[0]-Math.cos(ang)*72,y2=B[1]-Math.sin(ang)*30;
+      S('line',{x1,y1,x2,y2,stroke:bad?'var(--bad)':on?'var(--accent)':'var(--line)','stroke-width':on?3:2,'marker-end':`url(#${bad?'di-ahb':on?'di-ahh':'di-ah'})`},svg);
+      if(mode==='ok'){T('cần',{x:(x1+x2)/2+6,y:(y1+y2)/2-4,class:'dim'},svg);}}
+    for(const k in g.nodes){const [x,y,name,sub]=g.nodes[k];const s=st[k]||'idle';
+      const cls={idle:'bx',creating:'bx held',done:'bx hot',ready:'bx ok',bad:'bx bad'}[s];
+      S('rect',{class:cls,x:x-80,y:y-30,width:160,height:60,rx:9},svg);
+      T(name,{x,y:y-6,'text-anchor':'middle',style:'font-weight:700'},svg);
+      T(sub,{x,y:y+14,'text-anchor':'middle',class:'dim'},svg);
+      const lab={idle:'',creating:'đang tạo',done:'đã tạo',ready:'sẵn sàng · là proxy',bad:'đang tạo · lặp lại!'}[s];
+      if(lab)T(lab,{x,y:y+48,'text-anchor':'middle',class:s==='bad'?'bad':s==='ready'?'ok':s==='creating'?'warn':'dim'},svg);}
+  }
+  function reset(){run++;st={};hot=new Set();$('#di-log').innerHTML='';logTo('#di-log',mode==='ok'?'Bấm Chạy để xem container tạo OrderService.':'Ba bean tiêm nhau qua constructor theo vòng tròn.');draw();$('#di-run').disabled=false;}
+  async function go(){const my=++run;st={};hot=new Set();$('#di-log').innerHTML='';$('#di-run').disabled=true;draw();
+    for(const [n,s,e,msg] of STEPS[mode]){await wait(900);if(my!==run)return;st[n]=s;if(e)hot.add(e);logTo('#di-log',msg,s==='bad'?'w':s==='ready'?'h':'');draw();}
+    $('#di-run').disabled=false;}
+  $('#di-run').addEventListener('click',go);$('#di-reset').addEventListener('click',reset);
+  $('#di-mode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;mode=b.dataset.m;$$('#di-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));reset();});
+  reset();
+})();
+
+/* ===== 02. vòng đời bean ===== */
+(function(){
+  const ST=[
+   {n:'BeanDefinition',h:'@ComponentScan / @Bean',c:'// Spring đọc "bản thiết kế": class nào, scope gì, phụ thuộc gì\n// BeanFactoryPostProcessor có thể sửa bản thiết kế ở đây\n// (ví dụ thay ${...} bằng giá trị property)',a:'Chưa có object nào. Chỉ có metadata.'},
+   {n:'Khởi tạo',h:'constructor',c:'OrderService(OrderRepository repo) {\n  this.repo = repo;      // constructor injection: đã có\n  // field @Autowired: vẫn là null\n}',a:'Có: dependency truyền qua constructor. Chưa có: field/setter injection, @Value trên field.'},
+   {n:'Tiêm thuộc tính',h:'@Autowired field/setter, @Value',c:'@Autowired MailService mail;   // được gán ở bước này\n@Value("${booking.hold-time}") Duration hold;',a:'Mọi dependency đã đủ. Nếu có vòng phụ thuộc field, tham chiếu sớm lấy từ cache 3 cấp ở bước này.'},
+   {n:'Aware',h:'BeanNameAware, ApplicationContextAware…',c:'class X implements ApplicationContextAware {\n  public void setApplicationContext(ApplicationContext ctx) { ... }\n}',a:'Bean biết tên của mình và container. Ít dùng trực tiếp.'},
+   {n:'BPP before',h:'postProcessBeforeInitialization → @PostConstruct',c:'@PostConstruct\nvoid init() {\n  cache.warmUp(repo.findAll());   // an toàn: mọi thứ đã tiêm xong\n}',a:'@PostConstruct chạy ở đây (do CommonAnnotationBeanPostProcessor gọi). Bean CHƯA phải proxy: @Transactional chưa có tác dụng.'},
+   {n:'Init',h:'afterPropertiesSet(), initMethod',c:'class X implements InitializingBean {\n  public void afterPropertiesSet() { ... }   // sau @PostConstruct\n}\n@Bean(initMethod = "start") Client client() { ... }',a:'Thứ tự init: @PostConstruct → afterPropertiesSet() → initMethod.'},
+   {n:'BPP after',h:'postProcessAfterInitialization → AOP proxy',c:'// AbstractAutoProxyCreator kiểm tra: bean có @Transactional,\n// @Async, @Cacheable, aspect nào khớp không?\n// Có → trả về PROXY thay cho bean gốc\nreturn proxy;   // container lưu proxy, không lưu bean gốc',a:'Từ đây, ai được tiêm OrderService đều nhận proxy (OrderService$$SpringCGLIB$$0).'},
+   {n:'Sẵn sàng',h:'singleton cache, ApplicationReadyEvent',c:'// mọi singleton tạo xong → SmartInitializingSingleton\n// Tomcat nhận request → ApplicationReadyEvent\n@EventListener(ApplicationReadyEvent.class)\nvoid onReady() { ... }   // chỗ tốt để chạy việc khởi động cần transaction',a:'Bean phục vụ request. Singleton sống tới khi context đóng.'},
+   {n:'Huỷ',h:'@PreDestroy → destroy() → destroyMethod',c:'@PreDestroy\nvoid close() { executor.shutdown(); }\n// chỉ singleton được gọi; prototype thì không',a:'Khi app tắt (SIGTERM trên ECS): Spring đóng context, gọi hook huỷ theo thứ tự ngược với lúc tạo. Cấu hình server.shutdown=graceful để chờ request đang chạy.'}];
+  let i=0,timer=0;
+  function render(){
+    $('#lc-track').innerHTML=`<div class="lc-line"><div class="lc-fill" style="width:${i/(ST.length-1)*100}%"></div></div><div class="lc-dots">${ST.map((s,k)=>`<button type="button" class="lc-dot${k<i?' done':''}${k===i?' cur':''}" data-k="${k}" title="${esc(s.n)}"><span>${k+1}</span><small>${esc(s.n)}</small></button>`).join('')}</div><div class="lc-bean" style="left:calc(${i/(ST.length-1)*100}% )">bean</div>`;
+    const s=ST[i];$('#lc-detail').innerHTML=`<h4>Bước ${i+1}/${ST.length}: ${esc(s.n)} <code>${esc(s.h)}</code></h4><pre class="code">${esc(s.c)}</pre><p><b>Lúc này:</b> ${esc(s.a)}</p>`;
+    $('#lc-prev').disabled=i===0;$('#lc-next').disabled=i===ST.length-1;}
+  $('#lc-track').addEventListener('click',e=>{const b=e.target.closest('.lc-dot');if(!b)return;i=+b.dataset.k;render();});
+  $('#lc-prev').addEventListener('click',()=>{if(i>0){i--;render();}});
+  $('#lc-next').addEventListener('click',()=>{if(i<ST.length-1){i++;render();}});
+  $('#lc-auto').addEventListener('click',e=>{if(timer){clearInterval(timer);timer=0;e.currentTarget.textContent='Tự chạy';return;}e.currentTarget.textContent='Dừng';if(i===ST.length-1)i=0;render();timer=setInterval(()=>{if(i<ST.length-1){i++;render();}else{clearInterval(timer);timer=0;$('#lc-auto').textContent='Tự chạy';}},RM?600:2200);});
+  render();
+})();
+
+/* ===== 04. cache 3 cấp ===== */
+(function(){
+  const chip=(id,label,cls)=>`<span class="vtchip ${cls||''}" data-id="${id}">${label}</span>`;
+  const A0=chip('A','A <small>field b = null</small>','io'),Ae=chip('A','A (tham chiếu sớm)','pinwait'),Af=chip('A','A hoàn chỉnh','done');
+  const B0=chip('B','B <small>field a = null</small>','io'),Bf=chip('B','B hoàn chỉnh','done');
+  const fA=chip('fA','nhà máy của A'),fB=chip('fB','nhà máy của B');
+  const ST=[
+   {cur:[],l1:[],l2:[],l3:[],n:'Bắt đầu. A có field @Autowired B, B có field @Autowired A. Spring Boot 2.6+ cần spring.main.allow-circular-references=true mới đi tiếp.'},
+   {cur:[A0],l1:[],l2:[],l3:[],n:'getBean(A): không có ở cấp 1, 2, 3 → đánh dấu A đang tạo, gọi new A(). Object A đã tồn tại nhưng field b còn null.'},
+   {cur:[A0],l1:[],l2:[],l3:[fA],n:'Đặt "nhà máy" của A vào cấp 3. Nhà máy trả về A gốc, hoặc proxy của A nếu A cần AOP.'},
+   {cur:[A0,B0],l1:[],l2:[],l3:[fA],n:'Tiêm field cho A: cần B → getBean(B): đánh dấu B đang tạo, gọi new B().'},
+   {cur:[A0,B0],l1:[],l2:[],l3:[fA,fB],n:'Đặt nhà máy của B vào cấp 3.'},
+   {cur:[chip('Ac','A <small>đang chờ B</small>','io'),B0],l1:[],l2:[Ae],l3:[fB],n:'Tiêm field cho B: cần A → cấp 1 không có, cấp 2 không có, cấp 3 có nhà máy của A → gọi nó lấy tham chiếu sớm, chuyển A sang cấp 2, xoá khỏi cấp 3.'},
+   {cur:[chip('Ac','A <small>nhận B, sắp xong</small>','io')],l1:[Bf],l2:[Ae],l3:[],n:'B nhận A (chưa hoàn chỉnh), chạy init và BeanPostProcessor → B hoàn chỉnh vào cấp 1, nhà máy của B bị xoá.'},
+   {cur:[],l1:[Bf,Af],l2:[],l3:[],n:'Quay lại A: A.b = B, chạy init → A hoàn chỉnh vào cấp 1, xoá khỏi cấp 2. Vòng được phá.'},
+   {cur:[],l1:[Bf,Af],l2:[],l3:[],n:'Với constructor injection: new A(b) cần B ngay lúc gọi constructor, chưa có object A nào để đặt nhà máy vào cấp 3 → không phá được vòng → báo lỗi. Đó là lý do constructor injection "an toàn": lộ vòng phụ thuộc ngay lúc khởi động.'}];
+  let i=0,timer=0;const area=$('#c3');
+  function render(){flip(area,()=>{const s=ST[i];const put=(id,arr)=>$(id).innerHTML=arr.join('')||'<span class="cap">trống</span>';put('#c3-l1',s.l1);put('#c3-l2',s.l2);put('#c3-l3',s.l3);put('#c3-cur',s.cur);
+    $('#c3-note').innerHTML=`<h4>Bước ${i}/${ST.length-1}</h4><p>${esc(s.n)}</p>`;});
+    $('#c3-prev').disabled=i===0;$('#c3-next').disabled=i===ST.length-1;}
+  $('#c3-prev').addEventListener('click',()=>{if(i>0){i--;render();}});
+  $('#c3-next').addEventListener('click',()=>{if(i<ST.length-1){i++;render();}});
+  $('#c3-auto').addEventListener('click',e=>{if(timer){clearInterval(timer);timer=0;e.currentTarget.textContent='Tự chạy';return;}e.currentTarget.textContent='Dừng';if(i===ST.length-1)i=0;render();timer=setInterval(()=>{if(i<ST.length-1){i++;render();}else{clearInterval(timer);timer=0;$('#c3-auto').textContent='Tự chạy';}},RM?700:2600);});
+  render();
+})();
+
+/* ===== 05. auto-config ===== */
+(function(){
+  const O=[['starter','Có spring-boot-starter-data-jpa (kéo theo spring-jdbc, HikariCP)',true],['h2','Có H2 trên classpath (database nhúng)',true],['url','Đã đặt spring.datasource.url=jdbc:mysql://…',false],['mine','Bạn tự khai báo @Bean DataSource',false]];
+  const v={};O.forEach(([k,,d])=>v[k]=d);
+  $('#ac-opts').innerHTML=O.map(([k,l])=>`<label class="chk"><input type="checkbox" id="ac-${k}" ${v[k]?'checked':''}> ${esc(l)}</label>`).join('');
+  O.forEach(([k])=>$('#ac-'+k).addEventListener('change',e=>{v[k]=e.target.checked;render();}));
+  function row(ok,t){return `<div class="cond ${ok?'ok':'no'}"><b>${ok?'✓':'✗'}</b><span>${t}</span></div>`;}
+  function render(){let rows='',res,cls;
+    if(!v.starter){rows+=row(false,"DataSourceAutoConfiguration: @ConditionalOnClass did not find required class 'org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType'");
+      res='Không tạo DataSource. Ứng dụng vẫn khởi động bình thường, chỉ là không có database.';cls='ok';}
+    else{rows+=row(true,"DataSourceAutoConfiguration: @ConditionalOnClass found required classes 'javax.sql.DataSource', 'org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType'");
+      if(v.mine){rows+=row(false,"PooledDataSourceConfiguration: @ConditionalOnMissingBean (types: javax.sql.DataSource) found bean 'dataSource'");res='Dùng DataSource bạn tự khai báo. Auto-config lùi lại, nhưng JPA, TransactionManager vẫn được tự cấu hình dựa trên bean của bạn.';cls='ok';}
+      else{rows+=row(true,"PooledDataSourceConfiguration: @ConditionalOnMissingBean (types: javax.sql.DataSource) did not find any beans");
+        if(v.url){rows+=row(true,'Hikari: có spring.datasource.url → tạo HikariDataSource');res='HikariDataSource tới jdbc:mysql://… với pool mặc định 10 connection (maximum-pool-size). Driver tự đoán từ URL.';cls='ok';}
+        else if(v.h2){rows+=row(false,'Không có spring.datasource.url');rows+=row(true,'EmbeddedDatabaseCondition: tìm thấy H2 trên classpath');res='Database nhúng H2 trong bộ nhớ, URL dạng jdbc:h2:mem:&lt;uuid ngẫu nhiên&gt;. Dữ liệu mất khi tắt app: tiện cho test, không dùng cho production.';cls='ok';}
+        else{rows+=row(false,'Không có spring.datasource.url');rows+=row(false,'Không có database nhúng nào trên classpath');
+          res=`<b>APPLICATION FAILED TO START</b><br><code>Failed to configure a DataSource: 'url' attribute is not specified and no embedded datasource could be configured.</code><br><code>Reason: Failed to determine a suitable driver class</code><br>Lỗi rất hay gặp khi thêm starter JPA mà quên cấu hình URL.`;cls='bad';}}}
+    $('#ac-out').innerHTML=`<div class="cap" style="margin-bottom:6px">Báo cáo điều kiện (dạng rút gọn của <code>--debug</code>):</div>${rows}<div class="verdict ${cls}" style="margin-top:10px">${cls==='bad'?'Không khởi động được.':'Kết quả:'} <span>${res}</span></div>`;}
+  render();
+})();
+
+/* ===== 06. proxy ===== */
+(function(){
+  const svg=$('#px-svg');let run=0;
+  const C={x:95,y:125},P={x:315,y:125},TP={x:540,y:92},TS={x:540,y:168},ARC={x:625,y:130},PS={x:390,y:168};
+  let pk,layer;
+  function draw(){svg.innerHTML='';
+    S('rect',{class:'bx',x:20,y:95,width:150,height:60,rx:9},svg);T('OrderController',{x:95,y:122,'text-anchor':'middle',style:'font-weight:700'},svg);T('được tiêm proxy',{x:95,y:141,'text-anchor':'middle',class:'dim'},svg);
+    S('rect',{class:'bx hot',x:225,y:40,width:180,height:170,rx:10},svg);T('Proxy',{x:315,y:64,'text-anchor':'middle',style:'font-weight:700'},svg);T('OrderService$$SpringCGLIB$$0',{x:315,y:82,'text-anchor':'middle',class:'dim mono'},svg);T('TransactionInterceptor',{x:315,y:194,'text-anchor':'middle',class:'dim'},svg);
+    S('rect',{class:'bx',x:455,y:40,width:170,height:170,rx:10},svg);T('Object thật',{x:540,y:64,'text-anchor':'middle',style:'font-weight:700'},svg);
+    S('rect',{class:'reg',x:470,y:78,width:140,height:30,rx:6},svg);T('placeOrder()',{x:540,y:98,'text-anchor':'middle',class:'mono'},svg);
+    S('rect',{class:'reg',x:470,y:153,width:140,height:30,rx:6},svg);T('saveAudit()',{x:540,y:173,'text-anchor':'middle',class:'mono'},svg);
+    T('REQUIRES_NEW',{x:540,y:201,'text-anchor':'middle',class:'dim'},svg);
+    layer=S('g',{},svg);pk=S('circle',{r:10,class:'pk',cx:C.x,cy:C.y,visibility:'hidden'},svg);}
+  function lab(x,y,t,cls){T(t,{x,y,'text-anchor':'middle',class:'mark '+(cls||'ok')},layer);}
+  function move(a,b,ms){return new Promise(res=>{const t0=performance.now();const d=RM?40:ms;pk.setAttribute('visibility','visible');
+    const f=now=>{const k=Math.min(1,(now-t0)/d);const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;pk.setAttribute('cx',a.x+(b.x-a.x)*e);pk.setAttribute('cy',a.y+(b.y-a.y)*e);k<1?requestAnimationFrame(f):res();};requestAnimationFrame(f);});}
+  const L=(m,c)=>logTo('#px-log',m,c);
+  async function path(seq){const my=++run;draw();$('#px-log').innerHTML='';
+    for(const s of seq){if(my!==run)return; if(s.to){await move(s.from,s.to,s.ms||650);} if(s.log)L(s.log,s.c); if(s.lab)lab(s.lab[0],s.lab[1],s.lab[2],s.lab[3]); if(s.pause)await wait(s.pause);}
+    pk.setAttribute('visibility','hidden');}
+  const EXT=[{from:C,to:P,log:'controller.placeOrder() → thật ra gọi vào proxy'},{log:'[proxy] BEGIN TX placeOrder (REQUIRED)',c:'h',lab:[315,108,'BEGIN TX'],pause:300},
+    {from:P,to:TP,log:'[proxy] gọi placeOrder() trên object thật'},{from:TP,to:ARC,ms:400},{from:ARC,to:TS,ms:400,log:'[target] this.saveAudit(): this là object thật → đi thẳng, KHÔNG qua proxy',c:'w',lab:[540,145,'không qua proxy','bad'],pause:400},
+    {log:'→ không có transaction mới; REQUIRES_NEW bị bỏ qua, audit chạy chung transaction của placeOrder',c:'w'},{from:TS,to:ARC,ms:400},{from:ARC,to:TP,ms:400},{from:TP,to:P,log:'[proxy] COMMIT placeOrder',c:'h',lab:[315,230,'COMMIT'],pause:200},{from:P,to:C,log:'trả kết quả cho controller'}];
+  const SELF=[{from:C,to:P,log:'controller.placeOrder() → proxy'},{log:'[proxy] BEGIN TX placeOrder',c:'h',lab:[315,108,'BEGIN TX'],pause:250},{from:P,to:TP,log:'[target] placeOrder() chạy, gọi self.saveAudit() (self = proxy được tiêm qua @Lazy)'},
+    {from:TP,to:PS,log:'lời gọi đi ngược ra proxy',pause:150},{log:'[proxy] treo TX placeOrder, BEGIN TX saveAudit (REQUIRES_NEW)',c:'h',lab:[350,150,'TX mới'],pause:300},{from:PS,to:TS,log:'[target] saveAudit() chạy trong transaction riêng'},
+    {from:TS,to:PS,log:'[proxy] COMMIT saveAudit, khôi phục TX placeOrder',c:'h'},{from:PS,to:TP},{from:TP,to:P,log:'[proxy] COMMIT placeOrder',c:'h',lab:[315,230,'COMMIT']},{from:P,to:C,log:'xong'}];
+  $$('#px [data-s]').forEach(b=>b.addEventListener('click',()=>path(b.dataset.s==='ext'?EXT:SELF)));
+  $('#px-reset').addEventListener('click',()=>{run++;draw();$('#px-log').innerHTML='';L('Chọn một kiểu lời gọi để xem nó có đi qua proxy hay không.');});
+  draw();L('Chọn một kiểu lời gọi để xem nó có đi qua proxy hay không.');
+})();
+
+/* ===== 07. 12 bẫy ===== */
+(function(){
+  const TR=[
+   ['Gọi nội bộ trong cùng class','public void a() { this.b(); }\n@Transactional public void b() { ... }','Lời gọi this.b() không đi qua proxy (chương 06).','Tách b() sang bean khác, tự tiêm proxy qua @Lazy, hoặc TransactionTemplate.'],
+   ['Method private','@Transactional\nprivate void save() { ... }','CGLIB không ghi đè được method private. Spring 6 đã hỗ trợ protected và package-private với proxy lớp con; private thì không bao giờ.','Để public (hoặc protected/package-private trên Spring 6).'],
+   ['Method hoặc class final','@Transactional\npublic final void save() { ... }','Lớp con không ghi đè được method final; class final thì không tạo được proxy CGLIB. Lưu ý Kotlin: class mặc định là final (cần plugin kotlin-spring).','Bỏ final.'],
+   ['Method static','@Transactional\npublic static void save() { ... }','Proxy chỉ chặn được lời gọi trên instance.','Không dùng static cho logic cần transaction.'],
+   ['Tự bắt exception, không ném lại','@Transactional\npublic void pay() {\n  try { ... } catch (Exception e) { log.error("", e); }\n}','Interceptor không thấy lỗi nào nên commit, kể cả phần đã ghi dở.','Ném lại, hoặc gọi TransactionAspectSupport.currentTransactionStatus().setRollbackOnly().'],
+   ['Ném checked exception','throw new InsufficientPointsException();  // extends Exception','Mặc định chỉ RuntimeException và Error mới rollback.','rollbackFor = Exception.class, hoặc exception nghiệp vụ kế thừa RuntimeException.'],
+   ['Bean không do Spring quản lý','OrderService s = new OrderService(repo);\ns.placeOrder();','Tự new thì không có proxy.','Lấy bean từ container (tiêm vào).'],
+   ['Chạy ở thread khác','@Transactional\npublic void a() {\n  CompletableFuture.runAsync(() -> repo.save(x));\n}','Transaction gắn với ThreadLocal của thread gọi. Thread khác không thấy, không rollback cùng.','Làm việc DB trong cùng thread; việc async thì có transaction riêng trong bean khác.'],
+   ['Gọi trong @PostConstruct','@PostConstruct void init() { seed(); }\n@Transactional public void seed() { ... }','@PostConstruct chạy trước khi proxy được tạo, lại còn là gọi nội bộ.','@EventListener(ApplicationReadyEvent.class) hoặc ApplicationRunner trong bean khác.'],
+   ['REQUIRED + bắt lỗi của inner','try { audit.log(o); } catch (RuntimeException e) { }','Inner đánh dấu rollback-only; outer commit thì nhận UnexpectedRollbackException và mất hết.','REQUIRES_NEW hoặc NESTED cho phần được phép lỗi riêng, hoặc kiểm tra điều kiện trước thay vì bắt lỗi.'],
+   ['Sai transaction manager','@Transactional  // nhưng dữ liệu nằm ở DataSource thứ hai','Có nhiều DataSource thì @Transactional dùng manager @Primary, không quản lý DB kia.','@Transactional("reportTransactionManager").'],
+   ['Database không hỗ trợ','CREATE TABLE ... ENGINE=MyISAM','MyISAM không có transaction: rollback không xoá được gì.','Dùng InnoDB (mặc định của MySQL hiện nay).']];
+  $('#traps').innerHTML=TR.map((t,i)=>`<details class="trap-card"><summary><span class="tn">${i+1}</span>${esc(t[0])}</summary><pre class="code">${esc(t[1])}</pre><p><b>Vì sao:</b> ${esc(t[2])}</p><p><b>Sửa:</b> ${esc(t[3])}</p></details>`).join('');
+})();
+
+/* ===== 08. mô phỏng propagation ===== */
+(function(){
+  const LBL={none:'không dùng',active:'đang chạy',suspended:'tạm treo','rollback-only':'bị đánh dấu rollback-only',committed:'đã COMMIT',rolledback:'đã ROLLBACK'};
+  function sim(c){
+    const ev=[];const st={t1:'none',t1n:'',t2:'none',t2n:'',order:'none',audit:'none'};
+    const push=(text,cls,patch)=>{Object.assign(st,patch||{});ev.push({text,cls,snap:{...st}});};
+    const outerTx=c.outer==='REQ';const P=c.prop;
+    const commitAll=()=>({t1:'committed',order:st.order==='pending'?'saved':st.order,audit:st.audit==='pending'?'saved':st.audit});
+    const rollbackAll=()=>({t1:'rolledback',order:st.order==='pending'?'lost':st.order,audit:st.audit==='pending'?'lost':st.audit});
+    if(outerTx)push('placeOrder(): proxy mở transaction T1, lấy connection #1 từ pool','',{t1:'active',t1n:'connection #1'});else push('placeOrder(): không có transaction','');
+    if(outerTx)push('INSERT orders → nằm trong T1, chưa commit','',{order:'pending'});else push('INSERT orders → repository.save() tự mở và commit transaction riêng → đã lưu','ok',{order:'saved'});
+    let ctx;
+    if(P==='REQUIRED')ctx=outerTx?'join':'new';else if(P==='SUPPORTS')ctx=outerTx?'join':'none';else if(P==='MANDATORY')ctx=outerTx?'join':'err';
+    else if(P==='REQUIRES_NEW')ctx='new';else if(P==='NOT_SUPPORTED')ctx='none';else if(P==='NEVER')ctx=outerTx?'err':'none';else ctx=outerTx?'nested':'new';
+    push(`Gọi auditService.log() qua proxy, propagation = ${P}`,'');
+    let innerExc=null,rbOnly=false,conns=1;
+    if(ctx==='err'){const m=P==='MANDATORY'?"No existing transaction found for transaction marked with propagation 'mandatory'":"Existing transaction found for transaction marked with propagation 'never'";
+      push(`Proxy của log() ném IllegalTransactionStateException: ${m}. Thân method log() không chạy`,'w');innerExc={n:'IllegalTransactionStateException',rt:true};}
+    else{
+      if(ctx==='join')push('log() THAM GIA T1, dùng chung connection #1','');
+      if(ctx==='new'){if(outerTx){conns=2;push('TREO T1, mở transaction mới T2 với connection #2 (cùng lúc giữ 2 connection)','h',{t1:'suspended',t2:'active',t2n:'connection #2'});}else push('Mở transaction mới T2','h',{t2:'active',t2n:'connection #1'});}
+      if(ctx==='nested')push('Tạo SAVEPOINT SP1 bên trong T1','h',{t1n:'connection #1 · SAVEPOINT SP1'});
+      if(ctx==='none'){if(outerTx)push('TREO T1, log() chạy không có transaction','h',{t1:'suspended'});else push('log() chạy không có transaction','');}
+      if(ctx==='join'||ctx==='nested')push('INSERT audit_log → nằm trong T1, chưa commit','',{audit:'pending'});
+      else if(ctx==='new')push('INSERT audit_log → nằm trong T2, chưa commit','',{audit:'pending2'});
+      else push('INSERT audit_log → repository.save() tự commit ngay','ok',{audit:'saved'});
+      const resumeT1=outerTx?{t1:'active'}:{};
+      if(c.ex!=='none'){const rt=c.ex==='rt';innerExc={n:rt?'RuntimeException':'Exception (checked)',rt};
+        push(`log() ném ${innerExc.n}`,'w');
+        if(ctx==='join'){if(rt){rbOnly=true;push('Interceptor của log(): RuntimeException → đánh dấu T1 rollback-only (không rollback ngay vì T1 không do nó mở)','w',{t1:'rollback-only'});}else push('Interceptor của log(): checked exception → không đánh dấu gì','');}
+        if(ctx==='new'){if(rt)push('ROLLBACK T2 → audit_log mất. Trả connection #2, khôi phục T1','w',{t2:'rolledback',audit:'lost',...resumeT1});else push('Checked exception → vẫn COMMIT T2 → audit_log đã lưu. Khôi phục T1','ok',{t2:'committed',audit:'saved',...resumeT1});}
+        if(ctx==='nested'){if(rt)push('ROLLBACK TO SAVEPOINT SP1 → audit_log bị huỷ, T1 vẫn dùng tiếp được','w',{audit:'lost',t1n:'connection #1'});else push('Checked exception → RELEASE SAVEPOINT SP1, audit_log vẫn nằm trong T1','',{t1n:'connection #1'});}
+        if(ctx==='none'&&outerTx)push('Khôi phục T1','',{t1:'active'});
+      }else{
+        if(ctx==='new')push('log() xong → COMMIT T2 → audit_log đã lưu. Khôi phục T1','ok',{t2:'committed',audit:'saved',...resumeT1});
+        if(ctx==='nested')push('log() xong → RELEASE SAVEPOINT SP1','',{t1n:'connection #1'});
+        if(ctx==='none'&&outerTx)push('log() xong → khôi phục T1','',{t1:'active'});
+        if(ctx==='join')push('log() xong, vẫn ở trong T1','');}
+    }
+    let outerExc=null;
+    if(innerExc){if(c.catch)push(`placeOrder() bắt ${innerExc.n} và đi tiếp`,'');else{outerExc=innerExc;push(`placeOrder() không bắt → ${innerExc.n} bay ra khỏi placeOrder()`,'w');}}
+    if(!outerExc&&c.after){outerExc={n:'RuntimeException',rt:true};push('placeOrder() ném RuntimeException sau khi gọi log()','w');}
+    let caller=null;
+    if(outerTx){
+      if(outerExc){if(outerExc.rt){push(`Interceptor của placeOrder(): ${outerExc.n} → ROLLBACK T1`,'w',rollbackAll());}else push('Interceptor của placeOrder(): checked exception → vẫn COMMIT T1','ok',commitAll());caller=outerExc.n;}
+      else if(rbOnly){push('placeOrder() kết thúc bình thường, chuẩn bị commit… nhưng T1 đã bị đánh dấu rollback-only → ROLLBACK','w',rollbackAll());caller='UnexpectedRollbackException: Transaction silently rolled back because it has been marked as rollback-only';}
+      else push('placeOrder() kết thúc bình thường → COMMIT T1','ok',commitAll());
+    }else{caller=outerExc?outerExc.n:null;push(outerExc?`${outerExc.n} trả về controller. Những gì đã commit thì giữ nguyên`:'Xong. Không có transaction ngoài để commit hay rollback',outerExc?'w':'');}
+    return {ev,caller,conns,final:{...st}};
+  }
+  function txHtml(name,s,n){const cls={none:'',active:'act',suspended:'sus','rollback-only':'rbo',committed:'com',rolledback:'rb'}[s];
+    return `<div class="txcard ${cls}"><h4>${name}</h4><b>${LBL[s]}</b><small>${esc(n||'')}</small></div>`;}
+  function rowHtml(name,s){if(s==='none')return '<span class="cap">trống</span>';
+    const m={pending:['chưa commit','pend'],pending2:['chưa commit (trong T2)','pend'],saved:['đã lưu','saved'],lost:['đã bị huỷ','lost']}[s];
+    return `<span class="dbrow ${m[1]}">${name} #1 · ${m[0]}</span>`;}
+  function paint(s){$('#pp-t1').outerHTML=txHtml('T1 · transaction của placeOrder()',s.t1,s.t1n).replace('class="txcard','id="pp-t1" class="txcard');
+    $('#pp-t2').outerHTML=txHtml('T2 · transaction riêng của log()',s.t2,s.t2n).replace('class="txcard','id="pp-t2" class="txcard');
+    $('#pp-orders').innerHTML=rowHtml('order',s.order);$('#pp-audit').innerHTML=rowHtml('audit',s.audit);}
+  const cfg=()=>({outer:$('#pp-outer').value,prop:$('#pp-prop').value,ex:$('#pp-ex').value,catch:$('#pp-catch').checked,after:$('#pp-after').checked});
+  let run=0;
+  async function go(){const my=++run;const r=sim(cfg());const tl=$('#pp-tl');tl.innerHTML='';$('#pp-verdict').style.display='none';
+    paint({t1:'none',t2:'none',order:'none',audit:'none'});$('#pp-run').disabled=true;
+    for(const e of r.ev){await wait(700);if(my!==run)return;const li=document.createElement('li');li.className=e.cls||'';li.textContent=e.text;tl.appendChild(li);if(!RM)li.animate([{opacity:0,transform:'translateX(-8px)'},{opacity:1,transform:'none'}],{duration:300});li.scrollIntoView({block:'nearest'});paint(e.snap);}
+    const f=r.final;const v=$('#pp-verdict');v.style.display='flex';const okO=f.order==='saved',okA=f.audit==='saved';
+    v.className='verdict '+(r.caller&&r.caller.startsWith('Unexpected')?'bad':r.caller?'warn':'ok');
+    v.innerHTML=`orders: ${okO?'có dòng':'không có dòng'} · audit_log: ${okA?'có dòng':'không có dòng'} <span>Caller nhận: ${r.caller?'<code>'+esc(r.caller)+'</code>':'không có exception'}. Connection dùng cùng lúc tối đa: ${r.conns}.</span>`;
+    $('#pp-run').disabled=false;}
+  const PRE=[['Bẫy UnexpectedRollbackException',{outer:'REQ',prop:'REQUIRED',ex:'rt',catch:true,after:false}],['Audit phải còn dù đơn lỗi',{outer:'REQ',prop:'REQUIRES_NEW',ex:'none',catch:false,after:true}],['Checked exception vẫn commit',{outer:'REQ',prop:'REQUIRED',ex:'chk',catch:false,after:false}],['NESTED: hỏng phần con, giữ đơn',{outer:'REQ',prop:'NESTED',ex:'rt',catch:true,after:false}],['REQUIRES_NEW + bắt lỗi',{outer:'REQ',prop:'REQUIRES_NEW',ex:'rt',catch:true,after:false}],['MANDATORY khi không có transaction',{outer:'NONE',prop:'MANDATORY',ex:'none',catch:false,after:false}]];
+  $('#pp-presets').innerHTML='<span class="cap">Tình huống mẫu:</span>'+PRE.map((p,i)=>`<button type="button" class="btn" data-i="${i}">${esc(p[0])}</button>`).join('');
+  $('#pp-presets').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const c=PRE[+b.dataset.i][1];$('#pp-outer').value=c.outer;$('#pp-prop').value=c.prop;$('#pp-ex').value=c.ex;$('#pp-catch').checked=c.catch;$('#pp-after').checked=c.after;go();});
+  $('#pp-run').addEventListener('click',go);
+  $('#pp-outer').value='REQ';$('#pp-prop').value='REQUIRED';$('#pp-ex').value='rt';$('#pp-catch').checked=true;
+  paint({t1:'none',t2:'none',order:'none',audit:'none'});
+  $('#pp-tl').innerHTML='<li class="cap">Chọn một tình huống mẫu hoặc tự cấu hình rồi bấm Chạy. Đang chọn sẵn tình huống bẫy UnexpectedRollbackException.</li>';
+})();
+
+/* ===== 09. request pipeline ===== */
+(function(){
+  const STG=['Client: POST /api/orders','Tomcat: lấy thread http-nio-8080-exec-7 từ pool','Filter: RequestIdFilter gắn X-Request-Id vào MDC','Filter: Spring Security kiểm tra JWT','DispatcherServlet','HandlerMapping: tìm ra OrderController#create','Interceptor.preHandle: RateLimitInterceptor','Argument resolver: JSON → CreateOrderRequest, chạy @Valid','OrderController.create()','OrderService (proxy · @Transactional)','OrderRepository → MySQL'];
+  const SC={
+   ok:{l:'Thành công',resp:['201 Created','ok'],seq:[[0,'f'],[1,'f'],[2,'f'],[3,'f'],[4,'f'],[5,'f'],[6,'f'],[7,'f'],[8,'f'],[9,'f','BEGIN TX'],[10,'f','INSERT'],[9,'b','COMMIT TX'],[8,'b','trả OrderDto'],[7,'b','HttpMessageConverter: DTO → JSON'],[6,'b','postHandle, afterCompletion'],[2,'b','ghi log thời gian, xoá MDC'],[1,'b','trả thread về pool'],[0,'b','nhận 201']]},
+   valid:{l:'Lỗi validation',resp:['400 Bad Request · ProblemDetail','warn'],seq:[[0,'f'],[1,'f'],[2,'f'],[3,'f'],[4,'f'],[5,'f'],[6,'f'],[7,'e','people = 0 vi phạm @Min(1) → MethodArgumentNotValidException'],[4,'b','@RestControllerAdvice bắt lỗi, trả ProblemDetail 400. Controller KHÔNG chạy'],[6,'b','afterCompletion (postHandle bị bỏ qua)'],[2,'b','xoá MDC'],[0,'b','nhận 400']]},
+   conflict:{l:'Service ném lỗi nghiệp vụ',resp:['409 Conflict','warn'],seq:[[0,'f'],[1,'f'],[2,'f'],[3,'f'],[4,'f'],[5,'f'],[6,'f'],[7,'f'],[8,'f'],[9,'f','BEGIN TX'],[10,'f','INSERT'],[9,'e','SlotUnavailableException (RuntimeException) → ROLLBACK TX'],[4,'b','@RestControllerAdvice → 409 ProblemDetail'],[6,'b','afterCompletion'],[2,'b','xoá MDC'],[0,'b','nhận 409']]},
+   rate:{l:'Bị rate limit',resp:['429 Too Many Requests','warn'],seq:[[0,'f'],[1,'f'],[2,'f'],[3,'f'],[4,'f'],[5,'f'],[6,'e','preHandle trả về false → dừng tại đây, controller không chạy'],[2,'b','xoá MDC'],[0,'b','nhận 429']]},
+   auth:{l:'Token hết hạn',resp:['401 Unauthorized','bad'],seq:[[0,'f'],[1,'f'],[2,'f'],[3,'e','JWT hết hạn → AuthenticationEntryPoint trả 401. DispatcherServlet CHƯA chạy nên @ControllerAdvice không bắt được lỗi này'],[2,'b','xoá MDC'],[0,'b','nhận 401']]}};
+  let run=0;
+  $('#rq-scen').innerHTML=Object.entries(SC).map(([k,s])=>`<button type="button" class="btn${k==='ok'?' primary':''}" data-k="${k}">${esc(s.l)}</button>`).join('');
+  function base(){$('#rq-pipe').innerHTML=STG.map((s,i)=>`<li data-i="${i}"><span class="pi">${i}</span>${esc(s)}</li>`).join('');}
+  async function go(k){const my=++run;base();$('#rq-log').innerHTML='';const r=$('#rq-resp');r.className='resp';r.textContent='Đang xử lý…';
+    $$('#rq-scen button').forEach(b=>b.classList.toggle('primary',b.dataset.k===k));
+    const items=$$('#rq-pipe li');
+    for(const [i,d,msg] of SC[k].seq){await wait(620);if(my!==run)return;items.forEach(x=>x.classList.remove('cur'));const li=items[i];li.classList.add('cur',d==='e'?'err':d==='b'?'back':'pass');
+      logTo('#rq-log',`${d==='b'?'← ':d==='e'?'✗ ':'→ '}${STG[i]}${msg?': '+msg:''}`,d==='e'?'w':d==='b'?'h':'');}
+    items.forEach(x=>x.classList.remove('cur'));items.forEach((x,i)=>{if(!x.classList.contains('pass')&&!x.classList.contains('err'))x.classList.add('skip');});
+    const [t,c]=SC[k].resp;r.className='resp '+c;r.textContent=t;}
+  $('#rq-scen').addEventListener('click',e=>{const b=e.target.closest('button');if(b)go(b.dataset.k);});
+  base();logTo('#rq-log','Chọn một tình huống để gửi request.');
+})();
+
+/* ===== 11. thứ tự property ===== */
+(function(){
+  const SRC=[{k:'cli',l:'Tham số dòng lệnh',e:'java -jar app.jar --server.port=9000',v:9000,on:false},{k:'env',l:'Biến môi trường (ECS task definition)',e:'SERVER_PORT=8500',v:8500,on:true},{k:'prof',l:'application-prod.yml',e:'server.port: 8443',v:8443,on:true,prof:true},{k:'app',l:'application.yml',e:'server.port: 8081',v:8081,on:true},{k:'def',l:'Mặc định của Spring Boot',e:'ServerProperties: 8080',v:8080,on:true,fixed:true}];
+  let prod=true;
+  function render(){let win=null;for(const s of SRC){const active=s.on&&(!s.prof||prod);if(active&&!win)win=s;}
+    $('#pr-srcs').innerHTML=`<label class="chk prof"><input type="checkbox" id="pr-prod" ${prod?'checked':''}> Bật profile prod (SPRING_PROFILES_ACTIVE=prod)</label>`+SRC.map((s,i)=>{const active=s.on&&(!s.prof||prod);return `<label class="src${s===win?' win':''}${active?'':' off'}"><span class="rank">${i+1}</span><input type="checkbox" data-k="${s.k}" ${s.on?'checked':''} ${s.fixed?'disabled':''}><span><b>${esc(s.l)}</b><code>${esc(s.e)}</code>${s.prof&&!prod?'<small>không được nạp vì profile prod chưa bật</small>':''}</span>${s===win?'<em>thắng</em>':''}</label>`;}).join('');
+    $('#pr-res').innerHTML=`<div class="cap">server.port thực tế</div><div class="bignum">${win.v}</div><p>Lấy từ <b>${esc(win.l)}</b>. Nguồn đứng trên ghi đè nguồn đứng dưới. Thứ tự đầy đủ của Spring Boot có hơn 15 nguồn; đây là 5 nguồn hay gặp nhất.</p>`;
+    $('#pr-prod').addEventListener('change',e=>{prod=e.target.checked;render();});
+    $$('#pr-srcs input[data-k]').forEach(x=>x.addEventListener('change',e=>{SRC.find(s=>s.k===e.target.dataset.k).on=e.target.checked;render();}));}
+  render();
+})();
+
+/* ===== 13. câu hỏi ===== */
+const QA=[
+ {l:'Tầng 1 · Khái niệm'},
+ {q:'IoC và DI là gì? Khác nhau thế nào?',a:'<p>IoC là nguyên lý: việc tạo và nối các object được giao cho container thay vì code tự làm. DI là một cách hiện thực IoC: container đưa dependency vào qua constructor, setter hoặc field. Lợi ích: lỏng ghép nối, dễ thay thế khi test, cấu hình tập trung.</p>'},
+ {q:'Bean là gì? Có những cách khai báo bean nào?',a:'<p>Object do Spring container tạo và quản lý vòng đời. Khai báo bằng stereotype annotation (<code>@Component</code>, <code>@Service</code>, <code>@Repository</code>, <code>@Controller</code>) để được quét, hoặc method <code>@Bean</code> trong class <code>@Configuration</code> (dùng cho class của thư viện bên ngoài mà bạn không sửa được).</p>'},
+ {q:'@Component, @Service, @Repository, @Controller khác nhau gì?',trap:1,a:'<p>Về việc tạo bean thì như nhau, ba cái sau đều là <code>@Component</code>. Khác biệt: <code>@Repository</code> được bật dịch exception (exception của JDBC/JPA đổi thành <code>DataAccessException</code>); <code>@Controller</code> được Spring MVC nhận làm handler; <code>@Service</code> chỉ mang ý nghĩa phân lớp.</p>'},
+ {q:'Vì sao nên dùng constructor injection?',a:'<p>Field có thể <code>final</code>, thiếu dependency thì lỗi ngay lúc khởi động, test không cần Spring, constructor quá dài lộ ra class làm quá nhiều việc, và vòng phụ thuộc bị phát hiện sớm.</p>'},
+ {q:'Có hai bean cùng kiểu, Spring tiêm cái nào?',a:'<p>Xét lần lượt <code>@Qualifier</code>, <code>@Primary</code>, rồi tên tham số trùng tên bean. Không quyết được thì <code>NoUniqueBeanDefinitionException</code>. Muốn tất cả thì tiêm <code>List&lt;T&gt;</code> hoặc <code>Map&lt;String, T&gt;</code>.</p>'},
+ {q:'Bean mặc định có scope gì? Có thread-safe không?',trap:1,a:'<p>Singleton. Không tự thread-safe: một instance phục vụ mọi request đồng thời, nên không được lưu trạng thái của request trong field.</p>'},
+ {q:'Prototype tiêm vào singleton thì sao?',a:'<p>Chỉ được lấy một lần lúc tạo singleton, nên luôn là cùng một instance. Lấy bản mới mỗi lần bằng <code>ObjectProvider</code>, <code>@Lookup</code> hoặc scoped proxy.</p>'},
+ {q:'BeanFactory và ApplicationContext khác nhau thế nào?',a:'<p>BeanFactory là giao diện cơ bản, tạo bean lười. ApplicationContext mở rộng, tạo sẵn singleton lúc khởi động, có event, i18n, resource, tự đăng ký BeanPostProcessor. Spring Boot dùng ApplicationContext.</p>'},
+ {q:'@SpringBootApplication gồm những gì?',a:'<p><code>@SpringBootConfiguration</code> (là <code>@Configuration</code>), <code>@EnableAutoConfiguration</code>, <code>@ComponentScan</code> package hiện tại và các package con. Đặt class main ở package gốc để quét được hết.</p>'},
+ {l:'Tầng 2 · Cơ chế bên trong'},
+ {q:'Kể vòng đời một bean.',a:'<p>Đọc BeanDefinition → constructor → tiêm field/setter → Aware → BeanPostProcessor before (chạy @PostConstruct) → afterPropertiesSet → init-method → BeanPostProcessor after (tạo AOP proxy) → sẵn sàng → khi đóng: @PreDestroy → destroy() → destroy-method. Prototype không được gọi hook huỷ.</p>'},
+ {q:'BeanPostProcessor và BeanFactoryPostProcessor khác nhau thế nào?',a:'<p>BeanFactoryPostProcessor chạy trước khi tạo bean, sửa <b>bản thiết kế</b> (BeanDefinition), ví dụ thay placeholder property, quét @Configuration. BeanPostProcessor chạy trên <b>từng object bean</b> sau khi tạo, có thể bọc bằng proxy; AOP, @Autowired, @PostConstruct đều hiện thực bằng BeanPostProcessor.</p>'},
+ {q:'Spring giải vòng phụ thuộc thế nào?',a:'<p>Với field/setter injection: cache 3 cấp. Sau khi new A, đặt nhà máy của A vào cấp 3; khi B cần A thì lấy tham chiếu sớm qua nhà máy (có thể là proxy), chuyển sang cấp 2; B xong thì vào cấp 1, quay lại hoàn tất A. Constructor injection không giải được vì chưa có object A nào trước khi có B. Từ Boot 2.6 vòng phụ thuộc bị cấm mặc định.</p>'},
+ {q:'Vì sao cần cấp 3 mà không chỉ cấp 2?',trap:1,a:'<p>Để hoãn việc tạo proxy. Nếu A cần AOP, B phải nhận proxy của A. Nhà máy ở cấp 3 chỉ tạo proxy sớm khi thật sự có ai cần tham chiếu sớm; còn bình thường proxy vẫn được tạo đúng lúc ở BeanPostProcessor after.</p>'},
+ {q:'Auto-configuration hoạt động thế nào?',a:'<p><code>@EnableAutoConfiguration</code> nạp danh sách class trong <code>AutoConfiguration.imports</code> (Boot 3) hoặc <code>spring.factories</code> (Boot 2). Mỗi class là <code>@Configuration</code> có điều kiện <code>@ConditionalOnClass</code>, <code>@ConditionalOnMissingBean</code>, <code>@ConditionalOnProperty</code>… Bạn tự khai báo bean thì auto-config lùi lại. Xem báo cáo bằng <code>--debug</code> hoặc <code>/actuator/conditions</code>.</p>'},
+ {q:'Làm sao ghi đè hoặc tắt một auto-config?',a:'<p>Ghi đè: khai báo bean cùng kiểu (nhờ <code>@ConditionalOnMissingBean</code>) hoặc chỉnh property. Tắt hẳn: <code>exclude</code> trong <code>@SpringBootApplication</code> hoặc <code>spring.autoconfigure.exclude</code>.</p>'},
+ {q:'AOP là gì? Spring AOP khác AspectJ thế nào?',a:'<p>Tách các mối quan tâm cắt ngang (transaction, log, bảo mật) ra khỏi nghiệp vụ. Spring AOP dùng proxy lúc chạy, chỉ chặn được lời gọi method public/protected của bean từ bên ngoài. AspectJ dệt vào bytecode lúc biên dịch hoặc lúc nạp class, chặn được cả gọi nội bộ, constructor, field, nhưng cấu hình phức tạp hơn.</p>'},
+ {q:'JDK proxy và CGLIB khác nhau thế nào? Spring Boot dùng gì?',a:'<p>JDK proxy cài đặt interface, không ép kiểu được về class cụ thể. CGLIB tạo lớp con, cần class và method không final. Spring Boot mặc định CGLIB từ 2.0 để tiêm theo class không bị lỗi.</p>'},
+ {q:'Vì sao gọi nội bộ thì @Transactional không có tác dụng?',trap:1,a:'<p>Proxy chỉ chặn lời gọi đi vào từ bên ngoài. Bên trong object thật, <code>this</code> là object gốc chứ không phải proxy, nên <code>this.b()</code> gọi thẳng, interceptor không chạy. Kể cả CGLIB, vì proxy của Spring uỷ quyền cho một object target riêng.</p>'},
+ {l:'Tầng 3 · @Transactional và thực chiến'},
+ {q:'@Transactional hoạt động thế nào bên dưới?',a:'<p>Proxy gọi TransactionInterceptor → PlatformTransactionManager mở transaction, lấy connection, tắt auto-commit, gắn connection vào ThreadLocal → chạy method → không lỗi thì commit, có lỗi thì xét luật rollback → gỡ ThreadLocal, trả connection.</p>'},
+ {q:'Exception nào thì rollback?',trap:1,a:'<p>Mặc định RuntimeException và Error. Checked exception thì <b>commit</b>. Đổi bằng <code>rollbackFor</code> / <code>noRollbackFor</code>.</p>'},
+ {q:'Kể các trường hợp @Transactional không chạy.',a:'<p>Gọi nội bộ; method private, final, static; class final; tự bắt exception; ném checked exception; bean tự new; chạy ở thread khác; gọi trong @PostConstruct; sai transaction manager; engine không hỗ trợ transaction như MyISAM. Thêm: REQUIRED inner lỗi mà outer bắt gây UnexpectedRollbackException.</p>'},
+ {q:'UnexpectedRollbackException xảy ra khi nào?',trap:1,a:'<p>Inner tham gia transaction (REQUIRED) ném RuntimeException → transaction bị đánh dấu rollback-only. Outer bắt lỗi và kết thúc bình thường → lúc commit phát hiện dấu rollback-only → rollback toàn bộ và ném exception này. Sửa: dùng REQUIRES_NEW/NESTED cho phần được phép lỗi, hoặc không bắt rồi nuốt lỗi.</p>'},
+ {q:'REQUIRED, REQUIRES_NEW, NESTED khác nhau thế nào?',a:'<p>REQUIRED tham gia transaction hiện có. REQUIRES_NEW treo cái hiện có, mở transaction độc lập với connection riêng; commit/rollback riêng. NESTED tạo savepoint trong transaction hiện có; lỗi thì chỉ quay về savepoint, nhưng nếu transaction ngoài rollback thì phần nested cũng mất. NESTED cần JDBC savepoint, dùng với DataSourceTransactionManager.</p>'},
+ {q:'REQUIRES_NEW có rủi ro gì?',trap:1,a:'<p>Mỗi tầng giữ một connection: 10 request cùng chạy, mỗi request giữ 2 connection, pool 10 là cạn và có thể tự khoá chết (request chờ connection thứ hai trong khi giữ connection thứ nhất). Transaction mới không thấy dữ liệu chưa commit của transaction ngoài, và có thể deadlock ở DB nếu cùng sửa một dòng.</p>'},
+ {q:'readOnly = true có tác dụng gì?',a:'<p>Hibernate bỏ flush và dirty checking, không giữ snapshot entity; driver có thể tối ưu; có thể dùng để định tuyến sang replica. Không phải cơ chế bảo mật.</p>'},
+ {q:'Isolation level trong @Transactional dùng thế nào?',a:'<p><code>@Transactional(isolation = Isolation.READ_COMMITTED)</code> đặt mức cô lập cho connection trong transaction đó. Mặc định <code>DEFAULT</code> là theo DB (MySQL InnoDB: REPEATABLE READ). Chi tiết hiện tượng dirty read, non-repeatable read, phantom thuộc chương database.</p>'},
+ {q:'Open Session in View là gì? Nên bật không?',a:'<p>Giữ EntityManager mở suốt request để lazy loading chạy được ở controller và lúc serialize. Mặc định bật, kèm cảnh báo. Với API nên tắt: tránh giữ connection lâu và N+1 ngầm, lấy dữ liệu đủ bằng JOIN FETCH/EntityGraph/DTO.</p>'},
+ {q:'Gọi API bên ngoài trong @Transactional có vấn đề gì?',a:'<p>Giữ connection DB suốt thời gian chờ mạng, dễ cạn pool. Nếu API thành công mà DB rollback thì hai bên lệch nhau. Gọi ngoài transaction, hoặc dùng AFTER_COMMIT, outbox pattern cho việc cần đảm bảo.</p>'},
+ {q:'DispatcherServlet làm gì?',a:'<p>Front controller của Spring MVC: nhận mọi request, nhờ HandlerMapping tìm handler, chạy interceptor, dùng HandlerAdapter gọi controller (giải tham số, validate), dùng HttpMessageConverter ghi response, và chuyển exception cho HandlerExceptionResolver (nơi @ControllerAdvice hoạt động).</p>'},
+ {q:'Filter, Interceptor, AOP khác nhau thế nào?',a:'<p>Filter thuộc Servlet, chạy với mọi request trước DispatcherServlet, không biết handler. Interceptor thuộc Spring MVC, biết handler nào xử lý. AOP chặn lời gọi method của bean bất kỳ. Bảo mật, CORS dùng filter; kiểm tra theo endpoint dùng interceptor; transaction, cache dùng AOP.</p>'},
+ {q:'Lỗi trong filter có được @ControllerAdvice bắt không?',trap:1,a:'<p>Không, vì lỗi xảy ra trước khi vào DispatcherServlet. Với Spring Security dùng AuthenticationEntryPoint, AccessDeniedHandler; filter tự viết thì tự ghi response hoặc chuyển cho HandlerExceptionResolver.</p>'},
+ {q:'Xử lý exception tập trung trong Spring Boot thế nào?',a:'<p><code>@RestControllerAdvice</code> với các <code>@ExceptionHandler</code>, trả <code>ProblemDetail</code> (Boot 3). Map exception nghiệp vụ sang mã HTTP phù hợp, log đầy đủ ở server, không lộ stack trace ra client.</p>'},
+ {q:'@Valid và @Validated khác nhau gì?',a:'<p>@Valid của Jakarta, kiểm tra object và đi sâu vào object con. @Validated của Spring hỗ trợ validation groups và bật kiểm tra tham số method khi đặt trên class (ném ConstraintViolationException).</p>'},
+ {q:'Thứ tự ưu tiên cấu hình trong Spring Boot?',a:'<p>Tham số dòng lệnh > biến môi trường > file profile (application-{profile}.yml) > application.yml > mặc định. Nguồn đứng trên ghi đè nguồn dưới. Dùng @ConfigurationProperties cho nhóm cấu hình có kiểu và validate.</p>'},
+ {q:'@EventListener và @TransactionalEventListener khác nhau thế nào?',a:'<p>@EventListener chạy ngay, cùng thread, cùng transaction với người phát. @TransactionalEventListener mặc định chạy sau khi commit thành công; rollback thì không chạy. Dùng cho gửi mail, đẩy message sau khi dữ liệu đã chắc chắn lưu.</p>'},
+ {q:'Kể một lần bạn xử lý lỗi transaction.',a:'<p>Theo STAR, có số liệu: triệu chứng (dữ liệu ghi dở, UnexpectedRollbackException, cạn connection pool), cách điều tra (log TRACE của TransactionInterceptor, metric HikariCP), nguyên nhân (checked exception, gọi nội bộ, gọi API trong transaction), cách sửa và test kiểm chứng. Chỉ kể việc thật hoặc lab đã tự làm.</p>'}
+];
+$('#qa').innerHTML=QA.map(x=>x.l?`<div class="lvl">${x.l}</div>`:`<details><summary><span>${x.q}</span>${x.trap?'<span class="trap">bẫy</span>':''}</summary><div class="ans">${x.a}</div></details>`).join('');
+})();
+</script>
+</body>
+</html>

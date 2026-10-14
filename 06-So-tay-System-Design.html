@@ -1,0 +1,1808 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sổ tay System design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sổ tay kỹ thuật hai cột (dùng chung với Sổ tay JVM) — mục lục dính bên trái, nội dung đọc bên phải; mỗi chương mở bằng khung "Phỏng vấn sẽ hỏi" */
+:root{
+  --bg:#F2F5F9; --surface:#FFFFFF; --sunk:#E7EDF5; --ink:#0E1A2C; --muted:#4F5F77; --line:#D2DBE7;
+  --accent:#1B5BD4; --accent-ink:#FFFFFF; --accent-soft:#DCE7FB;
+  --s1:#1D5FD6; --s2:#C2620A; --s3:#8A3FA8;
+  --eden:#2F6FE0; --surv:#0F8FB3; --old:#3A3F9E; --dead:#9AA7B8;
+  --ok:#17845A; --ok-soft:#D9F1E6; --warn:#A86A00; --warn-soft:#FBEBCB; --bad:#C23434; --bad-soft:#F9DDDD;
+  --code-bg:#0F1A2B; --code-ink:#D6E2F2; --code-dim:#7F93AE; --code-hl:#8EC1FF; --code-str:#9FD8B8; --code-warn:#FFB4A8;
+  --f-ui:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0A111D; --surface:#101A2A; --sunk:#0D1624; --ink:#E2E9F4; --muted:#93A3BB; --line:#223149;
+  --accent:#5B96F5; --accent-ink:#081120; --accent-soft:#15284A;
+  --s1:#4A86E8; --s2:#CC7222; --s3:#A963C4;
+  --eden:#4A86E8; --surv:#2AA8C9; --old:#7A7FE0; --dead:#4D5B70;
+  --ok:#3FBF8A; --ok-soft:#10301F; --warn:#E0A33A; --warn-soft:#33270E; --bad:#F06A6A; --bad-soft:#3A1717;
+  --code-bg:#060C16; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0A111D; --surface:#101A2A; --sunk:#0D1624; --ink:#E2E9F4; --muted:#93A3BB; --line:#223149;
+  --accent:#5B96F5; --accent-ink:#081120; --accent-soft:#15284A;
+  --s1:#4A86E8; --s2:#CC7222; --s3:#A963C4;
+  --eden:#4A86E8; --surv:#2AA8C9; --old:#7A7FE0; --dead:#4D5B70;
+  --ok:#3FBF8A; --ok-soft:#10301F; --warn:#E0A33A; --warn-soft:#33270E; --bad:#F06A6A; --bad-soft:#3A1717;
+  --code-bg:#060C16; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:16px;line-height:1.65}
+a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+:not(pre)>code{background:var(--sunk);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+h1,h2,h3,h4{margin:0;text-wrap:balance;line-height:1.25}
+p{margin:0}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.shell{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:24px 80px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px}
+@media (max-width:980px){.shell{grid-template-columns:1fr;gap:0}}
+
+/* mục lục */
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:4px}
+.toc .brand{font-weight:800;font-size:1rem;letter-spacing:-.01em;margin-bottom:12px}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.toc a{display:flex;gap:10px;text-decoration:none;color:var(--muted);font-size:.86rem;padding:5px 8px;border-radius:6px;line-height:1.35}
+.toc a span{font-family:var(--f-mono);font-size:.74rem;min-width:18px;color:var(--muted);padding-top:2px}
+.toc a:hover{background:var(--sunk);color:var(--ink)}
+.toc a.on{background:var(--accent-soft);color:var(--ink);font-weight:600}
+@media (max-width:980px){
+  .toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;max-height:none;background:var(--bg);margin-inline:-20px;padding:10px 20px;border-bottom:1px solid var(--line)}
+  .toc .brand{display:none}
+  .toc ol{flex-direction:row;overflow-x:auto;gap:4px;scrollbar-width:none}
+  .toc a{white-space:nowrap;font-size:.8rem}
+}
+
+main{min-width:0;display:flex;flex-direction:column;gap:64px}
+.hero{display:flex;flex-direction:column;gap:14px;padding-top:8px}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.hero h1{font-size:clamp(2rem,4.6vw,3.1rem);font-weight:800;letter-spacing:-.025em}
+.hero .lede{font-size:1.08rem;color:var(--muted);max-width:66ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.facts span{font-family:var(--f-mono);font-size:.76rem;background:var(--surface);border:1px solid var(--line);padding:4px 10px;border-radius:999px;color:var(--muted)}
+
+section.ch{display:flex;flex-direction:column;gap:20px;scroll-margin-top:72px}
+.ch-head{display:flex;flex-direction:column;gap:6px;border-top:2px solid var(--ink);padding-top:14px}
+.ch-head h2{font-size:clamp(1.45rem,2.6vw,1.9rem);font-weight:800;letter-spacing:-.015em}
+.ch-head p{color:var(--muted);max-width:68ch}
+h3{font-size:1.12rem;font-weight:700;margin-top:6px}
+h4{font-size:.98rem;font-weight:700}
+.prose{display:flex;flex-direction:column;gap:12px;max-width:72ch}
+.prose ul,.prose ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+
+.ask{background:var(--accent-soft);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.ask b{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.ask ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:3px}
+.callout{border-left:3px solid var(--accent);padding:10px 14px;background:var(--surface);border-radius:0 8px 8px 0;max-width:76ch}
+.callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-color:var(--ok);background:var(--ok-soft)}
+.callout b.t{display:block;margin-bottom:2px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+
+pre.code{background:var(--code-bg);color:var(--code-ink);border-radius:var(--r);padding:14px 16px;overflow-x:auto;font-family:var(--f-mono);font-size:.8rem;line-height:1.6;margin:0;max-width:100%}
+pre.code .c{color:var(--code-dim)} pre.code .h{color:var(--code-hl);font-weight:600} pre.code .s{color:var(--code-str)} pre.code .w{color:var(--code-warn);font-weight:600}
+.real{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--ok);font-weight:600;letter-spacing:.03em}
+.real::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.cap{font-size:.84rem;color:var(--muted);max-width:76ch}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--sunk)}
+td.n{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td code{white-space:nowrap}
+
+/* kiến trúc */
+.arch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.arch{grid-template-columns:1fr}}
+.arch .blk{border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.arch .blk h4{font-size:.9rem}
+.arch .blk p{font-size:.84rem;color:var(--muted)}
+.arch .lane{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--f-mono);font-size:.8rem}
+.arch .lane span{background:var(--sunk);padding:5px 10px;border-radius:6px}
+.arch .lane i{color:var(--muted);font-style:normal}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill.shared{background:var(--accent-soft);color:var(--accent)}
+
+/* vùng nhớ tương tác */
+.mem{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px}
+.mem>*{min-width:0}
+@media (max-width:860px){.mem{grid-template-columns:1fr}}
+@media (max-width:520px){.areas{grid-template-columns:1fr}}
+.area{min-width:0}
+.chip{overflow-wrap:anywhere}
+.codelines{background:var(--code-bg);border-radius:var(--r);padding:10px 0;font-family:var(--f-mono);font-size:.8rem;overflow-x:auto}
+.codelines button{display:block;width:100%;text-align:left;background:transparent;border:0;color:var(--code-ink);padding:4px 14px;white-space:pre;font-family:inherit;font-size:inherit;border-left:3px solid transparent}
+.codelines button:hover{background:#ffffff0d}
+.codelines button.on{background:#5b96f526;border-left-color:var(--code-hl)}
+.codelines .ln{color:var(--code-dim);margin-right:12px}
+.areas{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.area{border:1px dashed var(--line);border-radius:8px;padding:10px;min-height:96px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.area.heap{grid-column:1/-1}
+.area h4{font-size:.82rem;display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.area .items{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:.74rem;padding:3px 8px;border-radius:6px;background:var(--sunk);border:1px solid var(--line);transition:background-color .3s,border-color .3s}
+.chip.new{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.chip.gone{text-decoration:line-through;opacity:.5}
+.memnote{margin-top:10px;font-size:.9rem}
+
+/* object layout */
+.objrow{display:flex;flex-wrap:wrap;gap:3px;align-items:stretch;font-family:var(--f-mono);font-size:.72rem}
+.objrow div{padding:6px 8px;border-radius:4px;display:flex;flex-direction:column;justify-content:center;min-height:44px}
+.objrow .hdr{background:var(--accent);color:var(--accent-ink)}
+.objrow .kl{background:var(--s3);color:#fff}
+.objrow .fld{background:var(--sunk);border:1px solid var(--line)}
+.objrow .pad{background:repeating-linear-gradient(45deg,var(--sunk),var(--sunk) 4px,var(--surface) 4px,var(--surface) 8px);border:1px dashed var(--line);color:var(--muted)}
+.objrow small{opacity:.85}
+.objrow div{min-width:58px}
+
+/* GC simulator */
+.sim{display:flex;flex-direction:column;gap:14px}
+.sim-ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 13px;font-weight:500;font-size:.88rem}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.sim-ctrl label{font-size:.86rem;color:var(--muted);display:flex;gap:6px;align-items:center}
+.sim-ctrl input[type=range]{width:110px;accent-color:var(--accent)}
+.heapviz{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
+.heapviz .old{grid-column:1/-1}
+@media (max-width:640px){.heapviz{grid-template-columns:1fr 1fr}.heapviz .eden{grid-column:1/-1}}
+.gen{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);min-width:0}
+.gen h4{font-size:.8rem;display:flex;justify-content:space-between;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.gen h4 small{font-family:var(--f-mono);color:var(--muted);font-weight:400}
+.gen.to h4::after{content:"đích copy kế tiếp";font-size:.68rem;font-weight:500;color:var(--surv)}
+.cells{display:grid;gap:4px}
+.eden .cells{grid-template-columns:repeat(8,minmax(0,1fr))}
+.surv .cells{grid-template-columns:repeat(4,minmax(0,1fr))}
+.old .cells{grid-template-columns:repeat(16,minmax(0,1fr))}
+@media (max-width:640px){.old .cells{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.cell{aspect-ratio:1;border-radius:4px;background:var(--sunk);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.66rem;color:#fff;font-weight:600;transition:background-color .25s,transform .25s;max-width:100%}
+.cell.e{background:var(--eden)} .cell.s{background:var(--surv)} .cell.o{background:var(--old)}
+.cell.lt{box-shadow:inset 0 0 0 2px var(--warn)}
+.cell.dead{background:var(--dead);color:transparent}
+.cell.dying{background:var(--bad);transform:scale(.8)}
+.sim-stats{display:flex;flex-wrap:wrap;gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:110px}
+.stat b{display:block;font-family:var(--f-mono);font-size:1.15rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.74rem;color:var(--muted)}
+.simlog{background:var(--code-bg);color:var(--code-ink);font-family:var(--f-mono);font-size:.76rem;border-radius:8px;padding:10px 12px;height:150px;overflow:auto;display:flex;flex-direction:column;gap:3px}
+.simlog .w{color:var(--code-warn)} .simlog .h{color:var(--code-hl)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.oom{display:none;background:var(--bad-soft);border:1px solid var(--bad);border-radius:8px;padding:10px 12px;font-family:var(--f-mono);font-size:.82rem;color:var(--bad)}
+.oom.show{display:block}
+
+/* G1 regions */
+.regions{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px}
+@media (max-width:640px){.regions{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.rg{aspect-ratio:1;border-radius:3px;font-family:var(--f-mono);font-size:.6rem;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+.rg.E{background:var(--eden)} .rg.S{background:var(--surv)} .rg.O{background:var(--old)} .rg.H{background:var(--s2)} .rg.F{background:var(--sunk);color:var(--muted)}
+.rg.C{outline:2px solid var(--bad);outline-offset:-2px}
+
+/* charts */
+.chart{position:relative;min-width:0}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .grid line{stroke:var(--line);stroke-width:1}
+.chart .ax text,.chart text.ax{fill:var(--muted);font-family:var(--f-mono);font-size:10.5px}
+.chart text.lbl{font-family:var(--f-ui);font-size:11.5px;font-weight:600}
+.chart text.val{fill:var(--ink);font-family:var(--f-mono);font-size:11px}
+.chart .hit{fill:transparent}
+.chart .xh{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.78rem;box-shadow:0 6px 18px #0b16281f;min-width:150px;z-index:3;display:none}
+.tip .tt{font-weight:700;margin-bottom:3px}
+.tip .tr{display:flex;justify-content:space-between;gap:12px;font-family:var(--f-mono);font-size:.74rem}
+.tip .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.chart-legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+.chart-title{font-weight:700;font-size:.95rem;margin-bottom:2px}
+
+/* container calc */
+.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px}
+@media (max-width:860px){.calc{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.82rem;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.field label output{font-family:var(--f-mono);font-weight:600;color:var(--accent)}
+.field input[type=range]{width:100%;accent-color:var(--accent)}
+.field small{color:var(--muted);font-size:.76rem}
+.fields{display:flex;flex-direction:column;gap:12px}
+.budget{display:flex;flex-direction:column;gap:12px}
+.bar{position:relative;height:38px;border-radius:6px;background:var(--sunk);overflow:visible;display:flex}
+.bar .seg{height:100%;border-right:2px solid var(--surface);transition:width .3s}
+.bar .seg:first-child{border-radius:6px 0 0 6px}
+.bar .limit{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink)}
+.bar .limit span{position:absolute;top:-20px;transform:translateX(-50%);font-family:var(--f-mono);font-size:.7rem;white-space:nowrap;color:var(--ink)}
+.brows{display:flex;flex-direction:column;gap:4px;font-size:.84rem}
+.brows div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:3px}
+.brows i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.brows b{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.verdict{border-radius:8px;padding:10px 12px;font-weight:600;font-size:.9rem;display:flex;gap:8px;align-items:flex-start}
+.verdict.ok{background:var(--ok-soft);color:var(--ok)} .verdict.warn{background:var(--warn-soft);color:var(--warn)} .verdict.bad{background:var(--bad-soft);color:var(--bad)}
+.verdict span{color:var(--ink);font-weight:400}
+
+/* playbooks */
+.pb{display:flex;flex-direction:column;gap:12px}
+.pb .sym{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sev{font-family:var(--f-mono);font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.04em}
+.sev.bad{background:var(--bad-soft);color:var(--bad)} .sev.warn{background:var(--warn-soft);color:var(--warn)}
+.steps{counter-reset:s;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px}
+.steps li::before{content:counter(s);font-family:var(--f-mono);font-size:.74rem;font-weight:700;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-top:2px}
+
+/* gc log annotate */
+.logline{font-family:var(--f-mono);font-size:.8rem;background:var(--code-bg);color:var(--code-ink);border-radius:8px;padding:12px 14px;overflow-x:auto;white-space:nowrap}
+.logline span{border-bottom:2px solid;padding-bottom:1px}
+.logline .a1{border-color:var(--s1)} .logline .a2{border-color:var(--surv)} .logline .a3{border-color:var(--s2)} .logline .a4{border-color:var(--s3)} .logline .a5{border-color:var(--ok)}
+.anno{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;font-size:.84rem}
+.anno div{border-top:3px solid;padding-top:6px}
+
+/* Q&A */
+.qa{display:flex;flex-direction:column;gap:8px}
+.qa details{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.qa summary{cursor:pointer;padding:12px 14px;font-weight:600;list-style:none;display:flex;gap:10px;align-items:flex-start}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{content:"+";font-family:var(--f-mono);color:var(--accent);font-weight:700;width:14px;flex:none}
+.qa details[open] summary::before{content:"−"}
+.qa .ans{padding:0 16px 14px 38px;display:flex;flex-direction:column;gap:8px;font-size:.94rem}
+.qa .ans ul{margin:0;padding-left:20px}
+.lvl{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:10px;font-weight:700}
+.trap{font-family:var(--f-mono);font-size:.66rem;background:var(--warn-soft);color:var(--warn);padding:1px 6px;border-radius:4px;margin-left:auto;flex:none;align-self:center}
+.foot{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padding-top:16px}
+
+/* ===== thêm cho sổ tay concurrency ===== */
+.states{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:860px){.states{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:460px){.states{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stnode{border:1px solid var(--line);border-radius:8px;padding:10px 8px;text-align:center;background:var(--surface);font-family:var(--f-mono);font-size:.74rem;font-weight:600;transition:background-color .25s,border-color .25s,color .25s;min-width:0;overflow-wrap:anywhere}
+.stnode small{display:block;font-family:var(--f-ui);font-weight:400;color:var(--muted);font-size:.72rem;margin-top:3px}
+.stnode.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.stnode.on small{color:var(--accent-ink);opacity:.85}
+.sim-ctrl .btn:disabled{opacity:.4;cursor:default}
+.seg-ctl{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg-ctl button{border:0;background:transparent;color:var(--muted);padding:7px 12px;font-size:.86rem;border-right:1px solid var(--line)}
+.seg-ctl button:last-child{border-right:0}
+.seg-ctl button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.race{display:grid;grid-template-columns:minmax(0,1fr) 170px minmax(0,1fr);gap:12px;align-items:stretch}
+@media (max-width:700px){.race{grid-template-columns:1fr 1fr}.race .memcol{grid-column:1/-1;grid-row:1;flex-direction:row}}
+.thr{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:8px;min-width:0}
+.thr h4{display:flex;justify-content:space-between;gap:6px;font-size:.88rem;flex-wrap:wrap}
+.thr .badge{font-family:var(--f-mono);font-size:.68rem;padding:2px 7px;border-radius:4px;background:var(--sunk);color:var(--muted)}
+.thr .badge.run{background:var(--accent-soft);color:var(--accent)}
+.thr .badge.blk{background:var(--warn-soft);color:var(--warn)}
+.thr .badge.ok{background:var(--ok-soft);color:var(--ok)}
+.thr ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font-family:var(--f-mono);font-size:.76rem}
+.thr li{padding:4px 8px;border-radius:5px;color:var(--muted);border:1px solid transparent}
+.thr li.cur{border-color:var(--accent);color:var(--ink);background:var(--accent-soft)}
+.thr li.done{color:var(--ok)}
+.thr .reg{font-family:var(--f-mono);font-size:.78rem;background:var(--sunk);border-radius:5px;padding:5px 8px}
+.memcol{display:flex;flex-direction:column;gap:10px;justify-content:center}
+.ram{border:2px solid var(--ink);border-radius:10px;padding:12px;text-align:center;background:var(--surface);flex:1}
+.ram span{display:block;font-size:.72rem;color:var(--muted)}
+.ram b{display:block;font-family:var(--f-mono);font-size:2.2rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.ram small{font-family:var(--f-mono);color:var(--muted)}
+.ram.flash{animation:ramf .6s ease}
+@keyframes ramf{0%{background:var(--accent-soft)}100%{background:var(--surface)}}
+.lockbox{border:1px dashed var(--line);border-radius:8px;padding:8px;text-align:center;font-family:var(--f-mono);font-size:.76rem;color:var(--muted);flex:1}
+.lockbox.held{border-style:solid;border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.cache-diag{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cache-diag .core{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;background:var(--surface);min-width:0}
+.cache-diag .core span{font-size:.8rem;color:var(--muted)}
+.cache-diag .lv{font-family:var(--f-mono);font-size:.76rem;background:var(--sunk);border-radius:5px;padding:5px 8px;overflow-wrap:anywhere}
+.cache-diag i{font-style:normal;font-weight:700;color:var(--s2)}
+.cache-diag i.nw{color:var(--ok)}
+.cache-diag .ram-wide{grid-column:1/-1;border:2px solid var(--ink);border-radius:8px;padding:10px;text-align:center;font-family:var(--f-mono);font-size:.8rem}
+.adder{display:flex;flex-direction:column;gap:8px;margin:4px 0}
+.cells-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.cells-row span{border:1px solid var(--line);border-radius:6px;padding:6px;text-align:center;font-family:var(--f-mono);font-size:.7rem;color:var(--muted);background:var(--surface)}
+.cells-row b{display:block;font-size:1rem;color:var(--ink)}
+.adder .sum{font-family:var(--f-mono);font-size:.82rem;text-align:center;background:var(--accent-soft);border-radius:6px;padding:6px}
+.sel{font:inherit;font-size:.84rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 6px}
+.poolviz{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,.8fr);gap:10px}
+@media (max-width:760px){.poolviz{grid-template-columns:1fr}}
+.workers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.worker{border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-family:var(--f-mono);font-size:.72rem;display:flex;flex-direction:column;gap:4px;min-height:52px;background:var(--surface)}
+.worker.core{border:2px solid var(--accent)}
+.worker .pg{height:6px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.worker .pg i{display:block;height:100%;background:var(--accent);transition:width .4s}
+.worker.idle{color:var(--muted)}
+.worker.new{animation:ramf .8s ease}
+.queue{display:flex;flex-direction:column;gap:4px}
+.qslot{border:1px dashed var(--line);border-radius:5px;padding:4px 8px;font-family:var(--f-mono);font-size:.72rem;color:var(--muted);min-height:26px}
+.qslot.full{border-style:solid;border-color:var(--surv);color:var(--ink);background:var(--sunk)}
+.caller{font-family:var(--f-mono);font-size:.76rem;border:1px dashed var(--line);border-radius:6px;padding:8px;color:var(--muted)}
+.caller.busy{border-style:solid;border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+
+/* ===== hình động bổ sung ===== */
+.anim{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.anim svg{width:100%;min-width:520px;height:auto;display:block}
+.anim text{font-family:var(--f-ui);font-size:13px;fill:var(--ink)}
+.anim text.mono{font-family:var(--f-mono);font-size:12px}
+.anim text.dim{fill:var(--muted);font-size:11.5px}
+.anim text.big{font-family:var(--f-mono);font-size:22px;font-weight:600}
+.anim text.bad{fill:var(--bad);font-weight:600}
+.anim text.ok{fill:var(--ok);font-weight:600}
+.anim text.warn{fill:var(--warn);font-weight:600}
+.anim .bx{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.anim .bx.hot{stroke:var(--accent);stroke-width:2.5}
+.anim .bx.ram{stroke:var(--ink);stroke-width:2}
+.anim .bx.held{fill:var(--warn-soft);stroke:var(--warn);stroke-width:2}
+.anim .bx.cell{fill:var(--surface);stroke:var(--s1);stroke-width:1.5}
+.anim .reg{fill:var(--sunk);stroke:none;transition:fill .2s}
+.anim .reg.ping{fill:var(--accent-soft)}
+.anim .pk{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.anim .pk.old{fill:var(--s2)}
+.anim .edge-own{stroke:var(--accent);stroke-width:3;fill:none}
+.anim .edge-wait{stroke:var(--bad);stroke-width:3;fill:none;stroke-dasharray:8 6;animation:dashmove .8s linear infinite}
+@keyframes dashmove{to{stroke-dashoffset:-28}}
+.anim .th{stroke:var(--surface);stroke-width:3;transition:fill .3s}
+.anim .th.run{fill:var(--accent)} .anim .th.blk{fill:var(--warn)} .anim .th.done{fill:var(--ok)} .anim .th.dead{fill:var(--bad)}
+.anim .fl{stroke-width:3;animation:flfade .65s ease-out forwards}
+.anim .fl.ok{stroke:var(--ok)} .anim .fl.fail{stroke:var(--bad);stroke-dasharray:5 4}
+@keyframes flfade{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
+.anim .mark{animation:flfade .9s ease-out forwards;font-weight:700}
+.anim marker path{fill:var(--muted)}
+@media (prefers-reduced-motion: reduce){.anim .edge-wait{animation:none}}
+.vt-wrap{display:flex;flex-direction:column;gap:10px}
+.vt-carriers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.carrier{border:2px solid var(--ink);border-radius:10px;padding:10px;background:var(--surface);min-height:92px;display:flex;flex-direction:column;gap:6px;transition:border-color .3s,background-color .3s}
+.carrier h4{font-size:.82rem;display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.carrier h4 small{font-family:var(--f-mono);font-weight:400;color:var(--muted)}
+.carrier.pinned{border-color:var(--bad);background:var(--bad-soft)}
+.carrier .slot{min-height:40px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vt-row{border:1px dashed var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);min-width:0}
+.vt-row h4{font-size:.78rem;color:var(--muted);font-weight:600;margin-bottom:6px}
+.vt-row .chips{display:flex;flex-wrap:wrap;gap:6px;min-height:34px}
+.vtchip{font-family:var(--f-mono);font-size:.72rem;border-radius:6px;padding:4px 8px;background:var(--accent-soft);border:1px solid var(--accent);color:var(--ink);display:inline-flex;flex-direction:column;line-height:1.3;will-change:transform}
+.vtchip small{color:var(--muted);font-size:.66rem}
+.vtchip.io{background:var(--sunk);border-color:var(--line)}
+.vtchip.done{background:var(--ok-soft);border-color:var(--ok)}
+.vtchip.pin{border-style:dashed}
+.vtchip.pinwait{background:var(--bad-soft);border-color:var(--bad)}
+
+/* ===== thêm cho sổ tay Spring Boot ===== */
+.spring{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--s3);font-weight:600;letter-spacing:.03em}
+.spring::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--s3)}
+.w-txt{color:var(--bad);font-weight:700}
+.anim .bx.ok{fill:var(--ok-soft);stroke:var(--ok);stroke-width:2}
+.anim .bx.bad{fill:var(--bad-soft);stroke:var(--bad);stroke-width:2.5}
+/* lifecycle */
+.lc-track{position:relative;padding:8px 6px 30px}
+.lc-line{position:absolute;left:24px;right:24px;top:24px;height:4px;background:var(--sunk);border-radius:2px}
+.lc-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.lc-dots{position:relative;display:flex;justify-content:space-between;gap:2px}
+.lc-dot{background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:6px;width:11%;min-width:0;color:var(--muted)}
+.lc-dot span{width:32px;height:32px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.78rem;font-weight:700;transition:all .3s}
+.lc-dot small{font-size:.7rem;text-align:center;line-height:1.2;overflow-wrap:anywhere}
+.lc-dot.done span{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.lc-dot.cur span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);transform:scale(1.15)}
+.lc-dot.cur small{color:var(--ink);font-weight:700}
+.lc-bean{display:none}
+@media (max-width:640px){.lc-dot small{display:none}.lc-dot span{width:26px;height:26px}}
+.lc-detail{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.lc-detail h4{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+.lc-detail h4 code{font-weight:400}
+/* cache 3 cấp */
+.c3-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:860px){.c3-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.c3-box{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);min-height:110px;min-width:0}
+.c3-box h4{font-size:.8rem;display:flex;flex-direction:column;margin-bottom:8px}
+.c3-box h4 small{font-weight:400;color:var(--muted);font-size:.72rem}
+.c3-box .chips{display:flex;flex-wrap:wrap;gap:6px}
+/* auto-config */
+.ac-opts{display:flex;flex-direction:column;gap:6px}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:.9rem;cursor:pointer}
+.chk input{margin-top:4px;accent-color:var(--accent)}
+.ac-out{display:flex;flex-direction:column;gap:4px}
+.cond{display:grid;grid-template-columns:20px minmax(0,1fr);gap:6px;font-family:var(--f-mono);font-size:.74rem;padding:5px 8px;border-radius:5px;overflow-wrap:anywhere}
+.cond.ok{background:var(--ok-soft)} .cond.ok b{color:var(--ok)}
+.cond.no{background:var(--sunk)} .cond.no b{color:var(--bad)}
+/* tx flow */
+.flow{display:flex;flex-direction:column;gap:6px}
+.flow div{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;font-size:.92rem;padding:6px 8px;border-radius:6px;background:var(--bg)}
+.flow b{width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.76rem}
+.traps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:760px){.traps{grid-template-columns:1fr}}
+.trap-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:0 12px;min-width:0}
+.trap-card summary{cursor:pointer;padding:10px 0;font-weight:600;list-style:none;display:flex;gap:10px;align-items:center}
+.trap-card summary::-webkit-details-marker{display:none}
+.trap-card .tn{font-family:var(--f-mono);font-size:.74rem;width:22px;height:22px;border-radius:50%;background:var(--bad-soft);color:var(--bad);display:flex;align-items:center;justify-content:center;flex:none}
+.trap-card[open]{padding-bottom:12px}
+.trap-card p{font-size:.9rem;margin-top:6px}
+/* propagation */
+.pp-presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pp-presets .btn{font-size:.8rem;padding:5px 10px}
+.pp-ctrl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
+@media (max-width:860px){.pp-ctrl{grid-template-columns:1fr 1fr}}
+@media (max-width:480px){.pp-ctrl{grid-template-columns:1fr}}
+.pp-ctrl .sel{width:100%}
+.pp-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px}
+@media (max-width:860px){.pp-main{grid-template-columns:1fr}}
+.pp-tx #pp-verdict{flex-direction:column;gap:4px}
+.pp-tx{display:flex;flex-direction:column;gap:10px;min-width:0}
+.txcard{border:2px dashed var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;transition:all .3s;background:var(--surface)}
+.txcard h4{font-size:.78rem;color:var(--muted)}
+.txcard b{font-family:var(--f-mono);font-size:.9rem}
+.txcard small{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.txcard.act{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
+.txcard.sus{border-style:solid;border-color:var(--muted);background:var(--sunk)}
+.txcard.rbo{border-style:solid;border-color:var(--warn);background:var(--warn-soft)}
+.txcard.com{border-style:solid;border-color:var(--ok);background:var(--ok-soft)}
+.txcard.rb{border-style:solid;border-color:var(--bad);background:var(--bad-soft)}
+.pp-db{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dbt{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);min-width:0}
+.dbt h4{font-family:var(--f-mono);font-size:.74rem;color:var(--muted);margin-bottom:6px}
+.dbrow{display:block;font-family:var(--f-mono);font-size:.74rem;padding:5px 8px;border-radius:5px;transition:all .3s}
+.dbrow.pend{border:1px dashed var(--accent);background:var(--accent-soft)}
+.dbrow.saved{border:1px solid var(--ok);background:var(--ok-soft);color:var(--ok);font-weight:600}
+.dbrow.lost{border:1px solid var(--bad);background:var(--bad-soft);color:var(--bad);text-decoration:line-through}
+.pp-timeline{list-style:none;margin:0;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--code-bg);border-radius:8px;max-height:430px;overflow:auto;counter-reset:ev}
+.pp-timeline li{font-family:var(--f-mono);font-size:.76rem;color:var(--code-ink);counter-increment:ev;display:grid;grid-template-columns:22px minmax(0,1fr);gap:6px}
+.pp-timeline li::before{content:counter(ev);color:var(--code-dim)}
+.pp-timeline li.w{color:var(--code-warn)} .pp-timeline li.ok{color:var(--code-str)} .pp-timeline li.h{color:var(--code-hl)}
+.pp-timeline li.cap{display:block;color:var(--code-dim);font-family:var(--f-ui)}
+.pp-timeline li.cap::before{content:none}
+/* request pipeline */
+.rq-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px}
+@media (max-width:860px){.rq-grid{grid-template-columns:1fr}}
+.pipe{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.pipe li{display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px;align-items:center;font-size:.86rem;padding:7px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);transition:all .3s}
+.pipe .pi{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.pipe li.pass{border-color:var(--accent);background:var(--accent-soft)}
+.pipe li.back{border-color:var(--ok);background:var(--ok-soft)}
+.pipe li.err{border-color:var(--bad);background:var(--bad-soft);font-weight:600}
+.pipe li.skip{opacity:.4;border-style:dashed}
+.pipe li.cur{box-shadow:0 0 0 3px var(--accent);transform:translateX(6px)}
+.rq-side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.resp{border:2px dashed var(--line);border-radius:8px;padding:12px;font-family:var(--f-mono);font-weight:600;text-align:center}
+.resp.ok{border-style:solid;border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.resp.warn{border-style:solid;border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+.resp.bad{border-style:solid;border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+/* property precedence */
+.pr-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.pr-grid{grid-template-columns:1fr}}
+.srcs{display:flex;flex-direction:column;gap:6px}
+.src{display:grid;grid-template-columns:24px 20px minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);cursor:pointer;transition:all .3s}
+.src .rank{font-family:var(--f-mono);font-size:.74rem;color:var(--muted)}
+.src span b{display:block;font-size:.88rem}
+.src code{font-size:.74rem}
+.src small{display:block;color:var(--warn);font-size:.74rem}
+.src em{font-style:normal;font-family:var(--f-mono);font-size:.72rem;font-weight:700;color:var(--accent-ink);background:var(--accent);padding:2px 8px;border-radius:999px}
+.src.win{border-color:var(--accent);background:var(--accent-soft)}
+.src.off{opacity:.5}
+.chk.prof{padding:6px 2px}
+.pr-result{border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--bg);display:flex;flex-direction:column;gap:6px}
+.bignum{font-family:var(--f-mono);font-size:2.6rem;font-weight:600;color:var(--accent);line-height:1}
+
+/* ===== thêm cho sổ tay Database ===== */
+.mysql{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--s2);font-weight:600;letter-spacing:.03em}
+.mysql::before{content:"";width:7px;height:7px;transform:rotate(45deg);background:var(--s2)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad)}
+.numin{font:inherit;font-family:var(--f-mono);font-size:.86rem;width:64px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 6px}
+/* storage */
+.store-diag{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+@media (max-width:560px){.store-diag{grid-template-columns:1fr}}
+.store-diag>div{display:flex;flex-direction:column;gap:8px;min-width:0}
+.sd-box{display:block;border:2px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.84rem;line-height:1.4;background:var(--surface)}
+.sd-box small{color:var(--muted)}
+.sd-box.pk{border-color:var(--accent);background:var(--accent-soft)}
+.sd-box.heap{border-color:var(--s2);border-style:dashed}
+.sd-box.sec{border-color:var(--s3)}
+/* B+Tree */
+.bt-node{fill:var(--surface);stroke:var(--line);stroke-width:1.5;transition:fill .3s,stroke .3s}
+.bt-node.hot{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5}
+.bt-node.leaf{fill:var(--bg)}
+.bt-node.leaf.hot{fill:var(--accent-soft)}
+.bt-edge{stroke:var(--line);stroke-width:1.5;fill:none;transition:stroke .3s}
+.bt-edge.hot{stroke:var(--accent);stroke-width:3}
+.bt-link{stroke:var(--s2);stroke-width:1.5;fill:none;stroke-dasharray:4 3}
+.bt-link.hot{stroke-width:3;stroke-dasharray:none}
+.anim text.bt-k{font-family:var(--f-mono);font-size:13px}
+.anim text.bt-k.hit{fill:var(--ok);font-weight:700}
+.anim text.bt-k.in{fill:var(--accent);font-weight:700}
+.anim text.bt-cap{font-size:12px;fill:var(--muted)}
+.anim text.bt-cmp{font-family:var(--f-mono);font-size:12px;fill:var(--accent);font-weight:600}
+.bt-key-bg.in{fill:var(--accent-soft)}
+.bt-key-bg{fill:transparent;transition:fill .3s}
+/* composite */
+.ci-ctrl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
+@media (max-width:760px){.ci-ctrl{grid-template-columns:1fr 1fr}}
+.ci-main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px}
+@media (max-width:860px){.ci-main{grid-template-columns:1fr}}
+.ci-idx{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface);min-width:0}
+.ci-head,.ci-row{display:grid;grid-template-columns:.7fr 1.3fr 1.2fr .8fr;gap:6px;padding:4px 10px;font-family:var(--f-mono);font-size:.76rem}
+.ci-head{background:var(--sunk);color:var(--muted);font-weight:600;padding-block:7px}
+.ci-row{border-top:1px solid var(--line);transition:background-color .3s,opacity .3s;position:relative}
+.ci-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ci-row.blk{background:var(--sunk)}
+.ci-row.seek{background:var(--accent-soft)}
+.ci-row.match{background:var(--ok-soft);font-weight:700}
+.ci-row.match::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--ok)}
+.ci-row.skip{opacity:.35}
+.ci-res{display:flex;flex-direction:column;gap:8px;min-width:0}
+.ci-res .bigline{font-family:var(--f-mono);font-size:.8rem;background:var(--code-bg);color:var(--code-ink);border-radius:8px;padding:10px 12px;overflow-wrap:anywhere}
+.ci-res .bigline b{color:var(--code-hl)}
+.ci-res .bigline .w{color:var(--code-warn)}
+.ci-cols{display:flex;gap:6px;flex-wrap:wrap}
+.ci-cols span{font-family:var(--f-mono);font-size:.74rem;padding:3px 8px;border-radius:6px;border:1px solid var(--line)}
+.ci-cols span.use{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ci-cols span.flt{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.ci-cols span.no{background:var(--sunk);color:var(--muted);text-decoration:line-through}
+/* tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:8px;padding:7px 12px;font-size:.86rem;display:flex;flex-direction:column;align-items:flex-start;gap:0;line-height:1.3;text-align:left}
+.tabs button b{font-family:var(--f-mono);font-size:.78rem;color:var(--ink)}
+.tabs button small{font-family:var(--f-mono);font-size:.72rem}
+.tabs button[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);box-shadow:inset 0 -3px 0 var(--accent)}
+#ex-panel{display:flex;flex-direction:column;gap:10px}
+.ex-badges{display:flex;gap:8px;flex-wrap:wrap}
+.ex-badges span{font-family:var(--f-mono);font-size:.76rem;border-radius:999px;padding:3px 10px;background:var(--sunk)}
+.ex-badges span.good{background:var(--ok-soft);color:var(--ok);font-weight:700}
+.ex-badges span.bad{background:var(--bad-soft);color:var(--bad);font-weight:700}
+.ex-notes{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:.92rem}
+/* no-index cards */
+.noidx{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.noidx{grid-template-columns:1fr}}
+.ni{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.ni h4{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ni h4 .n{font-family:var(--f-mono);font-size:.74rem;width:24px;height:24px;border-radius:50%;background:var(--bad-soft);color:var(--bad);display:flex;align-items:center;justify-content:center;flex:none}
+.ni pre.code{margin:0;font-size:.74rem}
+.ni-vs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ni-vs div{border-radius:7px;padding:6px 10px;font-size:.82rem;min-width:0}
+.ni-vs div b{display:block;font-family:var(--f-mono);font-size:1rem}
+.ni-vs .bad{background:var(--bad-soft);color:var(--bad)}
+.ni-vs .good{background:var(--ok-soft);color:var(--ok)}
+.ni-vs div small{color:var(--ink);opacity:.8;font-size:.74rem}
+.ni-bar{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden;margin-top:4px}
+.ni-bar i{display:block;height:100%;background:currentColor;border-radius:4px;width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.ni p{font-size:.9rem}
+/* ACID */
+.acid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.acid{grid-template-columns:1fr}}
+.acid .card{position:relative;padding-left:66px}
+.acid-l{position:absolute;left:14px;top:14px;width:40px;height:40px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:1.3rem;display:flex;align-items:center;justify-content:center}
+/* isolation */
+.is-lanes{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.is-head,.is-step{display:grid;grid-template-columns:minmax(0,1fr) 120px minmax(0,1fr);gap:8px;padding:6px 10px;align-items:center}
+@media (max-width:560px){.is-head,.is-step{grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr)}}
+.is-head{background:var(--sunk);font-size:.78rem;font-weight:700;color:var(--muted)}
+.is-head span:nth-child(2){text-align:center}
+.is-step{border-top:1px solid var(--line);font-family:var(--f-mono);font-size:.76rem;min-height:38px}
+.is-step>div{min-width:0;overflow-wrap:anywhere}
+.is-step .op{padding:5px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg)}
+.is-step .op.a{border-color:var(--s1)} .is-step .op.b{border-color:var(--s2)}
+.is-step .op .r{display:block;font-weight:700;margin-top:2px}
+.is-step .op.err{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.is-step .op.blk{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.is-step .op.anom .r{color:var(--bad)}
+.is-step .op.okv .r{color:var(--ok)}
+.is-step .db{text-align:center;font-weight:700;color:var(--muted);font-size:.72rem}
+.is-step.new{animation:isin .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes isin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+td.y{color:var(--bad);font-weight:700}
+td.nn{color:var(--ok);font-weight:700}
+td.mid{color:var(--warn);font-weight:700}
+#is-matrix tr.cur td{background:var(--accent-soft)}
+/* MVCC */
+.mv-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.mv-grid{grid-template-columns:1fr}}
+.mv-t{font-size:.8rem;color:var(--muted);margin-bottom:8px}
+.mv-heap,.mv-txs{display:flex;flex-direction:column;gap:8px;min-height:90px}
+.tup{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:6px;align-items:center;border:2px solid var(--line);border-radius:8px;padding:8px 10px;font-family:var(--f-mono);font-size:.76rem;background:var(--surface);transition:border-color .3s,background-color .3s,opacity .3s}
+.tup .v{font-weight:800;font-size:.9rem}
+.tup span small{display:block;color:var(--muted);font-size:.66rem}
+.tup.live{border-color:var(--ok)}
+.tup.dead{border-style:dashed;opacity:.7}
+.tup.pend{border-color:var(--accent);border-style:dashed}
+.txc{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);font-size:.84rem}
+.txc b{font-family:var(--f-mono)}
+.txc .sees{font-family:var(--f-mono);font-size:.76rem}
+.txc.act{border-color:var(--accent);background:var(--accent-soft)}
+.txc.done{opacity:.55}
+.see{display:inline-block;padding:0 6px;border-radius:4px;background:var(--ok-soft);color:var(--ok);font-weight:700}
+/* gap lock */
+.gl-rec{fill:var(--surface);stroke:var(--ink);stroke-width:2}
+.gl-rec.lk{fill:var(--bad-soft);stroke:var(--bad)}
+.gl-gap{fill:transparent;stroke:none}
+.gl-gap.lk{fill:var(--bad-soft);opacity:.75}
+.anim text.gl-v{font-family:var(--f-mono);font-weight:700;font-size:14px}
+.anim text.gl-c{font-size:11px;fill:var(--muted)}
+.gl-ins{transition:transform .5s}
+/* N+1 */
+.np-grid{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:12px}
+@media (max-width:640px){.np-grid{grid-template-columns:1fr}}
+.np-stat{display:flex;flex-direction:column;gap:8px}
+@media (max-width:640px){.np-stat{flex-direction:row}}
+.np-stat .stat b{font-size:1.6rem}
+.simlog .s{color:var(--code-str)}
+.simlog .d{color:var(--code-dim)}
+/* hikari */
+.hp-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:640px){.hp-grid{grid-template-columns:1fr}}
+.hp-slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.slot{height:42px;border-radius:7px;border:2px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.68rem;color:var(--muted);position:relative;overflow:hidden;transition:background-color .2s,border-color .2s}
+.slot.busy{border-style:solid;border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.slot i{position:absolute;left:0;bottom:0;height:4px;background:var(--accent);transition:width .05s linear}
+.hp-queue{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;min-height:96px;max-height:150px;overflow:hidden}
+.qd{width:16px;height:16px;border-radius:4px;background:var(--warn-soft);border:1px solid var(--warn);position:relative;overflow:hidden}
+.qd i{position:absolute;left:0;bottom:0;width:100%;background:var(--warn)}
+.qd.to{background:var(--bad);border-color:var(--bad)}
+.ci-ctrl .field{min-width:0}
+.ci-ctrl .sel{width:100%;min-width:0}
+.sim-ctrl label{flex-wrap:wrap;max-width:100%;min-width:0}
+.sim-ctrl .sel{max-width:100%;min-width:0}
+
+/* ===== thêm cho sổ tay Redis ===== */
+.txtin{font:inherit;font-family:var(--f-mono);font-size:.86rem;width:220px;max-width:100%;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 8px}
+.bt-node.found{fill:var(--ok-soft);stroke:var(--ok);stroke-width:2.5}
+.bt-node.fresh{stroke:var(--s2);stroke-width:2.5}
+/* playground */
+.pg-ex{display:flex;flex-wrap:wrap;gap:6px}
+.pg-ex .btn{font-size:.8rem;padding:5px 10px}
+.pg-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:860px){.pg-grid{grid-template-columns:1fr}}
+.pg-term{background:var(--code-bg);border-radius:8px;display:flex;flex-direction:column;min-width:0;height:420px}
+.pg-out{flex:1;overflow:auto;padding:10px 12px;font-family:var(--f-mono);font-size:.76rem;color:var(--code-ink);display:flex;flex-direction:column;gap:6px}
+.pg-out pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--code-str);font:inherit}
+.pg-out pre.err{color:var(--code-warn)}
+.pg-c{color:var(--code-ink);overflow-wrap:anywhere}
+.pg-c span,.pg-in span{color:var(--code-hl)}
+.pg-in{display:flex;gap:6px;align-items:center;border-top:1px solid #ffffff22;padding:8px 10px}
+.pg-in span{font-family:var(--f-mono);font-size:.8rem}
+.pg-in input{flex:1;min-width:0;background:transparent;border:0;color:var(--code-ink);font-family:var(--f-mono);font-size:.84rem;outline:none}
+.pg-in input::placeholder{color:var(--code-dim)}
+.pg-in .btn{padding:4px 10px;font-size:.8rem}
+.pg-view{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow:auto;min-width:0}
+.pg-key{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);transition:box-shadow .3s}
+.pg-key.hot{box-shadow:0 0 0 2px var(--accent)}
+.pg-kh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.pg-kh b{font-family:var(--f-mono);font-size:.8rem;overflow-wrap:anywhere}
+.pg-type{font-family:var(--f-mono);font-size:.66rem;padding:1px 6px;border-radius:4px;background:var(--accent);color:var(--accent-ink);font-weight:700}
+.pg-type.t-hash{background:var(--s3);color:#fff}.pg-type.t-list{background:var(--s2);color:#fff}.pg-type.t-set{background:var(--ok);color:#fff}.pg-type.t-zset{background:var(--old);color:#fff}.pg-type.t-bitmap,.pg-type.t-hll{background:var(--muted);color:#fff}
+.pg-enc{font-family:var(--f-mono);font-size:.66rem;color:var(--muted);border:1px solid var(--line);padding:0 5px;border-radius:4px}
+.pg-ttl{font-family:var(--f-mono);font-size:.66rem;color:var(--warn);background:var(--warn-soft);padding:1px 6px;border-radius:4px;margin-left:auto}
+.pg-str{font-family:var(--f-mono);font-size:.78rem;background:var(--bg);padding:5px 8px;border-radius:5px;overflow-wrap:anywhere}
+.pg-hash{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-family:var(--f-mono);font-size:.76rem}
+.pg-hash span{color:var(--muted)}.pg-hash b{overflow-wrap:anywhere}
+.pg-list,.pg-set{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-family:var(--f-mono);font-size:.74rem}
+.pg-list span,.pg-set span{border:1px solid var(--line);border-radius:5px;padding:2px 7px;background:var(--bg)}
+.pg-list span i{font-style:normal;color:var(--muted);font-size:.64rem;margin-right:4px}
+.pg-list small{color:var(--muted);font-size:.66rem}
+.pg-set span{border-radius:999px}
+.pg-z{display:flex;flex-direction:column;gap:3px;font-family:var(--f-mono);font-size:.74rem}
+.pg-z div{display:grid;grid-template-columns:18px minmax(0,1.2fr) minmax(0,1fr) auto;gap:6px;align-items:center}
+.pg-z .r{color:var(--muted)}.pg-z .m{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-z .bar{height:8px;background:var(--sunk);border-radius:4px;overflow:hidden}.pg-z .bar i{display:block;height:100%;background:var(--accent);transition:width .4s}
+.pg-z small{color:var(--muted)}
+.pg-bits{display:flex;flex-wrap:wrap;gap:2px}
+.pg-bits i{font-style:normal;font-family:var(--f-mono);font-size:.66rem;width:18px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:3px;background:var(--sunk);color:var(--muted)}
+.pg-bits i.on{background:var(--accent);color:var(--accent-ink);font-weight:700}
+/* eviction */
+.ev-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.ev-grid{grid-template-columns:1fr}}
+.ev-slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.evs{border:2px solid var(--line);border-radius:7px;padding:6px 4px;text-align:center;display:flex;flex-direction:column;gap:1px;min-width:0;transition:background-color .3s,border-color .3s}
+.evs b{font-family:var(--f-mono);font-size:.9rem}
+.evs small{font-size:.62rem;color:var(--muted);overflow-wrap:anywhere;line-height:1.2}
+.evs.hot{border-color:var(--accent);background:var(--accent-soft)}
+.evs.nw{animation:evin .5s}
+.evs.empty{border-style:dashed;color:var(--muted);font-size:.72rem;justify-content:center}
+@keyframes evin{from{transform:scale(.7);opacity:.2}to{transform:none;opacity:1}}
+.ev-req{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-height:30px}
+.evr{display:inline-flex;gap:2px;align-items:center;border:1px solid var(--line);border-radius:5px;padding:1px 4px;font-family:var(--f-mono);font-size:.72rem}
+.evr.hot b{color:var(--accent)}
+.evr i{font-style:normal;font-size:.6rem;width:13px;height:13px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+.evr i.h{background:var(--ok)}.evr i.m{background:var(--bad)}
+/* patterns, incidents */
+.patterns,.incidents{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.patterns,.incidents{grid-template-columns:1fr}}
+.inc-h{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.04em;text-transform:uppercase;color:var(--bad);font-weight:700}
+/* cache consistency */
+.ca-wrap{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:12px}
+@media (max-width:640px){.ca-wrap{grid-template-columns:1fr}}
+.ca-lanes{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface);min-width:0}
+.ca-head{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 10px;background:var(--sunk);font-size:.78rem;font-weight:700;color:var(--muted)}
+.ca-row.is-step{grid-template-columns:1fr 1fr}
+.ca-state{display:flex;flex-direction:column;gap:8px}
+@media (max-width:640px){.ca-state{flex-direction:row}}
+.ca-box{flex:1;border:2px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:2px}
+.ca-box small{font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.ca-box b{font-family:var(--f-mono);font-size:1.05rem}
+/* rate limit */
+.rl-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:860px){.rl-grid{grid-template-columns:1fr}}
+.rl-p svg{width:100%;height:auto;display:block}
+.rl-p svg text{font-family:var(--f-ui);font-size:11px;fill:var(--ink)}
+.rl-p svg text.bt-cmp{font-family:var(--f-mono);font-size:11px;fill:var(--accent);font-weight:600}
+.rl-p svg text.bt-cap{fill:var(--muted)}
+.rl-c{display:flex;flex-wrap:wrap;gap:6px;font-family:var(--f-mono);font-size:.72rem;margin-top:4px}
+.rl-c span{padding:1px 6px;border-radius:4px;background:var(--sunk)}
+.rl-c .okc{background:var(--ok-soft);color:var(--ok);font-weight:700}
+.rl-c .noc{background:var(--bad-soft);color:var(--bad);font-weight:700}
+/* stream */
+.sm-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
+@media (max-width:760px){.sm-grid{grid-template-columns:1fr}}
+.sm-log{display:flex;flex-direction:column;gap:4px;min-height:60px}
+.sm-e{display:grid;grid-template-columns:auto 1fr;gap:0 8px;border:1px solid var(--line);border-left-width:4px;border-radius:6px;padding:4px 8px;font-family:var(--f-mono);font-size:.72rem;background:var(--bg)}
+.sm-e small{grid-column:1/-1;color:var(--muted);font-size:.66rem}
+.sm-e.new{border-left-color:var(--muted)}
+.sm-e.pend{border-left-color:var(--warn);background:var(--warn-soft)}
+.sm-e.ack{border-left-color:var(--ok);opacity:.65}
+.sm-dead{font-size:.76rem;color:var(--bad);font-weight:700;margin-bottom:4px}
+.cs-ex{display:flex;flex-wrap:wrap;gap:4px}
+.cs-ex .chip{cursor:pointer;font-size:.7rem}
+.cs-ex .chip:hover{border-color:var(--accent)}
+
+/* ===== thêm cho sổ tay System design ===== */
+.simlb{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--s3);font-weight:600;letter-spacing:.03em}
+.simlb::before{content:"";width:7px;height:7px;border-radius:2px;border:2px solid var(--s3)}
+.numin.wide{width:100%}
+.frame{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:860px){.frame{grid-template-columns:1fr}}
+.fr-step{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+.fr-step>b{width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono)}
+.fr-step h4{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.fr-step h4 small{font-family:var(--f-mono);font-weight:400;color:var(--muted);font-size:.72rem}
+.fr-step p{font-size:.88rem}
+.calc-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:860px){.calc-grid{grid-template-columns:1fr 1fr}}
+.calc-grid .field span{font-size:.78rem;font-weight:600;color:var(--muted)}
+.calc-out{display:flex;flex-direction:column;gap:8px}
+.calc-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.calc-cards{grid-template-columns:1fr 1fr}}
+.calc-cards .stat{min-width:0}
+.calc-cards .stat b{font-size:1.05rem;overflow-wrap:anywhere}
+.layers{display:flex;flex-direction:column;gap:6px;max-width:760px}
+.ly{display:grid;grid-template-columns:200px 150px minmax(0,1fr);gap:10px;align-items:center;padding:10px 14px;border-radius:8px;background:var(--accent-soft);border-left:4px solid var(--accent)}
+.ly:nth-child(2){margin-left:16px}.ly:nth-child(3){margin-left:32px}.ly:nth-child(4){margin-left:48px}.ly:nth-child(5){margin-left:64px}
+.ly.db{background:var(--warn-soft);border-color:var(--warn)}
+.ly span{font-family:var(--f-mono);font-size:.8rem}.ly small{color:var(--muted);font-size:.82rem}
+@media (max-width:640px){.ly{grid-template-columns:1fr;margin-left:0!important;gap:2px}}
+.ladder{display:flex;flex-direction:column;gap:6px}
+.ld{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.ld>b{width:30px;height:30px;border-radius:8px;background:var(--sunk);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono)}
+.ld p{font-size:.9rem}
+.ring-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:760px){.ring-grid{grid-template-columns:1fr}}
+.ring-grid .anim svg{min-width:0;max-width:440px;margin:auto}
+.ring-side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.ring-load{display:flex;flex-direction:column;gap:4px}
+.rl-row{display:grid;grid-template-columns:80px minmax(0,1fr) 54px;gap:8px;align-items:center;font-size:.82rem}
+.rl-row span:first-child{display:flex;gap:6px;align-items:center}.rl-row i{display:inline-block;width:10px;height:10px;border-radius:3px}
+.rl-row .bar{height:10px;background:var(--sunk);border-radius:5px;overflow:hidden}.rl-row .bar i{display:block;height:100%;width:0;border-radius:5px;transition:width .5s}
+.rl-row b{font-family:var(--f-mono);font-size:.78rem;text-align:right}
+.sg-flow{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap}
+.sg-step{flex:1;min-width:140px;border:2px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;background:var(--surface);transition:all .3s}
+.sg-step small{color:var(--muted);font-size:.74rem}
+.sg-st{font-family:var(--f-mono);font-size:.72rem;margin-top:4px}
+.sg-step.run{border-color:var(--accent);background:var(--accent-soft)}
+.sg-step.ok{border-color:var(--ok);background:var(--ok-soft)}
+.sg-step.fail{border-color:var(--bad);background:var(--bad-soft)}
+.sg-step.compr{border-color:var(--warn);background:var(--warn-soft)}
+.sg-step.comp{border-color:var(--warn);border-style:dashed;opacity:.8}
+.sg-step.retry{border-color:var(--warn);background:var(--warn-soft)}
+.sg-arr{align-self:center;font-style:normal;color:var(--muted)}
+@media (max-width:640px){.sg-arr{display:none}.sg-step{min-width:calc(50% - 6px)}}
+.cb-grid,.tail-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px;align-items:center}
+@media (max-width:760px){.cb-grid,.tail-grid{grid-template-columns:1fr}}
+.cb-grid .anim svg,.tail-grid .anim svg{min-width:0}
+.cb-side,.tail-side{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cb-win{display:flex;gap:4px;flex-wrap:wrap}
+.cb-win span{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;font-weight:700}
+.cb-win span.ok{background:var(--ok)}.cb-win span.no{background:var(--bad)}
+.slo{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.slo-btns{display:flex;flex-wrap:wrap;gap:6px}.slo-btns .btn{padding:4px 10px;font-size:.8rem}
+.steps-case{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.steps-case{grid-template-columns:1fr}}
+.sf-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:860px){.sf-grid{grid-template-columns:1fr}}
+.sf-bits{display:grid;grid-template-columns:repeat(32,minmax(0,1fr));gap:1px;font-family:var(--f-mono);font-size:.6rem}
+.sf-bits i{font-style:normal;text-align:center;padding:2px 0;border-radius:2px;color:#fff}
+.b-sg{background:var(--muted)}.b-ts{background:var(--s1)}.b-wk{background:var(--s3)}.b-sq{background:var(--s2)}
+.sf-leg{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;font-size:.72rem}
+.sf-leg span{padding:1px 6px;border-radius:4px;color:#fff}
+.sf-list{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow:auto}
+.sf-row{display:flex;flex-direction:column;gap:1px;font-family:var(--f-mono);font-size:.72rem;border:1px solid var(--line);border-radius:6px;padding:4px 8px;overflow-wrap:anywhere}
+.sf-row small{color:var(--muted);margin-right:6px}
+.cms-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px}
+@media (max-width:760px){.cms-grid{grid-template-columns:1fr}}
+.cms-table{display:flex;flex-direction:column;gap:3px;min-width:0}
+.cms-row{display:grid;grid-template-columns:24px repeat(12,minmax(0,1fr));gap:3px;align-items:center}
+.cms-row small{font-family:var(--f-mono);font-size:.68rem;color:var(--muted)}
+.cms-row span{font-family:var(--f-mono);font-size:.74rem;text-align:center;padding:5px 0;border-radius:4px;background:var(--sunk);transition:background-color .3s}
+.cms-row span.hit{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+.cms-row span.min{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.cms-side table{font-size:.82rem}.cms-side td.over{color:var(--bad);font-weight:700}.cms-side tr.cur td{background:var(--accent-soft)}
+#cms-btns .btn{font-size:.78rem;padding:4px 9px}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="toc" aria-label="Mục lục">
+  <div class="brand">Sổ tay System design</div>
+  <ol id="toc">
+    <li><a href="#map"><span>00</span>Khung trả lời</a></li>
+    <li><a href="#estimate"><span>01</span>Ước lượng nhanh</a></li>
+    <li><a href="#evolve"><span>02</span>Từ 1 tới 1 triệu user</a></li>
+    <li><a href="#lb"><span>03</span>Load balancer</a></li>
+    <li><a href="#cache"><span>04</span>Cache nhiều tầng</a></li>
+    <li><a href="#dbscale"><span>05</span>Scale database</a></li>
+    <li><a href="#hash"><span>06</span>Consistent hashing</a></li>
+    <li><a href="#cap"><span>07</span>CAP và nhất quán</a></li>
+    <li><a href="#queue"><span>08</span>Queue và outbox</a></li>
+    <li><a href="#idem"><span>09</span>Idempotency</a></li>
+    <li><a href="#saga"><span>10</span>Transaction phân tán</a></li>
+    <li><a href="#resil"><span>11</span>Chịu lỗi</a></li>
+    <li><a href="#observe"><span>12</span>Quan sát và SLO</a></li>
+    <li><a href="#url"><span>13</span>Case: URL shortener</a></li>
+    <li><a href="#hugeclub"><span>14</span>Case: Hugeclub</a></li>
+    <li><a href="#nearby"><span>15</span>Case: nhà hàng gần</a></li>
+    <li><a href="#trending"><span>16</span>Case: từ khoá hot</a></li>
+    <li><a href="#notify"><span>17</span>Case: gửi thông báo</a></li>
+    <li><a href="#interview"><span>18</span>Câu hỏi phỏng vấn</a></li>
+    <li><a href="#lab"><span>19</span>Lab và checklist</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero" id="top">
+  <div class="eyebrow">Scale · Nhất quán · Chịu lỗi · Case study</div>
+  <h1>Sổ tay System design</h1>
+  <p class="lede">Từ khung trả lời 45 phút, ước lượng nhanh, load balancer, cache, sharding, queue, transaction phân tán, tới năm case study bám theo chính dự án của bạn. Kết quả gắn nhãn <span class="real">ĐO THẬT</span> chạy trên máy mình với PostgreSQL 16, Redis 7 và server TCP tự viết. Kết quả gắn nhãn <span class="simlb">MÔ PHỎNG</span> là mô hình chạy bằng code (hàng đợi, retry, cân bằng tải) để thấy hiện tượng mà không cần cả cụm máy thật.</p>
+  <div class="facts"><span>14 mô phỏng tương tác</span><span>7 biểu đồ số đo</span><span>20 chương</span><span>5 case study</span><span>40 câu hỏi phỏng vấn</span></div>
+</header>
+
+<!-- 00 -->
+<section class="ch" id="map">
+  <div class="ch-head"><div class="eyebrow">Chương 00</div><h2>Khung trả lời một câu system design</h2>
+    <p>Phỏng vấn system design không có đáp án đúng duy nhất. Người phỏng vấn chấm <b>cách bạn suy nghĩ</b>: hỏi đúng câu, ước lượng có căn cứ, chọn giải pháp và nói được cái giá phải trả.</p></div>
+  <div class="frame" id="frame">
+    <div class="fr-step"><b>1</b><div><h4>Làm rõ yêu cầu <small>5 phút</small></h4><p>Chức năng chính (3–5 cái), bao nhiêu người dùng, đọc nhiều hay ghi nhiều, cần nhất quán tới đâu, độ trễ chấp nhận được, có cần tính sẵn sàng cao không. <b>Ghi ra những gì không làm.</b></p></div></div>
+    <div class="fr-step"><b>2</b><div><h4>Ước lượng <small>3–5 phút</small></h4><p>QPS trung bình và lúc cao điểm, tỉ lệ đọc/ghi, dung lượng lưu trữ theo năm, băng thông, bộ nhớ cache. Chỉ cần đúng bậc độ lớn (chương 01).</p></div></div>
+    <div class="fr-step"><b>3</b><div><h4>API và mô hình dữ liệu <small>5–10 phút</small></h4><p>Vài endpoint chính (method, path, request, response). Các bảng/thực thể chính, khoá, index. Chọn SQL hay NoSQL và nói lý do.</p></div></div>
+    <div class="fr-step"><b>4</b><div><h4>Sơ đồ tổng thể <small>10 phút</small></h4><p>Client → LB → service → cache → DB, queue, worker. Đi một request từ đầu tới cuối trên sơ đồ.</p></div></div>
+    <div class="fr-step"><b>5</b><div><h4>Đào sâu <small>10–15 phút</small></h4><p>Chọn 2–3 điểm khó nhất (thường do interviewer chỉ): chống trùng, hot key, sharding, nhất quán cache, xử lý lỗi. Đưa ra 2 phương án, so sánh, chọn một.</p></div></div>
+    <div class="fr-step"><b>6</b><div><h4>Điểm nghẽn và mở rộng <small>5 phút</small></h4><p>Chỗ nào chết trước khi tải tăng 10 lần? Theo dõi gì (metric, alert)? Nếu có thêm thời gian sẽ làm gì?</p></div></div>
+  </div>
+  <div class="grid2">
+    <div class="callout"><b class="t">Câu nói nên dùng</b>"Em giả định… để ước lượng, anh/chị thấy hợp lý không?" · "Có hai cách: A nhanh hơn nhưng có thể mất dữ liệu khi…, B chậm hơn nhưng… Với yêu cầu ở đây em chọn B." · "Điểm nghẽn đầu tiên khi tải tăng sẽ là…"</div>
+    <div class="callout warn"><b class="t">Lỗi hay gặp</b>Vẽ ngay Kafka, Kubernetes, microservice khi chưa hỏi quy mô. Không ước lượng. Chỉ nói "dùng cache" mà không nói cache gì, TTL bao lâu, xoá khi nào. Không nhắc tới chuyện gì xảy ra khi một thành phần chết.</div>
+  </div>
+</section>
+
+<!-- 01 -->
+<section class="ch" id="estimate">
+  <div class="ch-head"><div class="eyebrow">Chương 01</div><h2>Ước lượng nhanh (back-of-the-envelope)</h2>
+    <p>Hai thứ cần thuộc: <b>các mốc độ trễ</b> để biết cái gì nhanh, cái gì chậm, và <b>cách nhân chia</b> từ số người dùng ra QPS và dung lượng.</p></div>
+  <div class="card"><span class="real">ĐO THẬT</span><div class="chart-title" style="margin-top:6px">Các mốc độ trễ đo trên chính máy này</div><p class="cap">micro giây, thang log; mỗi thao tác đo lặp nhiều lần lấy giá trị tốt nhất. Hai dòng cuối là số tham khảo, không đo được ở đây.</p><div class="chart" id="ch-lat"></div></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Quy tắc nhớ</h4>
+      <ul><li><b>Bộ nhớ</b> nhanh hơn <b>đĩa</b> khoảng 4 lần khi đọc tuần tự 1 MB (đo thật: 97 µs và 373 µs), nhưng nhanh hơn hàng chục nghìn lần khi đọc ngẫu nhiên từng byte (15 ns so với hàng chục, hàng trăm µs).</li><li>Một lượt mạng trong cùng máy đã tốn 90–100 µs (Redis GET 89 µs, PostgreSQL theo khoá chính 103 µs). Trong cùng vùng AWS: 0,3–1 ms. Qua châu lục: 100–200 ms.</li><li><code>fsync</code> một trang 4 KB: 176 µs. Đây là lý do commit một transaction không thể nhanh hơn mức đó trên đĩa này, và lý do gom nhiều ghi vào một lần flush.</li><li>Mở kết nối HTTP mới tốn thêm 164 µs so với giữ kết nối (418 µs so với 254 µs) ngay cả trong cùng máy; có TLS và mạng thật thì chênh lệch tính bằng mili giây. Luôn dùng connection pool.</li></ul></div>
+    <div class="card prose"><h4>Các con số làm tròn</h4>
+      <div class="tblwrap"><table><tbody>
+        <tr><td>1 ngày</td><td class="n">86 400 s ≈ <b>10<sup>5</sup> s</b></td></tr>
+        <tr><td>1 triệu request/ngày</td><td class="n">≈ <b>12 QPS</b></td></tr>
+        <tr><td>Cao điểm</td><td class="n">trung bình × <b>2–5</b></td></tr>
+        <tr><td>1 năm</td><td class="n">≈ 3,15 × 10<sup>7</sup> s</td></tr>
+        <tr><td>1 KB × 1 triệu</td><td class="n">1 GB</td></tr>
+        <tr><td>Quy tắc 80/20 cho cache</td><td class="n">cache 20% dữ liệu đọc trong ngày</td></tr>
+        <tr><td>Một server ứng dụng Java thường</td><td class="n">vài trăm – vài nghìn QPS</td></tr>
+        <tr><td>Một PostgreSQL/MySQL tốt</td><td class="n">vài nghìn – vài chục nghìn QPS đơn giản</td></tr>
+        <tr><td>Một Redis</td><td class="n">~100 000 lệnh/s</td></tr>
+      </tbody></table></div></div>
+  </div>
+  <div class="card sim" id="calc">
+    <h3 style="margin:0">Máy tính ước lượng</h3>
+    <div class="pp-presets" id="calc-pre"></div>
+    <div class="calc-grid">
+      <label class="field"><span>Người dùng hoạt động mỗi ngày (DAU)</span><input type="number" id="c-dau" class="numin wide" value="300000" min="1"></label>
+      <label class="field"><span>Request đọc mỗi người mỗi ngày</span><input type="number" id="c-read" class="numin wide" value="20" min="0"></label>
+      <label class="field"><span>Request ghi mỗi người mỗi ngày</span><input type="number" id="c-write" class="numin wide" value="2" min="0"></label>
+      <label class="field"><span>Hệ số cao điểm</span><input type="number" id="c-peak" class="numin wide" value="5" min="1" step="0.5"></label>
+      <label class="field"><span>Kích thước một bản ghi (byte)</span><input type="number" id="c-size" class="numin wide" value="500" min="1"></label>
+      <label class="field"><span>Giữ dữ liệu (năm)</span><input type="number" id="c-years" class="numin wide" value="3" min="0" step="0.5"></label>
+      <label class="field"><span>Kích thước response đọc (KB)</span><input type="number" id="c-resp" class="numin wide" value="5" min="0" step="0.5"></label>
+    </div>
+    <div class="calc-out" id="calc-out"></div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="ch" id="evolve">
+  <div class="ch-head"><div class="eyebrow">Chương 02</div><h2>Từ 1 tới 1 triệu người dùng</h2>
+    <p>Kiến trúc không vẽ một lần cho xong. Nó lớn lên theo từng điểm nghẽn. Đi từng bước để thấy mỗi thành phần được thêm vào để giải quyết vấn đề gì.</p></div>
+  <div class="card sim" id="evo">
+    <div class="sim-ctrl"><button class="btn" type="button" id="evo-prev">Bước trước</button><button class="btn primary" type="button" id="evo-next">Bước tiếp</button><span class="cap" id="evo-cnt"></span></div>
+    <div class="anim"><svg id="evo-svg" viewBox="0 0 760 330" role="img" aria-label="Sơ đồ kiến trúc lớn dần"></svg></div>
+    <div class="lc-detail" id="evo-note"></div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Stateless là điều kiện để scale ngang</h4>
+      <ul><li>Server ứng dụng không giữ trạng thái riêng của người dùng trong bộ nhớ (session, file upload, cache cục bộ quan trọng).</li><li>Session: lưu ở Redis (Spring Session) hoặc dùng JWT; file: S3; job: chỉ một instance chạy (khoá) hoặc chia việc qua queue.</li><li>Khi đó thêm/bớt task ECS chỉ là đổi con số <code>desiredCount</code>, auto scaling theo CPU hoặc số request.</li></ul></div>
+    <div class="card prose"><h4>Scale dọc hay scale ngang</h4>
+      <ul><li><b>Dọc</b> (máy to hơn): đơn giản, không đổi code; có trần, giá tăng nhanh, vẫn là một điểm chết.</li><li><b>Ngang</b> (thêm máy): gần như không trần, chịu lỗi tốt; cần stateless, LB, và dữ liệu phải chia hoặc nhân bản.</li><li>Database thường scale dọc lâu nhất có thể (RDS lớn hơn, read replica) trước khi phải sharding.</li></ul></div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section class="ch" id="lb">
+  <div class="ch-head"><div class="eyebrow">Chương 03</div><h2>Load balancer</h2>
+    <p>Chia request cho nhiều server, loại server hỏng ra khỏi vòng (health check), và là nơi kết thúc TLS.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>L4 và L7 load balancer khác nhau thế nào?</li><li>Các thuật toán chia tải? Round robin có vấn đề gì?</li><li>Sticky session là gì, có nên dùng?</li></ul></div>
+  <div class="card sim" id="lbs">
+    <div class="sim-ctrl">
+      <span class="seg-ctl" role="radiogroup" aria-label="Thuật toán" id="lbs-mode"><button type="button" data-m="rr" aria-pressed="true">Round robin</button><button type="button" data-m="least" aria-pressed="false">Least connections</button><button type="button" data-m="p2c" aria-pressed="false">Power of two choices</button></span>
+      <button class="btn" type="button" id="lbs-pause" aria-pressed="false">Tạm dừng</button>
+    </div>
+    <p class="cap">Request xanh xử lý nhanh, request cam chậm gấp 20 lần (ví dụ báo cáo, export). Xem các request nhanh bị kẹt sau request chậm như thế nào.</p>
+    <div class="anim"><svg id="lbs-svg" viewBox="0 0 760 260" role="img" aria-label="Request đi qua load balancer tới 4 server"></svg></div>
+    <div class="sim-stats"><div class="stat"><b id="lbs-p50">–</b><span>Chờ trung vị (request nhanh)</span></div><div class="stat"><b id="lbs-p99">–</b><span>Chờ p99 (request nhanh)</span></div><div class="stat"><b id="lbs-n">0</b><span>Request đã xong</span></div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="simlb">MÔ PHỎNG</span><div class="chart-title" style="margin-top:6px">Độ trễ của request nhanh (10 ms) theo thuật toán</div><p class="cap">4 server × 4 luồng; 5% request mất 500 ms; tải 82% công suất; 76 000 request; mili giây, thang log</p><div class="chart" id="ch-lb"></div></div>
+    <div class="card prose"><h4>L4, L7 và các thuật toán</h4>
+      <ul><li><b>L4</b> (AWS NLB): nhìn IP, cổng; rất nhanh, giữ nguyên kết nối TCP. <b>L7</b> (AWS ALB, Nginx): đọc HTTP, định tuyến theo path/host/header, kết thúc TLS, thêm <code>X-Forwarded-For</code>.</li><li><b>Round robin</b>: chia đều số request, không quan tâm request nặng nhẹ; một server dính request chậm vẫn bị chia thêm.</li><li><b>Least connections / least outstanding requests</b> (ALB có sẵn): gửi cho server đang bận ít nhất.</li><li><b>Power of two choices</b>: chọn ngẫu nhiên 2 server, gửi cho cái ít bận hơn. Gần bằng least connections mà không cần biết trạng thái toàn bộ.</li><li><b>Consistent hash</b> theo key: cùng user luôn tới cùng server (hữu ích cho cache cục bộ), chương 06.</li><li><b>Sticky session</b>: tránh nếu được; server chết là mất phiên, tải lệch. Làm server stateless thay vào đó.</li></ul></div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="ch" id="cache">
+  <div class="ch-head"><div class="eyebrow">Chương 04</div><h2>Cache nhiều tầng</h2>
+    <p>Mỗi tầng cache chặn bớt request trước khi tới tầng đắt hơn phía sau. Chi tiết về Redis, cache-aside, stampede đã có trong sổ tay Redis; ở đây nhìn ở mức kiến trúc.</p></div>
+  <div class="layers">
+    <div class="ly"><b>Trình duyệt / app</b><span><code>Cache-Control</code>, <code>ETag</code></span><small>ảnh, JS, dữ liệu ít đổi</small></div>
+    <div class="ly"><b>CDN</b><span>CloudFront</span><small>file tĩnh, ảnh món ăn, có thể cả API công khai</small></div>
+    <div class="ly"><b>Cache trong ứng dụng</b><span>Caffeine</span><small>vài giây – vài phút; danh sách khu vực, cấu hình, top hot word</small></div>
+    <div class="ly"><b>Cache phân tán</b><span>Redis / ElastiCache</span><small>chi tiết nhà hàng, kết quả tính toán, session</small></div>
+    <div class="ly db"><b>Database</b><span>RDS</span><small>nguồn sự thật</small></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><div class="chart-title" style="margin-top:6px">API "thống kê nhà hàng" có và không có Redis</div><p class="cap">Query tổng hợp trên bảng 2 triệu đơn; 16 luồng gọi liên tục 8 giây; nhà hàng được hỏi theo phân phối lệch (vài nhà hàng rất hot)</p><div class="chart" id="ch-cache"></div>
+      <p class="cap" style="margin-top:6px">Không cache: 14 request/s, trung vị 1 257 ms, database quá tải vì cùng câu query chạy song song. Có cache TTL 60 s: 715 request/s (giới hạn bởi client Python), trung vị 0,09 ms. p99 vẫn 1,16 s: đó là những lần miss đầu tiên, khi cache còn trống.</p></div>
+    <div class="card prose"><h4>Câu hỏi phải trả lời khi nói "dùng cache"</h4>
+      <ol><li><b>Cache cái gì</b>: object, kết quả query, trang HTML, hay response API?</li><li><b>Key</b> gồm những gì (ngôn ngữ, quyền người dùng có làm kết quả khác nhau không)?</li><li><b>TTL</b> bao lâu và dữ liệu cũ bao lâu thì chấp nhận được?</li><li><b>Xoá khi nào</b>: khi ghi, sau commit (sổ tay Redis, chương 07).</li><li><b>Miss đồng loạt</b> thì sao: stampede, avalanche, làm nóng cache khi deploy.</li><li><b>Cache sập</b> thì DB có chịu nổi không? Có circuit breaker chưa?</li></ol></div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section class="ch" id="dbscale">
+  <div class="ch-head"><div class="eyebrow">Chương 05</div><h2>Scale database</h2>
+    <p>Database là thành phần khó scale nhất vì nó giữ trạng thái. Đi theo thứ tự, mỗi bước đắt hơn và phức tạp hơn bước trước.</p></div>
+  <div class="ladder">
+    <div class="ld"><b>1</b><div><h4>Tối ưu query và index</h4><p>Rẻ nhất, hiệu quả nhất. Câu chuyện 13 s → 100 ms của bạn nằm ở bậc này (sổ tay Database).</p></div></div>
+    <div class="ld"><b>2</b><div><h4>Cache</h4><p>Chặn phần lớn lượt đọc lặp lại (chương 04).</p></div></div>
+    <div class="ld"><b>3</b><div><h4>Scale dọc</h4><p>Instance RDS lớn hơn, nhiều RAM để dữ liệu nóng nằm trong buffer pool, đĩa IOPS cao.</p></div></div>
+    <div class="ld"><b>4</b><div><h4>Read replica</h4><p>Tách đọc sang bản sao. Phải xử lý độ trễ sao chép: luồng vừa ghi xong đọc lại phải đọc primary.</p></div></div>
+    <div class="ld"><b>5</b><div><h4>Partition trong một database</h4><p>Chia bảng lớn theo thời gian (log điểm theo tháng). Query lọc theo thời gian chỉ đụng partition cần thiết, xoá dữ liệu cũ bằng DROP PARTITION.</p></div></div>
+    <div class="ld"><b>6</b><div><h4>Tách database theo chức năng</h4><p>Đơn đặt chỗ, điểm thưởng, nội dung nhà hàng mỗi phần một database (thường đi cùng tách service).</p></div></div>
+    <div class="ld"><b>7</b><div><h4>Sharding</h4><p>Chia dữ liệu của một bảng ra nhiều database theo shard key. Mạnh nhất, đắt nhất: join chéo shard, transaction chéo shard, chia lại shard đều trở thành bài toán.</p></div></div>
+  </div>
+  <div class="tblwrap"><table><thead><tr><th>Cách chia shard</th><th>Ví dụ</th><th>Ưu</th><th>Nhược</th></tr></thead><tbody>
+    <tr><td><b>Theo khoảng</b></td><td>user_id 1–1M shard 1, 1M–2M shard 2</td><td>Quét khoảng dễ</td><td>Dữ liệu mới dồn vào shard cuối (hot shard)</td></tr>
+    <tr><td><b>Theo hash</b></td><td><code>hash(user_id) mod N</code></td><td>Phân bố đều</td><td>Đổi N là chuyển gần hết dữ liệu (chương 06); quét khoảng phải hỏi mọi shard</td></tr>
+    <tr><td><b>Consistent hash / slot</b></td><td>Redis Cluster 16 384 slot, Cassandra, DynamoDB</td><td>Thêm node chỉ chuyển một phần</td><td>Phức tạp hơn</td></tr>
+    <tr><td><b>Theo bảng tra (directory)</b></td><td>bảng <code>tenant → shard</code></td><td>Linh hoạt, di chuyển từng tenant</td><td>Bảng tra là điểm nghẽn, phải cache</td></tr>
+  </tbody></table></div>
+  <div class="callout"><b class="t">Chọn shard key</b>Key xuất hiện trong gần như mọi query (để query chỉ đụng một shard), phân bố đều, không tạo hot spot. Với Hugeclub: <code>user_id</code> hợp cho lịch sử đặt chỗ và điểm của người dùng; nhưng màn quản lý của nhà hàng lại hỏi theo <code>restaurant_id</code>, phải nhân bản dữ liệu sang chỗ khác (bảng tổng hợp, search index). Không có shard key hoàn hảo cho mọi câu query.</div>
+</section>
+
+<!-- 06 -->
+<section class="ch" id="hash">
+  <div class="ch-head"><div class="eyebrow">Chương 06</div><h2>Consistent hashing</h2>
+    <p>Với <code>hash(key) mod N</code>, thêm một node làm gần như mọi key đổi chỗ, cache trống trơn, dữ liệu phải chuyển hàng loạt. Consistent hashing đặt node và key lên cùng một vòng tròn; mỗi key thuộc node đầu tiên theo chiều kim đồng hồ.</p></div>
+  <div class="card sim" id="ring">
+    <div class="sim-ctrl">
+      <button class="btn primary" type="button" id="ring-add">Thêm node</button>
+      <button class="btn" type="button" id="ring-del">Bớt node</button>
+      <label for="ring-v">Virtual node mỗi node <input type="range" id="ring-v" min="1" max="12" value="1"><output id="ring-v-v" class="mono">1</output></label>
+      <span class="seg-ctl" role="radiogroup" aria-label="Cách chia" id="ring-mode"><button type="button" data-m="ring" aria-pressed="true">Vòng băm</button><button type="button" data-m="mod" aria-pressed="false">mod N</button></span>
+    </div>
+    <div class="ring-grid">
+      <div class="anim"><svg id="ring-svg" viewBox="0 0 420 420" role="img" aria-label="Vòng băm với node và key"></svg></div>
+      <div class="ring-side"><div class="sim-stats"><div class="stat"><b id="ring-moved">–</b><span>Key đổi node ở lần thay đổi vừa rồi</span></div><div class="stat"><b id="ring-bal">–</b><span>Node nặng nhất / trung bình</span></div></div><div id="ring-load" class="ring-load"></div><p class="cap" id="ring-note"></p></div>
+    </div>
+  </div>
+  <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">100 000 key, từ 4 lên 5 node (tính thật bằng MD5)</h4>
+    <div class="tblwrap"><table><thead><tr><th>Cách chia</th><th>Key phải chuyển</th><th>Node nặng nhất / trung bình</th></tr></thead><tbody>
+      <tr><td><code>hash mod N</code></td><td class="n"><b style="color:var(--bad)">79,7%</b></td><td class="n">≈ 1,0</td></tr>
+      <tr><td>Vòng băm, 1 điểm mỗi node</td><td class="n">20,8%</td><td class="n"><b style="color:var(--bad)">1,96</b></td></tr>
+      <tr><td>Vòng băm, 10 virtual node</td><td class="n">17,9%</td><td class="n">1,53</td></tr>
+      <tr><td>Vòng băm, 100 virtual node</td><td class="n">19,9%</td><td class="n"><b style="color:var(--ok)">1,13</b></td></tr>
+      <tr><td>Vòng băm, 200 virtual node</td><td class="n">18,4%</td><td class="n">1,22</td></tr>
+    </tbody></table></div>
+    <p class="cap" style="margin-top:8px">Lý thuyết: thêm node thứ 5 thì chỉ cần chuyển 1/5 = 20% key. Vòng băm đạt đúng mức đó; mod N chuyển 80%. Một điểm mỗi node thì tải rất lệch (node nặng nhất gấp đôi trung bình); virtual node làm đều lại. Redis Cluster chọn cách khác: 16 384 slot cố định và chuyển từng slot.</p></div>
+</section>
+
+<!-- 07 -->
+<section class="ch" id="cap">
+  <div class="ch-head"><div class="eyebrow">Chương 07</div><h2>CAP, PACELC và các mức nhất quán</h2>
+    <p>Khi mạng giữa các node bị đứt (Partition), hệ thống phải chọn: từ chối phục vụ để giữ dữ liệu đúng (Consistency) hay vẫn phục vụ và chấp nhận dữ liệu lệch (Availability).</p></div>
+  <div class="card sim" id="capd">
+    <div class="sim-ctrl">
+      <button class="btn" type="button" id="cap-cut" aria-pressed="false">Cắt mạng giữa hai node</button>
+      <span class="seg-ctl" role="radiogroup" aria-label="Lựa chọn" id="cap-mode"><button type="button" data-m="cp" aria-pressed="true">Chọn CP</button><button type="button" data-m="ap" aria-pressed="false">Chọn AP</button></span>
+      <button class="btn primary" type="button" id="cap-w">Khách 1 trừ 200 điểm (ghi vào Node 1)</button>
+      <button class="btn" type="button" id="cap-r">Khách 2 xem điểm (đọc Node 2)</button>
+      <button class="btn" type="button" id="cap-heal">Nối mạng lại</button>
+    </div>
+    <div class="anim"><svg id="cap-svg" viewBox="0 0 760 220" role="img" aria-label="Hai node dữ liệu và client"></svg></div>
+    <div class="simlog" id="cap-log" aria-live="polite" style="height:120px"></div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Nói CAP cho đúng</h4>
+      <ul><li>Partition trong hệ phân tán là chuyện <b>chắc chắn xảy ra</b>, nên câu hỏi thật chỉ là: khi có partition thì chọn C hay A.</li><li><b>CP</b>: ZooKeeper, etcd, database có đồng bộ đa số; phía thiểu số từ chối ghi. <b>AP</b>: Cassandra, DynamoDB (mặc định), DNS; mọi phía vẫn ghi, hợp nhất sau.</li><li><b>PACELC</b>: Khi có Partition chọn A hoặc C; <b>Else</b> (bình thường) vẫn phải chọn giữa <b>L</b>atency và <b>C</b>onsistency. Ví dụ: đọc từ read replica là chọn độ trễ thấp, chấp nhận dữ liệu cũ.</li><li>Một hệ thống không phải "CP" hay "AP" trên toàn bộ: điểm thưởng, thanh toán cần CP; số lượt xem, hot word chọn AP.</li></ul></div>
+    <div class="card prose"><h4>Các mức nhất quán thường gặp</h4>
+      <div class="tblwrap"><table><thead><tr><th>Mức</th><th>Đảm bảo</th></tr></thead><tbody>
+        <tr><td><b>Mạnh (linearizable)</b></td><td>Đọc luôn thấy lần ghi mới nhất đã xác nhận, như chỉ có một bản dữ liệu</td></tr>
+        <tr><td><b>Đọc lại thứ mình ghi</b></td><td>Người vừa ghi thấy ngay dữ liệu của chính mình (người khác có thể chậm hơn). Cách làm: đọc primary trong vài giây sau khi ghi</td></tr>
+        <tr><td><b>Đọc đơn điệu</b></td><td>Không bao giờ thấy dữ liệu "lùi lại". Cách làm: một người dùng luôn đọc cùng một replica</td></tr>
+        <tr><td><b>Nhất quán cuối cùng</b></td><td>Không ghi nữa thì sau một lúc mọi bản giống nhau. Cache, replica, search index</td></tr>
+      </tbody></table></div></div>
+  </div>
+</section>
+
+<!-- 08 -->
+<section class="ch" id="queue">
+  <div class="ch-head"><div class="eyebrow">Chương 08</div><h2>Message queue và outbox pattern</h2>
+    <p>Queue tách người gửi khỏi người xử lý: request trả về nhanh, việc nặng làm sau, đỉnh tải được làm phẳng, một bên chết không kéo bên kia chết theo.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>At-most-once, at-least-once, exactly-once khác nhau thế nào?</li><li>Ghi DB rồi gửi message: nếu chết ở giữa thì sao?</li><li>Message bị xử lý hai lần thì sao? Message lỗi mãi thì sao?</li><li>Kafka và SQS/RabbitMQ khác nhau thế nào?</li></ul></div>
+  <div class="card sim" id="ob">
+    <div class="sim-ctrl">
+      <span class="seg-ctl" role="radiogroup" aria-label="Cách gửi sự kiện" id="ob-mode"><button type="button" data-m="dual" aria-pressed="true">Ghi DB rồi gửi queue</button><button type="button" data-m="outbox" aria-pressed="false">Outbox</button></span>
+      <button class="btn primary" type="button" id="ob-run">Tạo đơn</button>
+      <button class="btn" type="button" id="ob-crash">Tạo đơn và chết giữa chừng</button>
+      <button class="btn" type="button" id="ob-reset">Đặt lại</button>
+    </div>
+    <div class="anim"><svg id="ob-svg" viewBox="0 0 760 240" role="img" aria-label="Service, database, outbox và queue"></svg></div>
+    <div class="sim-stats"><div class="stat"><b id="ob-db">0</b><span>Đơn trong DB</span></div><div class="stat"><b id="ob-ev">0</b><span>Sự kiện trong queue</span></div><div class="stat"><b id="ob-miss">0</b><span>Đơn mất sự kiện</span></div><div class="stat"><b id="ob-dup">0</b><span>Sự kiện trùng</span></div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">1 000 đơn, tiến trình chết ngẫu nhiên 2% (PostgreSQL + Redis Stream)</h4>
+<pre class="code"><span class="h">Ghi DB rồi XADD</span> (chết sau COMMIT, trước XADD)
+  đơn trong DB 1000 · sự kiện 972 · <span class="w">mất 28</span> · trùng 0 · 28 lần chết
+
+<span class="h">Outbox</span> (đơn + outbox cùng transaction; relay đọc outbox
+       FOR UPDATE SKIP LOCKED, XADD, rồi đánh dấu đã gửi)
+  đơn trong DB 1000 · sự kiện 1023 · <span class="h">mất 0</span> · <span class="w">trùng 23</span>
+  writer chết 13 lần · relay chết 23 lần (sau XADD, trước khi đánh dấu)</pre>
+      <p class="cap" style="margin-top:8px">Outbox đổi "có thể mất" thành "có thể trùng": số sự kiện trùng đúng bằng số lần relay chết giữa hai bước. Vì vậy consumer luôn phải idempotent (chương 09).</p></div>
+    <div class="card prose"><h4>Outbox, từng bước</h4>
+<pre class="code"><span class="h">BEGIN</span>;
+  <span class="h">INSERT INTO</span> reservation (...) <span class="h">VALUES</span> (...);
+  <span class="h">INSERT INTO</span> outbox (type, payload) <span class="h">VALUES</span> (<span class="s">'RESERVATION_PAID'</span>, <span class="s">'{...}'</span>);
+<span class="h">COMMIT</span>;   <span class="c">-- hai dòng cùng sống hoặc cùng chết</span>
+
+<span class="c">-- relay (job hoặc Debezium đọc WAL/binlog)</span>
+<span class="h">SELECT</span> * <span class="h">FROM</span> outbox <span class="h">WHERE</span> sent_at <span class="h">IS NULL</span>
+<span class="h">ORDER BY</span> id <span class="h">LIMIT</span> 100 <span class="h">FOR UPDATE SKIP LOCKED</span>;
+publish(...);   <span class="h">UPDATE</span> outbox <span class="h">SET</span> sent_at = now() ...</pre>
+      <ul><li>Debezium (CDC) đọc thay đổi từ WAL/binlog, không cần job quét.</li><li>Dọn bảng outbox định kỳ hoặc partition theo ngày.</li></ul></div>
+  </div>
+  <div class="tblwrap"><table><thead><tr><th>Ngữ nghĩa giao nhận</th><th>Nghĩa là</th><th>Cách đạt</th></tr></thead><tbody>
+    <tr><td>At-most-once</td><td>Có thể mất, không trùng</td><td>Ack trước khi xử lý</td></tr>
+    <tr><td>At-least-once</td><td>Không mất, có thể trùng</td><td>Xử lý xong mới ack; mặc định của SQS, Kafka, RabbitMQ</td></tr>
+    <tr><td>Exactly-once (hiệu quả)</td><td>Kết quả như xử lý đúng một lần</td><td><b>At-least-once + consumer idempotent</b>; Kafka có transaction cho luồng Kafka → Kafka</td></tr>
+  </tbody></table></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Message lỗi mãi</h4><p>Đặt số lần thử tối đa, sau đó chuyển sang <b>dead letter queue</b> (SQS redrive policy) và cảnh báo. Không để một message hỏng chặn cả hàng (poison message). Thử lại với backoff, không thử lại ngay.</p></div>
+    <div class="card prose"><h4>Kafka hay SQS / RabbitMQ</h4><ul><li><b>Kafka</b>: log lưu lâu, nhiều nhóm consumer đọc lại từ đầu được, thứ tự trong partition, thông lượng rất cao; vận hành nặng (MSK đỡ phần nào).</li><li><b>SQS</b>: hàng đợi được quản lý hoàn toàn, gần như không vận hành; FIFO queue có thứ tự theo group; không đọc lại được.</li><li><b>RabbitMQ</b>: định tuyến linh hoạt (exchange), độ trễ thấp.</li></ul></div>
+  </div>
+</section>
+
+<!-- 09 -->
+<section class="ch" id="idem">
+  <div class="ch-head"><div class="eyebrow">Chương 09</div><h2>Idempotency: xử lý hai lần cũng như một lần</h2>
+    <p>Người dùng bấm hai lần, mobile mất mạng rồi gửi lại, client retry khi timeout, queue giao trùng. Mọi API ghi và mọi consumer phải chịu được việc nhận cùng một yêu cầu nhiều lần.</p></div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">100 lần "bấm đúp", mỗi lần 2 request cộng 500 điểm cùng lúc</h4>
+<pre class="code">Không có idempotency key : <span class="w">100 000 điểm</span>   <span class="c">(đúng phải là 50 000)</span>
+Có idempotency key       : <span class="h">50 000 điểm</span>
+
+<span class="h">INSERT INTO</span> idempotency(key) <span class="h">VALUES</span> (:key)
+  <span class="h">ON CONFLICT DO NOTHING</span>;           <span class="c">-- khoá chính chặn trùng</span>
+<span class="h">if</span> (rowCount == 1) cộng điểm;           <span class="c">-- cùng transaction</span></pre></div>
+    <div class="card prose"><h4>Thiết kế idempotency key</h4>
+      <ul><li>Client sinh key (UUID) <b>một lần cho một ý định</b> (một lần bấm "Thanh toán"), gửi qua header <code>Idempotency-Key</code>; retry dùng lại đúng key đó.</li><li>Server lưu key cùng <b>kết quả</b> (status, body), lần sau trả lại kết quả cũ thay vì báo lỗi.</li><li>Lưu key trong <b>cùng transaction</b> với thay đổi nghiệp vụ; lưu ở Redis (<code>SET NX</code>) thì nhanh nhưng có khe hở khi DB rollback.</li><li>Có hạn (24 giờ – vài ngày).</li><li>Consumer queue: dùng id sự kiện làm key, hoặc làm thao tác tự nhiên idempotent (<code>UPDATE … SET status = 'PAID' WHERE status = 'PENDING'</code>).</li></ul></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="ch" id="saga">
+  <div class="ch-head"><div class="eyebrow">Chương 10</div><h2>Transaction phân tán: 2PC và Saga</h2>
+    <p>Một nghiệp vụ trải qua nhiều service (đặt chỗ, thanh toán, cộng điểm, gửi mail) thì không còn một transaction database bao trùm.</p></div>
+  <div class="card sim" id="sg">
+    <div class="sim-ctrl">
+      <label for="sg-fail">Bước bị lỗi <select id="sg-fail" class="sel"><option value="-1">Không lỗi</option><option value="1">Thanh toán bị từ chối</option><option value="2" selected>Cộng điểm lỗi</option><option value="3">Gửi mail lỗi</option></select></label>
+      <button class="btn primary" type="button" id="sg-run">Chạy saga</button>
+    </div>
+    <div class="sg-flow" id="sg-flow"></div>
+    <div class="simlog" id="sg-log" aria-live="polite" style="height:150px"></div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>2PC (two-phase commit)</h4><p>Bộ điều phối hỏi mọi bên "chuẩn bị được không", tất cả đồng ý mới ra lệnh commit. Nhất quán mạnh nhưng giữ khoá suốt hai pha, bộ điều phối chết là mọi bên kẹt. Gần như không dùng giữa các microservice; REST API, SQS không hỗ trợ.</p></div>
+    <div class="card prose"><h4>Saga</h4><p>Chuỗi transaction cục bộ; bước nào lỗi thì chạy <b>hành động bù</b> cho các bước đã xong theo thứ tự ngược (hoàn tiền, huỷ chỗ). <b>Orchestration</b>: một service điều phối gọi từng bước (dễ theo dõi). <b>Choreography</b>: mỗi service nghe sự kiện và phát sự kiện tiếp (ít phụ thuộc, khó nhìn toàn cảnh). Không có cô lập: người khác có thể thấy trạng thái trung gian, nên dùng trạng thái rõ ràng (PENDING, CONFIRMED, CANCELLED).</p></div>
+  </div>
+  <div class="callout"><b class="t">Bước nào không bù được thì để cuối</b>Gửi mail không "thu hồi" được, nên đặt sau cùng và cho phép thử lại riêng (qua outbox); lỗi gửi mail không được làm huỷ cả đơn. Trong mô phỏng, chọn "Gửi mail lỗi" để thấy saga không rollback mà chỉ thử lại.</div>
+</section>
+
+<!-- 11 -->
+<section class="ch" id="resil">
+  <div class="ch-head"><div class="eyebrow">Chương 11</div><h2>Chịu lỗi: timeout, retry, circuit breaker, load shedding</h2>
+    <p>Trong hệ phân tán, câu hỏi không phải "có lỗi không" mà "lỗi thì lan tới đâu".</p></div>
+  <div class="card"><span class="simlb">MÔ PHỎNG</span><div class="chart-title" style="margin-top:6px">Một sự cố 10 giây: retry biến nó thành sự cố kéo dài mãi</div><p class="cap">Server xử lý 100 request/s, tải bình thường 80 request/s; từ giây 10 tới 20 công suất giảm còn 40/s. Client timeout 1 s, thử lại tối đa 3 lần. Trục dọc: số request <b>thành công</b> mỗi giây.</p><div class="chart-legend" id="lg-retry"></div><div class="chart" id="ch-retry"></div>
+    <p class="cap" style="margin-top:6px">Retry ngay lập tức đẩy tải lên 320 request/s (gấp 4 lần) và server xử lý toàn request mà client đã bỏ đi: <b>không bao giờ hồi phục</b> dù sự cố đã hết từ giây 20 (metastable failure). Không retry vẫn mất 15 giây sau sự cố để dọn hàng đợi cũ. Backoff + jitter, cộng với server bỏ các request đã quá hạn, hồi phục ngay khi sự cố hết.</p></div>
+  <div class="card sim" id="cb">
+    <h3 style="margin:0">Hình động: circuit breaker</h3>
+    <div class="sim-ctrl">
+      <label for="cb-err">Tỉ lệ lỗi của service phía sau <input type="range" id="cb-err" min="0" max="100" step="10" value="0"><output id="cb-err-v" class="mono">0%</output></label>
+      <button class="btn" type="button" id="cb-pause" aria-pressed="false">Tạm dừng</button>
+    </div>
+    <div class="cb-grid">
+      <div class="anim"><svg id="cb-svg" viewBox="0 0 520 220" role="img" aria-label="Ba trạng thái của circuit breaker"></svg></div>
+      <div class="cb-side"><div class="sim-stats"><div class="stat"><b id="cb-call">0</b><span>Gọi thật</span></div><div class="stat"><b id="cb-fast">0</b><span>Trả lỗi nhanh (không gọi)</span></div></div><div class="cb-win" id="cb-win"></div><p class="cap">Cửa sổ 10 lần gọi gần nhất; lỗi ≥ 50% thì mở mạch 3 giây, rồi cho 3 lần gọi thử.</p></div>
+    </div>
+    <div class="simlog" id="cb-log" aria-live="polite" style="height:90px"></div>
+  </div>
+  <div class="tblwrap"><table><thead><tr><th>Kỹ thuật</th><th>Chặn được</th><th>Ghi chú</th></tr></thead><tbody>
+    <tr><td><b>Timeout</b></td><td>Một service chậm làm cạn thread/connection của service gọi</td><td>Mọi lời gọi mạng phải có timeout (HTTP client, JDBC, Redis). Mặc định nhiều thư viện là vô hạn</td></tr>
+    <tr><td><b>Retry + exponential backoff + jitter</b></td><td>Lỗi thoáng qua</td><td>Chỉ retry thao tác idempotent; giới hạn số lần; jitter để các client không retry đồng loạt</td></tr>
+    <tr><td><b>Circuit breaker</b></td><td>Gọi liên tục vào service đã chết</td><td>Resilience4j: CLOSED → OPEN → HALF_OPEN; trả lỗi nhanh hoặc dữ liệu dự phòng</td></tr>
+    <tr><td><b>Bulkhead</b></td><td>Một phụ thuộc chậm chiếm hết thread</td><td>Pool riêng cho từng phụ thuộc (gọi API thanh toán không dùng chung pool với API đọc)</td></tr>
+    <tr><td><b>Load shedding / deadline</b></td><td>Xử lý việc client đã bỏ</td><td>Từ chối sớm khi quá tải (503), bỏ request đã quá hạn, hàng đợi có giới hạn</td></tr>
+    <tr><td><b>Rate limit</b></td><td>Một client dùng quá phần</td><td>Sổ tay Redis, chương 10</td></tr>
+    <tr><td><b>Fallback</b></td><td>Trải nghiệm hỏng toàn bộ</td><td>Trả dữ liệu cache cũ, ẩn tính năng phụ (hot word không có thì ẩn khung)</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- 12 -->
+<section class="ch" id="observe">
+  <div class="ch-head"><div class="eyebrow">Chương 12</div><h2>Quan sát hệ thống, tail latency và SLO</h2>
+    <p>Trung bình che giấu vấn đề. Người dùng cảm nhận p99, và một request gọi nhiều service thì gần như chắc chắn gặp p99 của ai đó.</p></div>
+  <div class="card sim" id="tail">
+    <div class="sim-ctrl"><label for="tail-n">Một request của người dùng gọi song song <input type="range" id="tail-n" min="1" max="100" value="10"><output id="tail-n-v" class="mono">10</output> backend</label></div>
+    <div class="tail-grid">
+      <div class="anim"><svg id="tail-svg" viewBox="0 0 520 200" role="img" aria-label="Fan-out tới nhiều backend"></svg></div>
+      <div class="tail-side"><div class="bignum" id="tail-pct">10%</div><p>người dùng gặp ít nhất một backend chậm, dù mỗi backend chỉ chậm 1% số lần.</p><p class="cap">Công thức: 1 − 0,99<sup>N</sup></p></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><div class="chart-title" style="margin-top:6px">Tỉ lệ request người dùng chậm hơn 50 ms</div><p class="cap">Server TCP thật: 99% trả sau 5 ms, 1% sau 100 ms. Client gọi song song N kết nối, chờ đủ N câu trả lời. Chấm: đo thật; đường: lý thuyết 1 − 0,99<sup>N</sup>.</p><div class="chart-legend" id="lg-tail"></div><div class="chart" id="ch-tail"></div>
+      <p class="cap" style="margin-top:6px">N = 100: 64,8% người dùng chậm (lý thuyết 63,4%), trung vị nhảy từ 5,4 ms lên 104 ms. Cách giảm: gọi ít backend hơn, timeout + giá trị dự phòng, hedged request (gửi thêm bản sao nếu quá p95).</p></div>
+    <div class="card prose"><h4>Ba trụ cột và SLO</h4>
+      <ul><li><b>Log</b> có cấu trúc (JSON) kèm <code>traceId</code>; <b>metric</b> (Micrometer → CloudWatch/Prometheus); <b>trace</b> phân tán (OpenTelemetry, X-Ray) để thấy request đi qua đâu, chậm ở đâu.</li><li>Bốn tín hiệu vàng: <b>độ trễ</b> (p50, p95, p99), <b>lưu lượng</b>, <b>tỉ lệ lỗi</b>, <b>độ bão hoà</b> (CPU, pool connection, hàng đợi).</li><li><b>SLI</b>: cái đo (tỉ lệ request &lt; 300 ms). <b>SLO</b>: mục tiêu (99,9% trong 30 ngày). <b>Error budget</b>: phần được phép hỏng.</li></ul>
+      <div class="slo" id="slo"></div></div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="ch" id="url">
+  <div class="ch-head"><div class="eyebrow">Chương 13</div><h2>Case study: URL shortener</h2>
+    <p>Bài kinh điển nhất, đủ mọi thành phần mà vẫn nhỏ. Làm đúng theo khung ở chương 00.</p></div>
+  <div class="steps-case">
+    <div class="card prose"><h4>1. Yêu cầu</h4><ul><li>Rút gọn URL dài thành mã 7 ký tự; truy cập mã thì chuyển hướng.</li><li>Tuỳ chọn: hạn dùng, alias tự đặt, thống kê lượt click.</li><li>Đọc gấp 100 lần ghi; chuyển hướng phải nhanh (&lt; 50 ms); mã không đoán được dễ dàng.</li></ul></div>
+    <div class="card prose"><h4>2. Ước lượng</h4><ul><li>100 triệu URL mới mỗi tháng ≈ <b>40 ghi/s</b>, cao điểm 200/s.</li><li>Đọc ×100 ≈ <b>4 000/s</b>, cao điểm 20 000/s.</li><li>Mỗi bản ghi 500 B × 1,2 tỉ/năm ≈ <b>600 GB/năm</b>.</li><li>Base62 7 ký tự: 62<sup>7</sup> ≈ <b>3,5 nghìn tỉ</b> mã, đủ dùng rất lâu.</li></ul></div>
+    <div class="card prose"><h4>3. API và dữ liệu</h4>
+<pre class="code">POST /api/urls {longUrl, expireAt?}
+  → 201 {code: "aZ3kP9x"}
+GET /{code} → 302 Location: longUrl
+
+url(code PK, long_url, user_id,
+    created_at, expire_at)</pre>
+      <p>Key–value thuần, không join: DynamoDB hoặc PostgreSQL đều được; quy mô lớn thì DynamoDB/Cassandra dễ chia hơn.</p></div>
+  </div>
+  <div class="card sim" id="sf">
+    <h3 style="margin:0">Sinh mã ngắn: đếm tăng dần + base62 hay Snowflake</h3>
+    <div class="sim-ctrl"><button class="btn primary" type="button" id="sf-gen">Sinh 1 mã</button><button class="btn" type="button" id="sf-burst">Sinh 5 mã cùng mili giây</button></div>
+    <div class="sf-grid">
+      <div class="gen"><h4>Snowflake ID 64 bit <small id="sf-dec"></small></h4><div class="sf-bits" id="sf-bits"></div><div class="sf-leg"><span class="b-ts">41 bit thời gian (ms từ mốc)</span><span class="b-wk">10 bit máy</span><span class="b-sq">12 bit thứ tự trong 1 ms</span></div></div>
+      <div class="gen"><h4>Các mã đã sinh</h4><div class="sf-list" id="sf-list"></div></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>4. Thiết kế và các lựa chọn</h4>
+      <ul><li><b>Sinh mã:</b> (a) băm URL (MD5) lấy 7 ký tự: đụng nhau phải xử lý; (b) bộ đếm tăng dần → base62: không đụng nhưng đoán được mã kế tiếp, cần nguồn số duy nhất (DB sequence, Redis <code>INCR</code>, cấp theo dải 1 000 số cho mỗi server); (c) Snowflake: sinh độc lập ở mỗi máy, gần tăng theo thời gian.</li><li><b>Chuyển hướng:</b> 301 trình duyệt nhớ luôn, đỡ tải nhưng mất số liệu click; 302 mỗi lần đều qua server.</li><li><b>Đọc:</b> cache Redis <code>code → url</code> (dữ liệu bất biến, hit rate rất cao), CDN cho mã cực nóng.</li><li><b>Thống kê click:</b> không ghi DB đồng bộ trong lúc chuyển hướng; đẩy sự kiện vào queue/Kinesis, tổng hợp sau.</li></ul></div>
+    <div class="card prose"><h4>5. Điểm nghẽn và mở rộng</h4>
+      <ul><li>Bảng url lớn: chia theo <code>code</code> (hash), mọi truy vấn đều theo code.</li><li>Chống lạm dụng: rate limit tạo URL, kiểm tra URL độc hại.</li><li>Hết hạn: TTL của DynamoDB, hoặc job xoá theo lô.</li><li>Nhiều vùng: ghi một vùng, đọc nhiều vùng (bản sao toàn cầu).</li></ul></div>
+  </div>
+</section>
+
+<!-- 14 -->
+<section class="ch" id="hugeclub">
+  <div class="ch-head"><div class="eyebrow">Chương 14</div><h2>Case study: hệ thống đặt chỗ và tích điểm kiểu Hugeclub</h2>
+    <p>Câu "thiết kế lại hệ thống bạn đã làm" rất hay gặp. Đi một lượt đặt chỗ từ đầu tới cuối và xem mỗi thành phần chặn được rủi ro nào.</p></div>
+  <div class="card sim" id="hc">
+    <div class="sim-ctrl"><button class="btn" type="button" id="hc-prev">Bước trước</button><button class="btn primary" type="button" id="hc-next">Bước tiếp</button><button class="btn" type="button" id="hc-auto">Tự chạy</button></div>
+    <div class="anim"><svg id="hc-svg" viewBox="0 0 760 330" role="img" aria-label="Kiến trúc hệ thống đặt chỗ"></svg></div>
+    <div class="lc-detail" id="hc-note"></div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Mô hình dữ liệu cốt lõi</h4>
+<pre class="code">time_slot(id, restaurant_id, area_id, start_at,
+          capacity, booked)          <span class="c">-- sức chứa theo khung giờ</span>
+reservation(id, user_id, slot_id, guests,
+          status,                    <span class="c">-- HELD / PAID / CANCELLED / EXPIRED</span>
+          hold_until, idempotency_key UNIQUE)
+point_ledger(id, user_id, delta, reason,
+          ref_id, created_at,
+          UNIQUE(reason, ref_id))    <span class="c">-- sổ cái chỉ thêm, chống cộng trùng</span>
+user_point(user_id, balance, version)
+outbox(id, type, payload, sent_at)</pre></div>
+    <div class="card prose"><h4>Các điểm sẽ bị đào sâu</h4>
+      <ul><li><b>Không đặt quá sức chứa:</b> <code>UPDATE time_slot SET booked = booked + :g WHERE id = :id AND booked + :g &lt;= capacity</code>, cập nhật được 1 dòng mới tạo reservation. Một câu nguyên tử, không cần khoá riêng.</li><li><b>Giữ chỗ khi đang thanh toán:</b> trạng thái HELD + <code>hold_until</code> (5 phút); job mỗi phút trả lại chỗ cho đơn quá hạn (hoặc Redis Sorted Set điểm = thời điểm hết hạn).</li><li><b>Webhook thanh toán tới hai lần</b> hoặc tới sau khi đã hết hạn giữ chỗ: cập nhật có điều kiện theo trạng thái; tới trễ thì hoàn tiền.</li><li><b>Điểm:</b> sổ cái chỉ thêm (ledger) thay vì sửa một con số; số dư tính từ sổ cái hoặc cập nhật cùng transaction; unique <code>(reason, ref_id)</code> chặn cộng hai lần.</li><li><b>Mail:</b> qua outbox → queue → worker, không làm chậm hay làm hỏng thanh toán (chương 17).</li></ul></div>
+  </div>
+</section>
+
+<!-- 15 -->
+<section class="ch" id="nearby">
+  <div class="ch-head"><div class="eyebrow">Chương 15</div><h2>Case study: tìm nhà hàng gần tôi</h2>
+    <p>Chính API Haversine trong CV của bạn. Câu hỏi đào sâu chắc chắn là: "Nếu có 200 000 nhà hàng và nhiều người tìm cùng lúc thì sao?"</p></div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><div class="chart-title" style="margin-top:6px">20 nhà hàng gần ga Tokyo nhất trong bán kính 2 km</div><p class="cap">200 000 điểm rải trong vùng Kanto; mili giây; thang log. Ba cách cho cùng top kết quả.</p><div class="chart" id="ch-geo"></div></div>
+    <div class="card prose"><h4>Đọc số liệu</h4>
+      <ul><li><b>Haversine trên mọi dòng</b> (cách viết đơn giản nhất): tính khoảng cách cho cả 200 000 dòng rồi sắp xếp: 31,9 ms. Tăng tuyến tính theo số nhà hàng.</li><li><b>Hộp bao + index (lat, lng)</b>: lọc trước bằng hình chữ nhật quanh điểm (±0,018° vĩ độ ≈ 2 km), chỉ tính Haversine cho 155 dòng trong hộp: 0,72 ms (thời gian thực thi trong PostgreSQL 0,36 ms).</li><li><b>Redis GEOSEARCH</b>: 0,26 ms gồm cả round trip; 200 000 điểm tốn 19 MB RAM.</li><li>Có 120 nhà hàng nằm trong bán kính; trả 20 cái gần nhất.</li></ul>
+      <p>Câu trả lời mẫu: "Bản đầu em tính Haversine trực tiếp; khi dữ liệu lớn, thêm bước lọc hộp bao có index để chỉ tính trên vài trăm dòng. Nếu cần độ trễ thấp hơn hoặc tải rất cao, em đưa toạ độ vào Redis GEO hoặc dùng PostGIS với index GiST."</p></div>
+  </div>
+  <div class="card sim" id="gh">
+    <h3 style="margin:0">Hình động: geohash và 8 ô lân cận</h3>
+    <p class="cap">Bấm vào bản đồ để đặt vị trí người dùng. Geohash chia mặt đất thành lưới ô; mỗi ký tự thêm vào chia ô nhỏ hơn 32 lần. Tìm trong ô của mình và 8 ô xung quanh để không bỏ sót nhà hàng ở sát mép.</p>
+    <div class="sim-ctrl"><label for="gh-p">Độ dài geohash <input type="range" id="gh-p" min="4" max="7" value="6"><output id="gh-p-v" class="mono">6</output></label><span class="cap" id="gh-info"></span></div>
+    <div class="anim"><svg id="gh-svg" viewBox="0 0 760 360" role="img" aria-label="Lưới geohash quanh ga Tokyo"></svg></div>
+  </div>
+  <div class="tblwrap"><table><thead><tr><th>Cách</th><th>Ý tưởng</th><th>Khi nào</th></tr></thead><tbody>
+    <tr><td>Hộp bao + B-Tree</td><td>Lọc khoảng lat, lng rồi tính chính xác</td><td>Vài trăm nghìn điểm, đã có PostgreSQL/MySQL</td></tr>
+    <tr><td>Geohash</td><td>Mã chuỗi theo ô lưới; điểm gần thường chung tiền tố; tìm ô mình + 8 ô bên cạnh</td><td>Lưu được trong mọi database/cache theo cột chuỗi có index</td></tr>
+    <tr><td>Redis GEO</td><td>Sorted Set với điểm là geohash 52 bit</td><td>Độ trễ rất thấp, tải đọc lớn</td></tr>
+    <tr><td>PostGIS (GiST), MySQL SPATIAL</td><td>Index không gian R-tree</td><td>Truy vấn hình học phức tạp, vùng giao hàng</td></tr>
+    <tr><td>Quadtree, S2, H3</td><td>Chia ô thích ứng theo mật độ (thành phố ô nhỏ, nông thôn ô lớn)</td><td>Quy mô Uber, Google Maps</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- 16 -->
+<section class="ch" id="trending">
+  <div class="ch-head"><div class="eyebrow">Chương 16</div><h2>Case study: từ khoá đang hot (top-K)</h2>
+    <p>Tính năng hot word của bạn ở quy mô Hugeclub chỉ cần một Sorted Set mỗi ngày (sổ tay Redis, chương 18). Phỏng vấn sẽ hỏi tiếp: <b>nếu có 10 triệu lượt tìm mỗi phút thì sao?</b></p></div>
+  <div class="ladder">
+    <div class="ld"><b>1</b><div><h4>Một Sorted Set</h4><p><code>ZINCRBY</code> mỗi lượt tìm. Đủ tới vài chục nghìn lượt/giây; nút thắt là một hot key trên một node Redis.</p></div></div>
+    <div class="ld"><b>2</b><div><h4>Cộng dồn trước ở ứng dụng</h4><p>Mỗi instance đếm trong RAM 5–10 giây rồi đẩy một lô <code>ZINCRBY</code>. Giảm số lệnh Redis hàng trăm lần, đổi lại số liệu trễ vài giây.</p></div></div>
+    <div class="ld"><b>3</b><div><h4>Chia nhỏ key</h4><p><code>hotword:{ngày}:{0..15}</code> theo hash từ khoá; mỗi phút gộp top của 16 phần.</p></div></div>
+    <div class="ld"><b>4</b><div><h4>Stream processing</h4><p>Lượt tìm vào Kafka/Kinesis; Flink đếm theo cửa sổ thời gian (5 phút trượt), ghi top-K ra Redis để đọc. Đếm gần đúng bằng <b>Count-Min Sketch</b> + một heap nhỏ chứa top-K để không giữ bộ đếm cho mọi từ khoá.</p></div></div>
+  </div>
+  <div class="card sim" id="cms">
+    <h3 style="margin:0">Hình động: Count-Min Sketch</h3>
+    <p class="cap">Bảng 4 hàng × 12 cột. Mỗi từ khoá được băm bởi 4 hàm (mỗi hàng một hàm) và tăng 4 ô. Ước lượng = ô <b>nhỏ nhất</b> trong 4 ô. Chỉ có thể đếm thừa (đụng ô với từ khác), không bao giờ đếm thiếu.</p>
+    <div class="sim-ctrl" id="cms-btns"></div>
+    <div class="cms-grid"><div class="cms-table" id="cms-table"></div><div class="cms-side" id="cms-side"></div></div>
+  </div>
+</section>
+
+<!-- 17 -->
+<section class="ch" id="notify">
+  <div class="ch-head"><div class="eyebrow">Chương 17</div><h2>Case study: hệ thống gửi thông báo (job gửi mail điểm)</h2>
+    <p>Phiên bản "đúng sách" của job gửi mail trong CV: tách thành các tầng để mỗi tầng chịu lỗi riêng và scale riêng.</p></div>
+  <div class="card sim" id="nt">
+    <div class="sim-ctrl"><button class="btn primary" type="button" id="nt-run">Chạy job cuối ngày</button><label for="nt-w">Số worker <input type="range" id="nt-w" min="1" max="4" value="2"><output id="nt-w-v" class="mono">2</output></label><button class="btn" type="button" id="nt-fail">SES trả lỗi tạm thời</button></div>
+    <div class="anim"><svg id="nt-svg" viewBox="0 0 760 250" role="img" aria-label="Job, queue, worker, SES"></svg></div>
+    <div class="sim-stats"><div class="stat"><b id="nt-q">0</b><span>Trong queue</span></div><div class="stat"><b id="nt-sent">0</b><span>Đã gửi</span></div><div class="stat"><b id="nt-retry">0</b><span>Thử lại</span></div><div class="stat"><b id="nt-dlq">0</b><span>Dead letter</span></div></div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Các tầng</h4><ol><li><b>Producer</b> (job ECS lúc 1 giờ sáng, giờ Nhật): đọc <code>log_mileage</code> của ngày hôm trước, gộp theo user (cộng trừ bù nhau thì bỏ), tạo một tin cho mỗi user cần gửi. Có khoá để chỉ một task chạy.</li><li><b>Queue</b> (SQS): mỗi tin là một mail cần gửi; visibility timeout, tối đa 5 lần nhận, sau đó vào DLQ.</li><li><b>Worker</b>: số lượng điều chỉnh được; lấy token từ bộ giới hạn tốc độ chung (giới hạn gửi mỗi giây của SES) trước khi gửi.</li><li><b>Đánh dấu</b>: <code>mail_status = SENT</code> có điều kiện, idempotent; xử lý lại một tin đã gửi thì bỏ qua.</li><li><b>Bounce/complaint</b> từ SES qua SNS: đánh dấu email hỏng, không gửi lại.</li></ol></div>
+    <div class="card prose"><h4>Câu hỏi đào sâu và trả lời</h4><ul><li><i>Job chết giữa chừng?</i> Chạy lại an toàn vì tin đã tạo được đánh dấu, mail đã gửi không gửi lại.</li><li><i>100 000 mail mà SES chỉ cho 14 mail/giây?</i> Khoảng 2 giờ; rate limit chung (Redis token bucket) chứ không phải mỗi worker tự giới hạn; xin tăng quota.</li><li><i>Người dùng nhận mail lúc nửa đêm?</i> Producer chạy đêm, nhưng lịch gửi có thể là 8 giờ sáng: tin có <code>send_after</code>, hoặc SQS delay.</li><li><i>Thêm kênh push, LINE?</i> Một tin chung, mỗi kênh một queue và worker riêng; một kênh lỗi không ảnh hưởng kênh khác.</li></ul></div>
+  </div>
+</section>
+
+<!-- 18 -->
+<section class="ch" id="interview">
+  <div class="ch-head"><div class="eyebrow">Chương 18</div><h2>40 câu hỏi phỏng vấn và cách trả lời</h2>
+    <p>Tự trả lời thành tiếng trước, rồi mới mở đáp án. Nhãn "bẫy" là câu hay bị trả lời sai.</p></div>
+  <div class="qa" id="qa"></div>
+</section>
+
+<!-- 19 -->
+<section class="ch" id="lab">
+  <div class="ch-head"><div class="eyebrow">Chương 19</div><h2>Lab và checklist trước buổi phỏng vấn</h2></div>
+  <div class="grid3">
+    <div class="card pb"><h4>Luyện vẽ</h4><ol class="steps"><li><div>Mỗi ngày một đề, hẹn giờ 45 phút: URL shortener, đặt chỗ nhà hàng, chat 1-1, news feed, rate limiter, thông báo.</div></li><li><div>Vẽ trên giấy hoặc Excalidraw, nói to từng bước theo khung chương 00.</div></li><li><div>Ghi lại 3 trade-off của mỗi đề.</div></li></ol></div>
+    <div class="card pb"><h4>Lab thật</h4><ol class="steps"><li><div>Docker compose: 2 instance Spring Boot sau Nginx, Redis, PostgreSQL.</div></li><li><div>Tắt một instance khi đang bắn K6: request lỗi bao lâu?</div></li><li><div>Thêm outbox + một worker đọc outbox, kill worker giữa chừng, đếm sự kiện trùng.</div></li><li><div>Resilience4j circuit breaker trước một API giả lập lỗi 50%.</div></li></ol></div>
+    <div class="card pb"><h4>Checklist</h4><ol class="steps"><li><div>Thuộc các mốc độ trễ và cách tính QPS, dung lượng.</div></li><li><div>Nói được CAP, idempotency, outbox, saga trong 1 phút mỗi cái.</div></li><li><div>Vẽ được kiến trúc Hugeclub của chính mình, có số liệu.</div></li><li><div>Mỗi lựa chọn đều kèm "đổi lại thì…".</div></li></ol></div>
+  </div>
+  <p class="foot">Nhãn ĐO THẬT: máy ảo 2 vCPU / 8 GB, PostgreSQL 16, Redis 7.0.15, server TCP và client Python tự viết, chạy cùng máy nên độ trễ mạng nhỏ hơn thực tế. Mỗi phép đo chạy một lần. Nhãn MÔ PHỎNG: mô hình rời rạc theo thời gian viết bằng Python (retry, cân bằng tải), dùng để thấy hiện tượng, không phải số đo của hệ thống thật.</p>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NS='http://www.w3.org/2000/svg';
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function S(tag,a,p){const e=document.createElementNS(NS,tag);for(const k in a)if(a[k]!==undefined&&a[k]!==null)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function T(txt,a,p){const e=S('text',a,p);e.textContent=txt;if(a&&a.fill)e.style.fill=a.fill;return e;}
+function logTo(id,msg,cls){const d=document.createElement('div');if(cls)d.className=cls;d.textContent=msg;const l=$(id);l.appendChild(d);while(l.children.length>80)l.firstChild.remove();l.scrollTop=l.scrollHeight;}
+const wait=ms=>new Promise(r=>setTimeout(r,RM?Math.min(ms,60):ms));
+function flip(container,render){const before={};if(!RM)container.querySelectorAll('[data-id]').forEach(e=>before[e.dataset.id]=e.getBoundingClientRect());render();
+  if(!RM)container.querySelectorAll('[data-id]').forEach(e=>{const b=before[e.dataset.id];if(!b){e.animate([{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'none'}],{duration:350});return;}const a=e.getBoundingClientRect();const dx=b.left-a.left,dy=b.top-a.top;if(Math.abs(dx)+Math.abs(dy)>2)e.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:500,easing:'cubic-bezier(.2,.8,.2,1)'});});}
+function seg(id,cb){const box=$(id);box.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;box.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));cb(b.dataset.m);});}
+function onVisible(el,cb){const o=new IntersectionObserver(es=>es.forEach(e=>cb(e.isIntersecting)),{threshold:0.05});o.observe(el);}
+
+/* ===== mục lục ===== */
+const links=$$('#toc a');const secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));const on=links.find(l=>l.classList.contains('on'));if(on&&innerWidth<980)on.scrollIntoView({block:'nearest',inline:'center'});}});},{rootMargin:'-30% 0px -60% 0px'});
+secs.forEach(s=>s&&io.observe(s));
+
+/* ===== biểu đồ ===== */
+function tipShow(box,html,x,y){let t=box.querySelector('.tip');if(!t){t=document.createElement('div');t.className='tip';box.appendChild(t);}t.innerHTML=html;t.style.display='block';const bw=box.clientWidth;const tw=t.offsetWidth;let left=x+14;if(left+tw>bw)left=x-tw-14;if(left<0)left=0;t.style.left=left+'px';t.style.top=Math.max(0,y-10)+'px';}
+function tipHide(box){const t=box.querySelector('.tip');if(t)t.style.display='none';}
+function fmtN(v){return v>=100?Math.round(v).toLocaleString('vi-VN'):(v>=1?(+v.toFixed(2)).toLocaleString('vi-VN'):(+v.toFixed(3)).toLocaleString('vi-VN'));}
+function hbar(id,rows,opt){
+  const box=$(id);box.innerHTML='';const W=480,rowH=34,padL=opt.padL||74,padR=64,top=6;const H=top+rows.length*rowH+24;
+  const svg=S('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':opt.aria},box);
+  const iw=W-padL-padR;let sx;
+  if(opt.log){const lo=Math.log10(opt.min),hi=Math.log10(opt.max);sx=v=>padL+(Math.log10(Math.max(v,opt.min))-lo)/(hi-lo)*iw;}
+  else sx=v=>padL+v/opt.max*iw;
+  const g=S('g',{class:'grid'},svg);const ax=S('g',{class:'ax'},svg);
+  for(const t of opt.ticks){const x=sx(t);S('line',{x1:x,x2:x,y1:top,y2:H-22},g);T(t.toLocaleString('vi-VN'),{x,y:H-6,'text-anchor':'middle'},ax);}
+  rows.forEach((r,i)=>{const y=top+i*rowH+8,h=rowH-16;
+    const lb=T(r.name,{x:padL-8,y:y+h/2+4,'text-anchor':'end',class:'lbl'},svg);lb.setAttribute('fill',css('--ink'));
+    const x0=opt.log?sx(opt.min):padL,x1=sx(r.v);const w=Math.max(2,x1-x0);
+    const rr=Math.min(4,w/2);S('path',{d:`M${x0},${y} H${x0+w-rr} Q${x0+w},${y} ${x0+w},${y+rr} V${y+h-rr} Q${x0+w},${y+h} ${x0+w-rr},${y+h} H${x0} Z`,fill:css(r.color||'--s1')},svg);
+    T(fmtN(r.v)+(opt.unit||''),{x:x0+w+6,y:y+h/2+4,class:'val'},svg);
+    const hit=S('rect',{x:0,y:top+i*rowH,width:W,height:rowH,class:'hit'},svg);
+    hit.addEventListener('mousemove',ev=>{const b=box.getBoundingClientRect();tipShow(box,`<div class="tt">${esc(r.name)}</div>${r.tip}`,ev.clientX-b.left,ev.clientY-b.top);});
+    hit.addEventListener('mouseleave',()=>tipHide(box));});
+}
+function lineChart(id,series,opt){
+  const box=$(id);box.innerHTML='';const W=720,H=opt.h||280,padL=50,padR=16,top=10,bot=30;
+  const svg=S('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':opt.aria},box);
+  const iw=W-padL-padR,ih=H-top-bot;
+  const sx=v=>padL+(v-opt.xmin)/(opt.xmax-opt.xmin)*iw;
+  let sy;if(opt.log){const lo=Math.log10(opt.ymin),hi=Math.log10(opt.ymax);sy=v=>top+ih-(Math.log10(Math.max(v,opt.ymin))-lo)/(hi-lo)*ih;}else sy=v=>top+ih-(v-opt.ymin)/(opt.ymax-opt.ymin)*ih;
+  const g=S('g',{class:'grid'},svg),ax=S('g',{class:'ax'},svg);
+  if(opt.band){const [b1,b2,bl]=opt.band;S('rect',{x:sx(b1),y:top,width:sx(b2)-sx(b1),height:ih,fill:css('--bad-soft')},svg);T(bl,{x:(sx(b1)+sx(b2))/2,y:top+14,'text-anchor':'middle','font-size':11,fill:css('--bad')},svg);}
+  for(const t of opt.yt){const y=sy(t);S('line',{x1:padL,x2:W-padR,y1:y,y2:y},g);T(t.toLocaleString('vi-VN'),{x:padL-6,y:y+4,'text-anchor':'end'},ax);}
+  for(const t of opt.xt){T(opt.xf?opt.xf(t):t,{x:sx(t),y:H-10,'text-anchor':'middle'},ax);}
+  for(const s of series){const d=s.pts.map((p,i)=>(i?'L':'M')+sx(p[0]).toFixed(1)+','+sy(p[1]).toFixed(1)).join(' ');
+    S('path',{d,fill:'none',stroke:css(s.color),'stroke-width':2.5,'stroke-linejoin':'round','stroke-linecap':'round'},svg);
+    for(const p of s.pts)S('circle',{cx:sx(p[0]),cy:sy(p[1]),r:3.5,fill:css(s.color),stroke:css('--surface'),'stroke-width':1.5},svg);}
+  const xh=S('line',{class:'xh',y1:top,y2:top+ih,x1:0,x2:0,visibility:'hidden'},svg);
+  const dots=series.map(s=>S('circle',{r:5,fill:css(s.color),stroke:css('--surface'),'stroke-width':2,cx:0,cy:0,visibility:'hidden'},svg));
+  const hit=S('rect',{x:padL,y:top,width:iw,height:ih,class:'hit'},svg);
+  hit.addEventListener('mousemove',ev=>{const b=svg.getBoundingClientRect();const px=(ev.clientX-b.left)/b.width*W;const xv=opt.xmin+(px-padL)/iw*(opt.xmax-opt.xmin);
+    let rows='',bx0=null;series.forEach((s,k)=>{let best=s.pts[0];for(const p of s.pts)if(Math.abs(p[0]-xv)<Math.abs(best[0]-xv))best=p;bx0=best[0];
+      dots[k].setAttribute('visibility','visible');dots[k].setAttribute('cx',sx(best[0]));dots[k].setAttribute('cy',sy(best[1]));rows+=`<div class="tr"><span><i class="sw" style="background:${css(s.color)}"></i>${esc(s.name)}</span><b>${fmtN(best[1])} ${opt.unit}</b></div>`;});
+    xh.setAttribute('x1',sx(bx0));xh.setAttribute('x2',sx(bx0));xh.setAttribute('visibility','visible');
+    const bx=box.getBoundingClientRect();tipShow(box,`<div class="tt">${opt.xf?opt.xf(bx0):bx0}</div>${rows}`,ev.clientX-bx.left,ev.clientY-bx.top);});
+  hit.addEventListener('mouseleave',()=>{tipHide(box);xh.setAttribute('visibility','hidden');dots.forEach(d=>d.setAttribute('visibility','hidden'));});
+}
+function legend(id,series){$(id).innerHTML=series.map(s=>`<span><i style="background:${css(s.color)}"></i>${esc(s.name)}</span>`).join('');}
+
+const SD={"s3": {"1": {"p50": 5.378700999983721, "p99": 8.783420000042952, "slow_frac": 0.008, "theory": 0.010000000000000009}, "5": {"p50": 5.653423000012481, "p99": 101.29391999998916, "slow_frac": 0.054, "theory": 0.04900995010000009}, "10": {"p50": 6.024877000015749, "p99": 101.88353500001313, "slow_frac": 0.091, "theory": 0.09561792499119559}, "50": {"p50": 9.551611999995657, "p99": 104.43433899996535, "slow_frac": 0.3975, "theory": 0.39499393286246365}, "100": {"p50": 103.92785699997376, "p99": 107.14080999997577, "slow_frac": 0.6475, "theory": 0.6339676587267709}}, "s4": {"no_cache": {"rps": 14.25, "p50": 1256.8365390000054, "p99": 1989.3987830000128, "db_queries": 114, "requests": 114}, "cache": {"rps": 715.0, "p50": 0.09405199995171643, "p99": 1159.1298479999637, "db_queries": 122, "requests": 5720}}, "s7": {"none": [[0, 80, 80, 0, 0], [1, 80, 80, 0, 0], [2, 80, 80, 0, 0], [3, 80, 80, 0, 0], [4, 80, 80, 0, 0], [5, 80, 80, 0, 0], [6, 80, 80, 0, 0], [7, 80, 80, 0, 0], [8, 80, 80, 0, 0], [9, 80, 80, 0, 0], [10, 80, 40, 0, 40], [11, 80, 40, 0, 80], [12, 80, 4, 36, 120], [13, 80, 0, 40, 160], [14, 80, 0, 40, 200], [15, 80, 0, 40, 240], [16, 80, 0, 40, 280], [17, 80, 0, 40, 320], [18, 80, 0, 40, 360], [19, 80, 0, 40, 400], [20, 80, 0, 100, 380], [21, 80, 0, 100, 360], [22, 80, 0, 100, 340], [23, 80, 0, 100, 320], [24, 80, 0, 100, 300], [25, 80, 0, 100, 280], [26, 80, 0, 100, 260], [27, 80, 0, 100, 240], [28, 80, 0, 100, 220], [29, 80, 0, 100, 200], [30, 80, 0, 100, 180], [31, 80, 0, 100, 160], [32, 80, 0, 100, 140], [33, 80, 0, 100, 120], [34, 80, 0, 100, 100], [35, 80, 20, 80, 80], [36, 80, 100, 0, 60], [37, 80, 100, 0, 40], [38, 80, 100, 0, 20], [39, 80, 100, 0, 0], [40, 80, 80, 0, 0], [41, 80, 80, 0, 0], [42, 80, 80, 0, 0], [43, 80, 80, 0, 0], [44, 80, 80, 0, 0], [45, 80, 80, 0, 0], [46, 80, 80, 0, 0], [47, 80, 80, 0, 0], [48, 80, 80, 0, 0], [49, 80, 80, 0, 0], [50, 80, 80, 0, 0], [51, 80, 80, 0, 0], [52, 80, 80, 0, 0], [53, 80, 80, 0, 0], [54, 80, 80, 0, 0], [55, 80, 80, 0, 0], [56, 80, 80, 0, 0], [57, 80, 80, 0, 0], [58, 80, 80, 0, 0], [59, 80, 80, 0, 0]], "immediate": [[0, 80, 80, 0, 0], [1, 80, 80, 0, 0], [2, 80, 80, 0, 0], [3, 80, 80, 0, 0], [4, 80, 80, 0, 0], [5, 80, 80, 0, 0], [6, 80, 80, 0, 0], [7, 80, 80, 0, 0], [8, 80, 80, 0, 0], [9, 80, 80, 0, 0], [10, 80, 40, 0, 40], [11, 80, 40, 0, 80], [12, 148, 4, 36, 188], [13, 220, 0, 40, 368], [14, 292, 0, 40, 620], [15, 320, 0, 40, 900], [16, 320, 0, 40, 1180], [17, 320, 0, 40, 1460], [18, 320, 0, 40, 1740], [19, 320, 0, 40, 2020], [20, 320, 0, 100, 2240], [21, 320, 0, 100, 2460], [22, 320, 0, 100, 2680], [23, 320, 0, 100, 2900], [24, 320, 0, 100, 3120], [25, 320, 0, 100, 3340], [26, 320, 0, 100, 3560], [27, 320, 0, 100, 3780], [28, 320, 0, 100, 4000], [29, 320, 0, 100, 4220], [30, 320, 0, 100, 4440], [31, 320, 0, 100, 4660], [32, 320, 0, 100, 4880], [33, 320, 0, 100, 5100], [34, 320, 0, 100, 5320], [35, 320, 0, 100, 5540], [36, 320, 0, 100, 5760], [37, 320, 0, 100, 5980], [38, 320, 0, 100, 6200], [39, 320, 0, 100, 6420], [40, 320, 0, 100, 6640], [41, 320, 0, 100, 6860], [42, 320, 0, 100, 7080], [43, 320, 0, 100, 7300], [44, 320, 0, 100, 7520], [45, 320, 0, 100, 7740], [46, 320, 0, 100, 7960], [47, 320, 0, 100, 8180], [48, 320, 0, 100, 8400], [49, 320, 0, 100, 8620], [50, 320, 0, 100, 8840], [51, 320, 0, 100, 9060], [52, 320, 0, 100, 9280], [53, 320, 0, 100, 9500], [54, 320, 0, 100, 9720], [55, 320, 0, 100, 9940], [56, 320, 0, 100, 10160], [57, 320, 0, 100, 10380], [58, 320, 0, 100, 10600], [59, 320, 0, 100, 10820]], "backoff": [[0, 80, 80, 0, 0], [1, 80, 80, 0, 0], [2, 80, 80, 0, 0], [3, 80, 80, 0, 0], [4, 80, 80, 0, 0], [5, 80, 80, 0, 0], [6, 80, 80, 0, 0], [7, 80, 80, 0, 0], [8, 80, 80, 0, 0], [9, 80, 80, 0, 0], [10, 80, 40, 0, 40], [11, 80, 40, 0, 80], [12, 125, 4, 36, 165], [13, 168, 0, 40, 293], [14, 223, 0, 40, 476], [15, 240, 0, 40, 676], [16, 275, 0, 40, 911], [17, 297, 0, 40, 1168], [18, 328, 0, 40, 1456], [19, 323, 0, 40, 1739], [20, 328, 0, 100, 1967], [21, 317, 0, 100, 2184], [22, 311, 0, 100, 2395], [23, 333, 0, 100, 2628], [24, 312, 0, 100, 2840], [25, 322, 0, 100, 3062], [26, 312, 0, 100, 3274], [27, 329, 0, 100, 3503], [28, 321, 0, 100, 3724], [29, 311, 0, 100, 3935], [30, 328, 0, 100, 4163], [31, 315, 0, 100, 4378], [32, 328, 0, 100, 4606], [33, 320, 0, 100, 4826], [34, 311, 0, 100, 5037], [35, 312, 0, 100, 5249], [36, 331, 0, 100, 5480], [37, 314, 0, 100, 5694], [38, 333, 0, 100, 5927], [39, 308, 0, 100, 6135], [40, 324, 0, 100, 6359], [41, 318, 0, 100, 6577], [42, 312, 0, 100, 6789], [43, 337, 0, 100, 7026], [44, 311, 0, 100, 7237], [45, 317, 0, 100, 7454], [46, 330, 0, 100, 7684], [47, 322, 0, 100, 7906], [48, 329, 0, 100, 8135], [49, 312, 0, 100, 8347], [50, 308, 0, 100, 8555], [51, 337, 0, 100, 8792], [52, 307, 0, 100, 8999], [53, 316, 0, 100, 9215], [54, 326, 0, 100, 9441], [55, 309, 0, 100, 9650], [56, 344, 0, 100, 9894], [57, 314, 0, 100, 10108], [58, 309, 0, 100, 10317], [59, 311, 0, 100, 10528]], "backoff_shed": [[0, 80, 80, 0, 0], [1, 80, 80, 0, 0], [2, 80, 80, 0, 0], [3, 80, 80, 0, 0], [4, 80, 80, 0, 0], [5, 80, 80, 0, 0], [6, 80, 80, 0, 0], [7, 80, 80, 0, 0], [8, 80, 80, 0, 0], [9, 80, 80, 0, 0], [10, 80, 40, 0, 40], [11, 80, 40, 0, 80], [12, 109, 40, 0, 113], [13, 120, 40, 0, 130], [14, 154, 40, 0, 165], [15, 160, 40, 0, 170], [16, 178, 40, 0, 190], [17, 191, 40, 0, 206], [18, 201, 40, 0, 220], [19, 191, 40, 0, 207], [20, 184, 100, 0, 188], [21, 155, 100, 0, 163], [22, 116, 100, 0, 124], [23, 128, 100, 0, 128], [24, 101, 100, 0, 105], [25, 85, 100, 0, 82], [26, 80, 100, 0, 62], [27, 80, 100, 0, 42], [28, 80, 100, 0, 22], [29, 80, 100, 0, 2], [30, 80, 82, 0, 0], [31, 80, 80, 0, 0], [32, 80, 80, 0, 0], [33, 80, 80, 0, 0], [34, 80, 80, 0, 0], [35, 80, 80, 0, 0], [36, 80, 80, 0, 0], [37, 80, 80, 0, 0], [38, 80, 80, 0, 0], [39, 80, 80, 0, 0], [40, 80, 80, 0, 0], [41, 80, 80, 0, 0], [42, 80, 80, 0, 0], [43, 80, 80, 0, 0], [44, 80, 80, 0, 0], [45, 80, 80, 0, 0], [46, 80, 80, 0, 0], [47, 80, 80, 0, 0], [48, 80, 80, 0, 0], [49, 80, 80, 0, 0], [50, 80, 80, 0, 0], [51, 80, 80, 0, 0], [52, 80, 80, 0, 0], [53, 80, 80, 0, 0], [54, 80, 80, 0, 0], [55, 80, 80, 0, 0], [56, 80, 80, 0, 0], [57, 80, 80, 0, 0], [58, 80, 80, 0, 0], [59, 80, 80, 0, 0]], "immediate_shed": [[0, 80, 80, 0, 0], [1, 80, 80, 0, 0], [2, 80, 80, 0, 0], [3, 80, 80, 0, 0], [4, 80, 80, 0, 0], [5, 80, 80, 0, 0], [6, 80, 80, 0, 0], [7, 80, 80, 0, 0], [8, 80, 80, 0, 0], [9, 80, 80, 0, 0], [10, 80, 40, 0, 40], [11, 80, 40, 0, 80], [12, 116, 40, 0, 120], [13, 152, 40, 0, 160], [14, 188, 40, 0, 200], [15, 200, 40, 0, 216], [16, 200, 40, 0, 216], [17, 200, 40, 0, 216], [18, 200, 40, 0, 216], [19, 200, 40, 0, 216], [20, 146, 100, 0, 156], [21, 92, 100, 0, 96], [22, 80, 100, 0, 64], [23, 80, 100, 0, 44], [24, 80, 100, 0, 24], [25, 80, 100, 0, 4], [26, 80, 84, 0, 0], [27, 80, 80, 0, 0], [28, 80, 80, 0, 0], [29, 80, 80, 0, 0], [30, 80, 80, 0, 0], [31, 80, 80, 0, 0], [32, 80, 80, 0, 0], [33, 80, 80, 0, 0], [34, 80, 80, 0, 0], [35, 80, 80, 0, 0], [36, 80, 80, 0, 0], [37, 80, 80, 0, 0], [38, 80, 80, 0, 0], [39, 80, 80, 0, 0], [40, 80, 80, 0, 0], [41, 80, 80, 0, 0], [42, 80, 80, 0, 0], [43, 80, 80, 0, 0], [44, 80, 80, 0, 0], [45, 80, 80, 0, 0], [46, 80, 80, 0, 0], [47, 80, 80, 0, 0], [48, 80, 80, 0, 0], [49, 80, 80, 0, 0], [50, 80, 80, 0, 0], [51, 80, 80, 0, 0], [52, 80, 80, 0, 0], [53, 80, 80, 0, 0], [54, 80, 80, 0, 0], [55, 80, 80, 0, 0], [56, 80, 80, 0, 0], [57, 80, 80, 0, 0], [58, 80, 80, 0, 0], [59, 80, 80, 0, 0]]}, "s8": {"rr": {"p50": 32.363454066949515, "p99": 902.295655537074, "p999": 1410.6612273304931}, "random": {"p50": 55.001085598185284, "p99": 1098.3214965410361, "p999": 1435.2033604690853}, "least": {"p50": 10.000000000005116, "p99": 387.40713190088627, "p999": 551.1986600984784}, "p2c": {"p50": 10.000000000005116, "p99": 385.39563833295176, "p999": 518.129189135627}}, "s9": {"pg_full_scan_ms": 31.863498000006985, "pg_bbox_index_ms": 0.720705000048838, "redis_geosearch_ms": 0.26416399998652196, "same_top": true, "top3": [[149528, 0.121], [80657, 0.214], [68278, 0.36]], "pg_top3": [[149528, 0.121], [80657, 0.214], [68278, 0.36]], "in_radius": 120, "geo_mem_mb": 19.161728}};
+
+/* ===== 01. độ trễ ===== */
+hbar('#ch-lat',[
+  ['Đọc RAM ngẫu nhiên',0.0155],['JSON 642 B mã hoá + giải mã',12.1],['Redis GET, cùng máy',88.7],['Đọc tuần tự 1 MB từ RAM',97.0],['PostgreSQL theo khoá chính',103.2],['fsync 4 KB xuống đĩa',176.3],['HTTP, giữ kết nối',254.0],['Đọc tuần tự 1 MB từ SSD',373.1],['HTTP, mở kết nối mới',418.0],['Cùng vùng AWS (tham khảo)',500],['Nhật ↔ Mỹ (tham khảo)',120000]
+].map(([n,v])=>({name:n,v,color:n.includes('tham khảo')?'--muted':'--s1',tip:`<div class="tr"><span>Độ trễ</span><b>${v<1?fmtN(v*1000)+' ns':v>=1000?fmtN(v/1000)+' ms':fmtN(v)+' µs'}</b></div>`})),{log:true,min:0.01,max:1000000,ticks:[0.01,1,100,10000,1000000],padL:190,unit:' µs',aria:'Các mốc độ trễ đo trên máy này'});
+
+/* ===== 01. máy tính ước lượng ===== */
+(function(){
+  const P={'Hugeclub (giả định)':[300000,20,2,5,500,3,5],'URL shortener':[10000000,33,0.33,5,500,5,0.5],'Mạng xã hội lớn':[100000000,100,5,3,1000,5,20]};
+  const ids=['c-dau','c-read','c-write','c-peak','c-size','c-years','c-resp'];
+  $('#calc-pre').innerHTML='<span class="cap">Ví dụ:</span>'+Object.keys(P).map(k=>`<button class="btn" type="button" data-k="${esc(k)}">${esc(k)}</button>`).join('');
+  $('#calc-pre').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;P[b.dataset.k].forEach((v,i)=>$('#'+ids[i]).value=v);calc();});
+  const fq=v=>v>=1e6?(v/1e6).toLocaleString('vi-VN',{maximumFractionDigits:1})+' triệu':v>=1e3?(v/1e3).toLocaleString('vi-VN',{maximumFractionDigits:1})+' nghìn':v.toLocaleString('vi-VN',{maximumFractionDigits:1});
+  const fb=b=>{const u=['B','KB','MB','GB','TB','PB'];let i=0;while(b>=1000&&i<u.length-1){b/=1000;i++;}return b.toLocaleString('vi-VN',{maximumFractionDigits:1})+' '+u[i];};
+  function calc(){const [dau,rd,wr,pk,sz,yr,resp]=ids.map(i=>Math.max(0,+$('#'+i).value||0));
+    const rq=dau*rd/86400,wq=dau*wr/86400,prq=rq*pk,pwq=wq*pk;const stYear=dau*wr*sz*365;const bw=prq*resp*1000;const cacheMem=dau*rd*resp*1000*0.2;
+    let note;const tot=prq+pwq;
+    if(tot<500)note='Vài trăm QPS lúc cao điểm: 2 instance ứng dụng (để chịu lỗi) + một database có read replica là dư sức. Đừng vẽ Kafka hay sharding.';
+    else if(tot<20000)note='Hàng nghìn QPS: nhiều instance sau load balancer, cache cho phần đọc, read replica; database một primary vẫn chịu được phần ghi.';
+    else note='Hàng chục nghìn QPS trở lên: cache là bắt buộc, cần nghĩ tới sharding hoặc NoSQL cho phần ghi, CDN, xử lý bất đồng bộ qua queue.';
+    if(pwq>3000)note+=' Ghi lúc cao điểm > 3 000/s: một database quan hệ bắt đầu căng, cân nhắc gom ghi qua queue hoặc chia shard.';
+    $('#calc-out').innerHTML=`<div class="calc-cards">
+      <div class="stat"><b>${fq(rq)}</b><span>Đọc/s trung bình</span></div><div class="stat"><b>${fq(prq)}</b><span>Đọc/s cao điểm</span></div>
+      <div class="stat"><b>${fq(wq)}</b><span>Ghi/s trung bình</span></div><div class="stat"><b>${fq(pwq)}</b><span>Ghi/s cao điểm</span></div>
+      <div class="stat"><b>${fb(stYear)}</b><span>Dữ liệu mới mỗi năm</span></div><div class="stat"><b>${fb(stYear*yr)}</b><span>Tổng sau ${yr} năm</span></div>
+      <div class="stat"><b>${fb(bw)}/s</b><span>Băng thông ra lúc cao điểm</span></div><div class="stat"><b>${fb(cacheMem)}</b><span>Cache 20% lượng đọc/ngày</span></div></div>
+      <div class="verdict ok"><span>${note}</span></div>
+      <p class="cap">Cách tính: ${fq(dau)} × ${rd} ÷ 86 400 = ${fq(rq)} đọc/s; × ${pk} lúc cao điểm. Dữ liệu: ${fq(dau)} × ${wr} × ${sz} B × 365.</p>`;}
+  ids.forEach(i=>$('#'+i).addEventListener('input',calc));calc();
+})();
+
+/* ===== 02. kiến trúc lớn dần ===== */
+(function(){
+  const svg=$('#evo-svg');let i=0;
+  const C={users:[55,165,'Người dùng','--muted'],one:[300,165,'Server (app + DB)','--s1'],app:[330,165,'App server','--s1'],app1:[350,120,'App 1','--s1'],app2:[350,210,'App 2','--s1'],a1:[350,95,'App 1','--s1'],a2:[350,165,'App 2','--s1'],a3:[350,235,'App … N','--s1'],
+    lb:[200,165,'Load balancer','--s3'],db:[540,165,'DB primary','--s2'],rep:[680,165,'Read replica','--s2'],cache:[540,55,'Redis cache','--bad'],cdn:[200,50,'CDN (ảnh, JS)','--ok'],q:[540,285,'Queue (SQS)','--warn'],wk:[680,285,'Worker','--warn'],
+    shA:[540,140,'DB shard A','--s2'],shB:[540,200,'DB shard B','--s2'],repA:[680,140,'Replica A','--s2'],repB:[680,200,'Replica B','--s2']};
+  const ST=[
+    {c:['users','one'],e:[['users','one']],t:'Một máy chạy cả ứng dụng và database',n:'Giai đoạn MVP. Rẻ, đơn giản. <b>Vấn đề:</b> app và DB tranh CPU/RAM; máy chết là sập toàn bộ; không deploy được mà không gián đoạn.'},
+    {c:['users','app','db'],e:[['users','app'],['app','db']],nw:['db'],t:'Tách database ra máy riêng',n:'Mỗi phần scale dọc độc lập; dùng RDS để có backup, Multi-AZ. <b>Vấn đề còn lại:</b> một app server vẫn là điểm chết duy nhất.'},
+    {c:['users','lb','app1','app2','db'],e:[['users','lb'],['lb','app1'],['lb','app2'],['app1','db'],['app2','db']],nw:['lb','app1','app2'],t:'Load balancer + nhiều app server',n:'App phải <b>stateless</b> (session ra Redis hoặc JWT). Một app chết thì LB loại nó ra qua health check. <b>Vấn đề mới:</b> mọi lượt đọc vẫn đập vào một database.'},
+    {c:['users','lb','app1','app2','db','cache'],e:[['users','lb'],['lb','app1'],['lb','app2'],['app1','db'],['app2','db'],['app1','cache'],['app2','cache']],nw:['cache'],t:'Thêm cache',n:'Dữ liệu đọc nhiều (chi tiết nhà hàng, menu) lấy từ Redis; đo thật ở chương 04: 14 → 715 request/s. <b>Đổi lại:</b> phải lo dữ liệu cũ và xoá cache khi ghi.'},
+    {c:['users','lb','app1','app2','db','cache','rep'],e:[['users','lb'],['lb','app1'],['lb','app2'],['app1','db'],['app2','db'],['app1','cache'],['app2','cache'],['db','rep']],nw:['rep'],t:'Read replica',n:'Lịch sử đơn, báo cáo đọc từ replica; ghi vẫn vào primary. <b>Đổi lại:</b> replica trễ vài trăm ms, màn "vừa đặt xong" phải đọc primary.'},
+    {c:['users','cdn','lb','app1','app2','db','cache','rep'],e:[['users','cdn'],['users','lb'],['lb','app1'],['lb','app2'],['app1','db'],['app2','db'],['app1','cache'],['app2','cache'],['db','rep']],nw:['cdn'],t:'CDN cho nội dung tĩnh',n:'Ảnh món ăn, JS, CSS phục vụ từ máy chủ gần người dùng (CloudFront), không tốn băng thông và CPU của app.'},
+    {c:['users','cdn','lb','app1','app2','db','cache','rep','q','wk'],e:[['users','cdn'],['users','lb'],['lb','app1'],['lb','app2'],['app1','db'],['app2','db'],['app1','cache'],['app2','cache'],['db','rep'],['app1','q'],['app2','q'],['q','wk'],['wk','db']],nw:['q','wk'],t:'Queue + worker cho việc nặng và chậm',n:'Gửi mail, tạo báo cáo, cộng điểm hàng loạt chạy nền. Request trả về ngay; đỉnh tải được queue hấp thụ; worker scale theo độ dài queue. <b>Đổi lại:</b> nhất quán cuối cùng, phải idempotent.'},
+    {c:['users','cdn','lb','a1','a2','a3','shA','shB','repA','repB','cache','q','wk'],e:[['users','cdn'],['users','lb'],['lb','a1'],['lb','a2'],['lb','a3'],['a1','shA'],['a2','shA'],['a2','shB'],['a3','shB'],['a1','cache'],['a3','cache'],['shA','repA'],['shB','repB'],['a3','q'],['q','wk']],nw:['shA','shB','repA','repB','a3'],t:'Auto scaling + sharding',n:'App tự tăng giảm theo tải. Phần ghi vượt sức một database thì chia shard theo <code>user_id</code>. Đây là bậc cuối, chỉ làm khi đo được là cần: mọi query chéo shard trở nên đắt.'}];
+  function box(k,isNew){const [x,y,n,c]=C[k];const w=k==='one'?170:k==='users'?92:118;const g=S('g',{},svg);
+    S('rect',{x:x-w/2,y:y-21,width:w,height:42,rx:8,fill:css('--surface'),stroke:css(c),'stroke-width':isNew?3:1.8},g);
+    if(isNew)S('rect',{x:x-w/2-4,y:y-25,width:w+8,height:50,rx:10,fill:'none',stroke:css(c),'stroke-width':1,'stroke-dasharray':'4 3'},g);
+    T(n,{x,y:y+5,'text-anchor':'middle','font-size':12.5,'font-weight':600},g);if(isNew&&!RM)g.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:450});}
+  function render(){const s=ST[i];svg.innerHTML='';
+    for(const [a,b] of s.e){const [x1,y1]=C[a],[x2,y2]=C[b];S('line',{x1,y1,x2,y2,stroke:css('--line'),'stroke-width':2},svg);}
+    s.c.forEach(k=>box(k,(s.nw||[]).includes(k)));
+    T(`Bước ${i+1}: ${s.t}`,{x:380,y:322,'text-anchor':'middle','font-weight':700,'font-size':13},svg);
+    $('#evo-note').innerHTML=`<h4>${s.t}</h4><p>${s.n}</p>`;$('#evo-cnt').textContent=`${i+1}/${ST.length}`;$('#evo-prev').disabled=i===0;$('#evo-next').disabled=i===ST.length-1;}
+  $('#evo-prev').addEventListener('click',()=>{if(i>0){i--;render();}});$('#evo-next').addEventListener('click',()=>{if(i<ST.length-1){i++;render();}});render();
+})();
+
+/* ===== 03. load balancer trực tiếp ===== */
+(function(){
+  const svg=$('#lbs-svg');let mode='rr',vis=false,paused=false,last=0,t=0,acc=0,rr=0,seq=0;
+  const NS=4,SL=2,FAST=200,SLOW=4000,RATE=16;let srv,fly,waits,done;
+  function reset(){srv=Array.from({length:NS},()=>({q:[],run:[]}));fly=[];waits=[];done=0;rr=0;}
+  const load=s=>s.q.length+s.run.length;
+  function pick(){if(mode==='rr')return (rr++)%NS;if(mode==='least'){let b=0;for(let i=1;i<NS;i++)if(load(srv[i])<load(srv[b]))b=i;return b;}
+    const a=Math.floor(Math.random()*NS);let b=Math.floor(Math.random()*(NS-1));if(b>=a)b++;return load(srv[a])<=load(srv[b])?a:b;}
+  const SY=i=>40+i*60;
+  function tick(dt){t+=dt;acc+=RATE*dt/1000;
+    while(acc>=1){acc--;const slow=Math.random()<0.06;fly.push({id:++seq,slow,s:pick(),t0:t});}
+    fly=fly.filter(f=>{if(t-f.t0>=350){srv[f.s].q.push({...f,enq:t});return false;}return true;});
+    srv.forEach(s=>{s.run=s.run.filter(r=>{if(t>=r.end){done++;return false;}return true;});
+      while(s.run.length<SL&&s.q.length){const r=s.q.shift();if(!r.slow)waits.push(t-r.enq);r.st=t;r.end=t+(r.slow?SLOW:FAST);s.run.push(r);}});
+    if(waits.length>300)waits=waits.slice(-300);}
+  function draw(){svg.innerHTML='';
+    S('rect',{x:150,y:100,width:90,height:60,rx:8,class:'bx hot'},svg);T('LB',{x:195,y:135,'text-anchor':'middle','font-weight':700},svg);
+    T('Request đến',{x:20,y:20,class:'bt-cap'},svg);
+    srv.forEach((s,i)=>{const y=SY(i);S('rect',{x:560,y:y-22,width:170,height:44,rx:8,class:'bx'+(load(s)>4?' bad':'')},svg);T('Server '+(i+1),{x:570,y:y-6,'font-size':11,'font-weight':700},svg);
+      s.run.forEach((r,j)=>{const k=Math.min(1,(t-r.st)/(r.end-r.st));S('rect',{x:640+j*42,y:y-14,width:38,height:28,rx:4,fill:css(r.slow?'--s2':'--ok'),opacity:.25},svg);S('rect',{x:640+j*42,y:y-14,width:38*k,height:28,rx:4,fill:css(r.slow?'--s2':'--ok')},svg);});
+      s.q.slice(0,10).forEach((r,j)=>S('circle',{cx:545-j*13,cy:y,r:5,fill:css(r.slow?'--s2':'--ok')},svg));
+      if(s.q.length>10)T('+'+(s.q.length-10),{x:400,y:y+4,class:'bt-cap'},svg);
+      S('line',{x1:240,y1:130,x2:430,y2:y,stroke:css('--line')},svg);});
+    fly.forEach(f=>{const k=Math.min(1,(t-f.t0)/350);let x,y;if(k<0.5){x=20+(k/0.5)*130;y=130;}else{const kk=(k-0.5)/0.5;x=240+kk*(545-240);y=130+(SY(f.s)-130)*kk;}S('circle',{cx:x,cy:y,r:f.slow?6:4.5,fill:css(f.slow?'--s2':'--ok')},svg);});
+    if(waits.length>20){const w=[...waits].sort((a,b)=>a-b);$('#lbs-p50').textContent=Math.round(w[w.length>>1])+' ms';$('#lbs-p99').textContent=Math.round(w[Math.floor(w.length*.99)])+' ms';}
+    $('#lbs-n').textContent=done;}
+  function loop(ts){if(!last)last=ts;const dt=Math.min(50,ts-last);last=ts;if(vis&&!paused){tick(dt);draw();}requestAnimationFrame(loop);}
+  seg('#lbs-mode',m=>{mode=m;reset();$('#lbs-p50').textContent='–';$('#lbs-p99').textContent='–';});
+  $('#lbs-pause').addEventListener('click',()=>{paused=!paused;$('#lbs-pause').setAttribute('aria-pressed',paused);$('#lbs-pause').textContent=paused?'Chạy tiếp':'Tạm dừng';});
+  onVisible($('#lbs'),v=>vis=v);reset();draw();requestAnimationFrame(loop);
+})();
+hbar('#ch-lb',[['Round robin',SD.s8.rr],['Ngẫu nhiên',SD.s8.random],['Least connections',SD.s8.least],['Power of two',SD.s8.p2c]].map(([n,v],i)=>({name:n,v:v.p99,color:i<2?'--s2':'--s1',tip:`<div class="tr"><span>p50</span><b>${fmtN(v.p50)} ms</b></div><div class="tr"><span>p99</span><b>${fmtN(v.p99)} ms</b></div><div class="tr"><span>p99,9</span><b>${fmtN(v.p999)} ms</b></div>`})),{log:true,min:10,max:2000,ticks:[10,100,1000],padL:120,unit:' ms',aria:'Độ trễ p99 của request nhanh theo thuật toán cân bằng tải'});
+
+/* ===== 04. cache ===== */
+hbar('#ch-cache',[['Không cache',SD.s4.no_cache],['Redis, TTL 60 s',SD.s4.cache]].map(([n,v],i)=>({name:n,v:v.rps,color:i?'--s1':'--s2',tip:`<div class="tr"><span>Request/s</span><b>${fmtN(v.rps)}</b></div><div class="tr"><span>p50</span><b>${fmtN(v.p50)} ms</b></div><div class="tr"><span>p99</span><b>${fmtN(v.p99)} ms</b></div><div class="tr"><span>Query xuống DB</span><b>${v.db_queries}</b></div>`})),{max:800,ticks:[0,200,400,600,800],padL:110,unit:' req/s',aria:'Số request mỗi giây có và không có cache'});
+
+/* ===== 06. consistent hashing ===== */
+(function(){
+  const svg=$('#ring-svg');const COL=['--s1','--s2','--s3','--ok','--warn','--bad','--old','--surv'];
+  function fnv(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;}h^=h>>>16;h=Math.imul(h,0x85ebca6b)>>>0;h^=h>>>13;h=Math.imul(h,0xc2b2ae35)>>>0;h^=h>>>16;return h>>>0;}
+  const KEYS=Array.from({length:28},(_,i)=>'user:'+(1001+i));const BIG=Array.from({length:10000},(_,i)=>'k'+i);
+  let nodes=[0,1,2],v=1,mode='ring',prevOwn=null,lastMoved=null;
+  function ringPts(){const pts=[];for(const n of nodes)for(let j=0;j<v;j++)pts.push([fnv('db'+n+'#'+j),n]);return pts.sort((a,b)=>a[0]-b[0]);}
+  function owner(k,pts){const h=fnv(k);if(mode==='mod')return nodes[h%nodes.length];for(const p of pts)if(p[0]>=h)return p[1];return pts[0][1];}
+  function ownAll(){const pts=ringPts();const m={};BIG.forEach(k=>m[k]=owner(k,pts));KEYS.forEach(k=>m[k]=owner(k,pts));return m;}
+  const A=h=>h/4294967296*Math.PI*2-Math.PI/2;
+  function change(fn){const before=ownAll();fn();const after=ownAll();const mv=BIG.filter(k=>before[k]!==after[k]).length;lastMoved=mv/BIG.length;prevOwn=before;render(after);}
+  function render(own){own=own||ownAll();svg.innerHTML='';const cx=210,cy=210,R=160;
+    S('circle',{cx,cy,r:R,fill:'none',stroke:css('--line'),'stroke-width':10},svg);
+    if(mode==='ring'){ringPts().forEach(([h,n])=>{const a=A(h);S('rect',{x:cx+Math.cos(a)*R-8,y:cy+Math.sin(a)*R-8,width:16,height:16,rx:3,fill:css(COL[n%8]),stroke:css('--surface'),'stroke-width':2},svg);});}
+    else T('mod N: vị trí trên vòng không quyết định node',{x:cx,y:cy+4,'text-anchor':'middle',class:'bt-cap'},svg);
+    KEYS.forEach(k=>{const a=A(fnv(k));const x=cx+Math.cos(a)*(R-30),y=cy+Math.sin(a)*(R-30);const moved=prevOwn&&prevOwn[k]!==own[k];
+      const c=S('circle',{cx:x,cy:y,r:moved?8:6,fill:css(COL[own[k]%8]),stroke:moved?css('--ink'):'none','stroke-width':2.5},svg);
+      if(moved&&!RM)c.animate([{r:14,opacity:.3},{r:8,opacity:1}],{duration:700});});
+    if(mode==='ring')T('■ node   ● key',{x:cx,y:cy-6,'text-anchor':'middle',class:'bt-cap'},svg);
+    const cnt={};nodes.forEach(n=>cnt[n]=0);BIG.forEach(k=>cnt[own[k]]++);const avg=BIG.length/nodes.length;const mx=Math.max(...Object.values(cnt));
+    $('#ring-load').innerHTML=nodes.map(n=>`<div class="rl-row"><span><i style="background:${css(COL[n%8])}"></i>Node ${n+1}</span><span class="bar"><i style="width:${cnt[n]/mx*100}%;background:${css(COL[n%8])}"></i></span><b>${(cnt[n]/BIG.length*100).toFixed(1).replace('.',',')}%</b></div>`).join('');
+    $('#ring-bal').textContent=(mx/avg).toFixed(2).replace('.',',');$('#ring-moved').textContent=lastMoved===null?'–':(lastMoved*100).toFixed(1).replace('.',',')+'%';
+    $('#ring-note').innerHTML=`Tính trên 10 000 key ẩn; vòng chỉ vẽ 28 key. Key viền đậm là key vừa đổi node. ${nodes.length} node${mode==='ring'?` × ${v} điểm trên vòng`:''}.`;}
+  $('#ring-add').addEventListener('click',()=>{if(nodes.length>=8)return;change(()=>{let n=0;while(nodes.includes(n))n++;nodes.push(n);});});
+  $('#ring-del').addEventListener('click',()=>{if(nodes.length<=2)return;change(()=>nodes.splice(Math.floor(nodes.length/2),1));});
+  $('#ring-v').addEventListener('input',()=>{v=+$('#ring-v').value;$('#ring-v-v').textContent=v;change(()=>{});});
+  seg('#ring-mode',m=>{mode=m;prevOwn=null;lastMoved=null;render();});
+  render();
+})();
+
+/* ===== 07. CAP ===== */
+(function(){
+  const svg=$('#cap-svg');let n1=1000,n2=1000,cut=false,mode='cp',busy=false;
+  function draw(flash){svg.innerHTML='';
+    const node=(x,v,name,lit)=>{S('rect',{x:x-80,y:60,width:160,height:90,rx:10,class:'bx'+(lit==='bad'?' bad':lit?' hot':'')},svg);T(name,{x,y:86,'text-anchor':'middle','font-weight':700},svg);T('điểm của khách A',{x,y:106,'text-anchor':'middle',class:'bt-cap'},svg);T(v,{x,y:134,'text-anchor':'middle','font-size':22,'font-weight':700,class:'bt-k'},svg);};
+    S('line',{x1:330,y1:105,x2:430,y2:105,stroke:cut?css('--bad'):css('--ok'),'stroke-width':4,'stroke-dasharray':cut?'8 6':''},svg);
+    T(cut?'✗ mạng đứt':'đồng bộ',{x:380,y:96,'text-anchor':'middle','font-size':12,'font-weight':700,fill:cut?css('--bad'):css('--ok')},svg);
+    node(250,n1,'Node 1 (Tokyo)',flash==='n1'?true:flash==='n1x'?'bad':false);node(510,n2,'Node 2 (Osaka)',flash==='n2'?true:flash==='n2x'?'bad':false);
+    S('rect',{x:20,y:80,width:100,height:50,rx:8,class:'bx'},svg);T('Khách 1',{x:70,y:110,'text-anchor':'middle'},svg);
+    S('rect',{x:640,y:80,width:100,height:50,rx:8,class:'bx'},svg);T('Khách 2',{x:690,y:110,'text-anchor':'middle'},svg);
+    S('line',{x1:120,y1:105,x2:170,y2:105,stroke:css('--line'),'stroke-width':2},svg);S('line',{x1:590,y1:105,x2:640,y2:105,stroke:css('--line'),'stroke-width':2},svg);
+    T(mode==='cp'?'CP: khi đứt mạng, từ chối để không ai thấy dữ liệu sai':'AP: khi đứt mạng, vẫn phục vụ, chấp nhận lệch tạm thời',{x:380,y:190,'text-anchor':'middle','font-weight':600,'font-size':13},svg);
+    if(n1!==n2)T(`Hai node đang lệch nhau: ${n1} và ${n2}`,{x:380,y:210,'text-anchor':'middle',fill:css('--bad'),'font-size':12},svg);}
+  const L=(m,c)=>logTo('#cap-log',m,c);
+  $('#cap-cut').addEventListener('click',()=>{cut=true;$('#cap-cut').setAttribute('aria-pressed','true');L('Mạng giữa Tokyo và Osaka bị đứt. Mỗi node chỉ thấy chính mình.','w');draw();});
+  $('#cap-heal').addEventListener('click',()=>{if(!cut)return;cut=false;$('#cap-cut').setAttribute('aria-pressed','false');
+    if(n1!==n2){L(`Nối lại: đồng bộ Node 2 theo Node 1 (${n2} → ${n1}). Nếu cả hai phía cùng ghi trong lúc đứt, phải có luật hợp nhất (last-write-wins, CRDT, hoặc xử lý tay).`,'h');n2=n1;}else L('Nối lại mạng, hai node đã khớp.','h');draw();});
+  seg('#cap-mode',m=>{mode=m;n1=n2=1000;cut=false;$('#cap-cut').setAttribute('aria-pressed','false');$('#cap-log').innerHTML='';L(m==='cp'?'Chế độ CP: ghi phải được cả hai node (đa số) xác nhận.':'Chế độ AP: mỗi node tự nhận ghi, đồng bộ sau.','d');draw();});
+  $('#cap-w').addEventListener('click',()=>{
+    if(!cut){n1-=200;n2=n1;L(`Khách 1 trừ 200 điểm → Node 1 ghi, sao chép sang Node 2 → OK. Cả hai: ${n1}.`,'s');draw('n1');return;}
+    if(mode==='cp'){L('Khách 1 trừ 200 điểm → LỖI 503: Node 1 không liên lạc được bản sao, không đủ đa số để xác nhận. Dữ liệu đúng, nhưng khách không dùng được tính năng.','w');draw('n1x');}
+    else{n1-=200;L(`Khách 1 trừ 200 điểm → OK trên Node 1 (${n1}). Node 2 chưa biết.`,'w');draw('n1');}});
+  $('#cap-r').addEventListener('click',()=>{
+    if(cut&&mode==='cp'){L('Khách 2 xem điểm → LỖI 503: Node 2 bị cô lập, không chắc mình có bản mới nhất nên từ chối.','w');draw('n2x');return;}
+    const stale=n2!==n1;L(`Khách 2 xem điểm trên Node 2 → ${n2}${stale?` (cũ! thật ra là ${n1}). Nếu khách dùng ${n2} điểm để thanh toán, hệ thống trừ quá số dư.`:''}`,stale?'w':'s');draw('n2');});
+  L('Khách A có 1 000 điểm, dữ liệu nhân bản trên hai node ở hai vùng.','d');draw();
+})();
+
+/* ===== 08. outbox ===== */
+(function(){
+  const svg=$('#ob-svg');let mode='dual',busy=false,orders=[],outbox=[],events=[],nextId=101,miss=0,dup=0;
+  const P={svc:[90,120],db:[300,120],relay:[480,120],q:[660,120]};
+  function reset(){orders=[];outbox=[];events=[];nextId=101;miss=0;dup=0;draw();stats();}
+  function stats(){$('#ob-db').textContent=orders.length;$('#ob-ev').textContent=events.length;$('#ob-miss').textContent=miss;$('#ob-dup').textContent=dup;}
+  function draw(hl){svg.innerHTML='';hl=hl||{};
+    const box=(k,title,lines,cls)=>{const [x,y]=P[k];S('rect',{x:x-75,y:y-70,width:150,height:150,rx:10,class:'bx'+(hl[k]==='bad'?' bad':hl[k]?' hot':'')+(cls||'')},svg);T(title,{x,y:y-48,'text-anchor':'middle','font-weight':700},svg);lines.forEach((l,i)=>T(l[0],{x:x-62,y:y-24+i*17,'font-size':11.5,class:'bt-k',fill:l[1]?css(l[1]):undefined},svg));};
+    box('svc','Order service',[[hl.svc==='bad'?'✗ chết':'đang chạy',hl.svc==='bad'?'--bad':null]]);
+    box('db','PostgreSQL',[['orders:',null],...orders.slice(-3).map(o=>['  #'+o,null]),...(mode==='outbox'?[['outbox:',null],...outbox.slice(-3).map(o=>['  #'+o.id+(o.sent?' đã gửi':' chờ'),o.sent?'--ok':'--warn'])]:[])]);
+    if(mode==='outbox')box('relay','Relay',[[hl.relay==='bad'?'✗ chết, khởi động lại':'đọc outbox',hl.relay==='bad'?'--bad':null]]);
+    box('q','Queue',events.slice(-6).map(e=>['ev #'+e.id+(e.dup?' (trùng)':''),e.dup?'--bad':null]));
+    const ln=(a,b)=>{const [x1,y1]=P[a],[x2,y2]=P[b];S('line',{x1:x1+75,y1,x2:x2-75,y2,stroke:css('--line'),'stroke-width':2},svg);};
+    if(mode==='dual'){ln('svc','db');S('path',{d:`M90,200 C90,235 660,235 660,200`,fill:'none',stroke:css('--line'),'stroke-width':2},svg);}
+    else{ln('svc','db');ln('db','relay');ln('relay','q');}}
+  function pkt(a,b,label,c,curve){return new Promise(res=>{const [x1,y1]=P[a],[x2,y2]=P[b];const d=S('circle',{r:7,fill:css(c||'--accent')},svg);const t=T(label,{'font-size':11,'font-weight':700,fill:css(c||'--accent')},svg);const t0=performance.now(),D=RM?50:650;
+    (function f(n){const k=Math.min(1,(n-t0)/D);let x,y;if(curve){x=x1+(x2-x1)*k;y=200+Math.sin(Math.PI*k)*28;}else{x=x1+75+(x2-75-x1-75)*k;y=y1;}d.setAttribute('cx',x);d.setAttribute('cy',y);t.setAttribute('x',x-20);t.setAttribute('y',y-12);if(k<1)requestAnimationFrame(f);else{d.remove();t.remove();res();}})(t0);});}
+  async function go(crash){if(busy)return;busy=true;const id=nextId++;
+    if(mode==='dual'){draw();await pkt('svc','db','INSERT + COMMIT');orders.push(id);draw();stats();
+      if(crash){draw({svc:'bad'});await wait(900);miss++;stats();busy=false;draw();return;}
+      await pkt('svc','q','publish',null,true);events.push({id});draw();stats();}
+    else{draw();await pkt('svc','db','order + outbox, 1 COMMIT');orders.push(id);outbox.push({id,sent:false});draw();stats();await wait(300);
+      await pkt('db','relay','đọc outbox');await pkt('relay','q','publish');events.push({id});draw();stats();
+      if(crash){draw({relay:'bad'});await wait(900);await pkt('db','relay','đọc lại outbox');await pkt('relay','q','publish lại','--bad');events.push({id,dup:true});dup++;draw();stats();}
+      outbox.find(o=>o.id===id).sent=true;draw();}
+    busy=false;}
+  seg('#ob-mode',m=>{mode=m;reset();});$('#ob-run').addEventListener('click',()=>go(false));$('#ob-crash').addEventListener('click',()=>go(true));$('#ob-reset').addEventListener('click',reset);reset();
+})();
+
+/* ===== 10. saga ===== */
+(function(){
+  const S4=[['Giữ chỗ','HELD trong time_slot','Trả chỗ'],['Thanh toán','gọi cổng thanh toán','Hoàn tiền'],['Cộng điểm','ghi point_ledger','Trừ lại điểm'],['Gửi mail xác nhận','qua outbox','(không bù được)']];
+  let run=0;
+  function render(st){$('#sg-flow').innerHTML=S4.map((s,i)=>`<div class="sg-step ${st[i]||''}"><b>${i+1}. ${s[0]}</b><small>${s[1]}</small><span class="sg-st">${({run:'đang chạy…',ok:'xong',fail:'lỗi',comp:'đã bù: '+s[2],compr:'đang bù…',retry:'thử lại sau'})[st[i]]||'chờ'}</span></div>`).join('<i class="sg-arr">→</i>');}
+  async function go(){const my=++run;const f=+$('#sg-fail').value;const st=[];$('#sg-log').innerHTML='';render(st);
+    for(let i=0;i<4;i++){st[i]='run';render(st);await wait(700);if(my!==run)return;
+      if(i===f){st[i]='fail';render(st);logTo('#sg-log',`Bước ${i+1} (${S4[i][0]}) lỗi`,'w');
+        if(i===3){for(let k=1;k<=3;k++){await wait(500);if(my!==run)return;logTo('#sg-log',`Thử gửi mail lại lần ${k} (backoff ${k*2} s)… lỗi`,'d');}
+          st[i]='retry';render(st);logTo('#sg-log','Đơn vẫn PAID. Tin gửi mail nằm lại trong queue/outbox để thử sau, quá số lần thì vào DLQ và cảnh báo. Không huỷ đơn vì mail lỗi.','h');return;}
+        for(let j=i-1;j>=0;j--){await wait(500);if(my!==run)return;st[j]='compr';render(st);await wait(600);if(my!==run)return;st[j]='comp';render(st);logTo('#sg-log',`Bù bước ${j+1}: ${S4[j][2]}`,'s');}
+        logTo('#sg-log','Saga kết thúc ở trạng thái CANCELLED, dữ liệu các service đã khớp lại. Hành động bù cũng phải idempotent và có thể thử lại.','h');return;}
+      st[i]='ok';render(st);logTo('#sg-log',`Bước ${i+1} (${S4[i][0]}) xong`,'s');}
+    logTo('#sg-log','Saga hoàn tất: đơn CONFIRMED.','h');}
+  $('#sg-run').addEventListener('click',go);$('#sg-fail').addEventListener('change',go);render([]);
+  let started=false;onVisible($('#sg'),v=>{if(v&&!started){started=true;go();}});
+})();
+
+/* ===== 11. retry storm ===== */
+(function(){const ser=[{name:'Không retry',color:'--s3',pts:SD.s7.none.map(x=>[x[0],x[2]])},{name:'Retry ngay, tối đa 3 lần',color:'--s2',pts:SD.s7.immediate.map(x=>[x[0],x[2]])},{name:'Backoff + jitter, server bỏ request quá hạn',color:'--s1',pts:SD.s7.backoff_shed.map(x=>[x[0],x[2]])}];
+  legend('#lg-retry',ser);lineChart('#ch-retry',ser,{xmin:0,xmax:59,ymin:0,ymax:110,yt:[0,25,50,75,100],xt:[0,10,20,30,40,50],xf:v=>'giây '+v,unit:'req/s',band:[10,20,'sự cố'],aria:'Số request thành công mỗi giây theo thời gian với ba cách retry'});})();
+
+/* ===== 11. circuit breaker ===== */
+(function(){
+  const svg=$('#cb-svg');let st='CLOSED',win=[],openAt=0,trial=[],calls=0,fast=0,vis=false,paused=false;
+  const POS={CLOSED:[90,90],OPEN:[430,90],HALF_OPEN:[260,180]};
+  function draw(){svg.innerHTML='';const defs=S('defs',{},svg);const m=S('marker',{id:'cba',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto'},defs);S('path',{d:'M0,0 L10,5 L0,10 z',fill:css('--muted')},m);
+    const ar=(d,l,x,y)=>{S('path',{d,fill:'none',stroke:css('--muted'),'stroke-width':1.5,'marker-end':'url(#cba)'},svg);T(l,{x,y,'text-anchor':'middle','font-size':11,class:'bt-cap'},svg);};
+    ar('M150,72 C230,40 290,40 370,72','lỗi ≥ 50%',260,40);ar('M430,130 C420,160 360,178 322,180','sau 3 s',418,170);ar('M200,182 C150,178 100,160 92,132','3 lần thử OK',110,172);ar('M320,170 C360,150 390,135 410,128','thử lỗi',372,138);
+    for(const [k,[x,y]] of Object.entries(POS)){const on=k===st;const c=k==='CLOSED'?'--ok':k==='OPEN'?'--bad':'--warn';
+      S('ellipse',{cx:x,cy:y,rx:62,ry:34,fill:on?css(c):css('--surface'),stroke:css(c),'stroke-width':on?3:1.5},svg);T(k,{x,y:y+5,'text-anchor':'middle','font-weight':700,'font-size':13,fill:on?'#fff':css('--ink')},svg);}
+    if(st==='OPEN'){const left=Math.max(0,3000-(performance.now()-openAt));T('mở lại sau '+(left/1000).toFixed(1).replace('.',',')+' s',{x:430,y:48,'text-anchor':'middle',class:'bt-cmp'},svg);}
+    $('#cb-win').innerHTML=(st==='HALF_OPEN'?trial:win).map(x=>`<span class="${x?'ok':'no'}">${x?'✓':'✗'}</span>`).join('')||'<span class="cap">chưa có lần gọi</span>';
+    $('#cb-call').textContent=calls;$('#cb-fast').textContent=fast;}
+  function call(){const ok=Math.random()*100>=+$('#cb-err').value;calls++;return ok;}
+  function step(){const L=(m,c)=>logTo('#cb-log',m,c);
+    if(st==='CLOSED'){win.push(call());if(win.length>10)win.shift();const f=win.filter(x=>!x).length;if(win.length>=10&&f/win.length>=0.5){st='OPEN';openAt=performance.now();L(`${f}/10 lần gọi gần nhất lỗi → OPEN: ngừng gọi service, trả lỗi nhanh hoặc dữ liệu dự phòng`,'w');}}
+    else if(st==='OPEN'){fast++;if(performance.now()-openAt>=3000){st='HALF_OPEN';trial=[];L('Hết 3 s → HALF_OPEN: cho 3 lần gọi thử','h');}}
+    else{const ok=call();trial.push(ok);if(!ok){st='OPEN';openAt=performance.now();L('Gọi thử lỗi → quay lại OPEN','w');}else if(trial.length>=3){st='CLOSED';win=[];L('3 lần gọi thử thành công → CLOSED, hoạt động lại bình thường','s');}}
+    draw();}
+  setInterval(()=>{if(vis&&!paused)step();},280);
+  $('#cb-err').addEventListener('input',()=>$('#cb-err-v').textContent=$('#cb-err').value+'%');
+  $('#cb-pause').addEventListener('click',()=>{paused=!paused;$('#cb-pause').setAttribute('aria-pressed',paused);$('#cb-pause').textContent=paused?'Chạy tiếp':'Tạm dừng';});
+  onVisible($('#cb'),v=>vis=v);logTo('#cb-log','Kéo tỉ lệ lỗi lên 60–100% để thấy mạch mở, rồi kéo về 0% để thấy nó tự đóng lại.','d');draw();
+})();
+
+/* ===== 12. tail latency ===== */
+(function(){
+  const svg=$('#tail-svg');let n=10,vis=false;
+  function draw(sample){svg.innerHTML='';const cols=Math.ceil(Math.sqrt(n)),sz=Math.min(26,170/cols);
+    S('rect',{x:20,y:75,width:100,height:50,rx:8,class:'bx'+(sample&&sample.some(x=>x)?' bad':' ok')},svg);T('Người dùng',{x:70,y:98,'text-anchor':'middle','font-weight':700,'font-size':12},svg);T(sample&&sample.some(x=>x)?'chậm 100 ms':'nhanh 5 ms',{x:70,y:115,'text-anchor':'middle',class:'bt-cap'},svg);
+    for(let i=0;i<n;i++){const r=Math.floor(i/cols),c=i%cols;const x=300+c*sz,y=15+r*sz;const slow=sample&&sample[i];
+      S('line',{x1:120,y1:100,x2:x+sz/2,y2:y+sz/2,stroke:css(slow?'--bad':'--line'),'stroke-width':slow?2:0.6,opacity:slow?1:.5},svg);
+      S('rect',{x:x+1,y:y+1,width:sz-2,height:sz-2,rx:3,fill:css(slow?'--bad':'--ok'),opacity:slow?1:.7},svg);}
+    T(`${n} backend`,{x:300,y:195,class:'bt-cap'},svg);}
+  function sample(){return Array.from({length:n},()=>Math.random()<0.01);}
+  function upd(){n=+$('#tail-n').value;$('#tail-n-v').textContent=n;$('#tail-pct').textContent=((1-Math.pow(0.99,n))*100).toFixed(1).replace('.',',')+'%';draw(sample());}
+  $('#tail-n').addEventListener('input',upd);setInterval(()=>{if(vis)draw(sample());},1100);onVisible($('#tail'),v=>vis=v);upd();
+  const th=[];for(let k=1;k<=100;k++)th.push([k,(1-Math.pow(0.99,k))*100]);
+  const ms=Object.entries(SD.s3).map(([k,v])=>[+k,v.slow_frac*100]).sort((a,b)=>a[0]-b[0]);
+  const ser=[{name:'Lý thuyết 1 − 0,99^N',color:'--s3',pts:th},{name:'Đo thật',color:'--s1',pts:ms}];legend('#lg-tail',ser);
+  lineChart('#ch-tail',ser,{xmin:1,xmax:100,ymin:0,ymax:100,yt:[0,25,50,75,100],xt:[1,10,25,50,75,100],xf:v=>'N = '+Math.round(v),unit:'%',h:240,aria:'Tỉ lệ request chậm tăng theo số backend gọi song song'});
+})();
+
+/* ===== 12. SLO ===== */
+(function(){const L=[99,99.5,99.9,99.95,99.99];const box=$('#slo');
+  function f(min){return min>=1440?(min/1440).toFixed(1).replace('.',',')+' ngày':min>=60?(Math.floor(min/60)+' giờ '+Math.round(min%60)+' phút'):min>=1?Math.round(min*10)/10+' phút':Math.round(min*60)+' giây';}
+  function show(v){const bad=(100-v)/100;box.innerHTML=`<div class="slo-btns">${L.map(x=>`<button class="btn${x===v?' primary':''}" type="button" data-v="${x}">${String(x).replace('.',',')}%</button>`).join('')}</div><div class="calc-cards"><div class="stat"><b>${f(bad*30*1440)}</b><span>Được phép hỏng mỗi 30 ngày</span></div><div class="stat"><b>${f(bad*7*1440)}</b><span>mỗi tuần</span></div><div class="stat"><b>${f(bad*1440)}</b><span>mỗi ngày</span></div></div>`;}
+  box.addEventListener('click',e=>{const b=e.target.closest('button');if(b)show(+b.dataset.v);});show(99.9);})();
+
+/* ===== 13. snowflake + base62 ===== */
+(function(){
+  const EP=Date.UTC(2024,0,1),WK=7n;let lastMs=0,sq=0,counter=125000n;const AL='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const b62=n=>{let s='';n=BigInt(n);do{s=AL[Number(n%62n)]+s;n/=62n;}while(n>0n);return s;};
+  function gen(){const ms=Date.now();if(ms===lastMs)sq++;else{sq=0;lastMs=ms;}const id=(BigInt(ms-EP)<<22n)|(WK<<12n)|BigInt(sq);counter++;return {id,ms,seq:sq,cnt:counter};}
+  function show(list){const last=list[list.length-1];const bits=last.id.toString(2).padStart(64,'0');
+    $('#sf-bits').innerHTML=[...bits].map((b,i)=>`<i class="${i===0?'b-sg':i<42?'b-ts':i<52?'b-wk':'b-sq'}">${b}</i>`).join('');
+    $('#sf-dec').textContent=`= ${last.id} · máy ${WK} · thứ tự ${last.seq}`;
+    list.forEach(x=>{const d=document.createElement('div');d.className='sf-row';d.innerHTML=`<span><small>Snowflake</small><b>${x.id}</b> → base62 <b>${b62(x.id)}</b></span><span><small>Đếm + base62</small><b>${x.cnt}</b> → <b>${b62(x.cnt)}</b></span><span class="cap">${new Date(x.ms).toISOString().slice(11,23)} · seq ${x.seq}</span>`;$('#sf-list').prepend(d);});
+    while($('#sf-list').children.length>7)$('#sf-list').lastChild.remove();}
+  $('#sf-gen').addEventListener('click',()=>show([gen()]));
+  $('#sf-burst').addEventListener('click',()=>{const l=[];const ms=Date.now();while(l.length<5){const g=gen();if(g.ms!==ms&&l.length){/* sang ms mới vẫn giữ */}l.push(g);}show(l);});
+  show([gen()]);
+})();
+
+/* ===== 14. Hugeclub ===== */
+(function(){
+  const svg=$('#hc-svg');let i=0,auto=null;
+  const C={cl:[60,165,'App khách','--muted'],alb:[180,165,'ALB','--s3'],api:[330,165,'API (ECS)','--s1'],rd:[330,50,'Redis','--bad'],db:[520,165,'RDS','--s2'],pay:[520,50,'Cổng thanh toán','--old'],job:[675,50,'Job hết hạn giữ chỗ','--warn'],q:[520,285,'Outbox → SQS','--warn'],wk:[690,285,'Mail worker','--warn'],ses:[690,165,'SES','--ok']};
+  const E=[['cl','alb'],['alb','api'],['api','rd'],['api','db'],['api','pay'],['pay','api'],['db','q'],['q','wk'],['wk','ses'],['job','db']];
+  const ST=[
+    {on:['cl','alb','api','rd','db'],e:['cl-alb','alb-api','api-rd','api-db'],t:'Xem khung giờ còn chỗ',n:'<code>GET /restaurants/17/slots?date=…</code>. Danh sách khung giờ đọc nhiều, đổi ít: cache Redis 30 giây. Con số "còn chỗ" trên màn hình chỉ để hiển thị; quyết định thật nằm ở bước sau.'},
+    {on:['cl','alb','api','rd','db'],e:['cl-alb','alb-api','api-rd','api-db'],t:'Giữ chỗ (HELD 5 phút)',n:'<code>POST /reservations</code> kèm <code>Idempotency-Key</code>. Rate limit theo user ở Redis. Trong một transaction: <code>UPDATE time_slot SET booked = booked + 2 WHERE id = ? AND booked + 2 &lt;= capacity</code>; cập nhật được 1 dòng mới <code>INSERT reservation(status = HELD, hold_until = now() + 5 phút)</code>. Hai người tranh chỗ cuối: chỉ một câu UPDATE thành công.'},
+    {on:['cl','api','pay'],e:['api-pay'],t:'Tạo phiên thanh toán',n:'API gọi cổng thanh toán (timeout ngắn, gửi kèm mã đơn làm idempotency key phía cổng). Không giữ transaction DB trong lúc chờ mạng. Khách nhập thẻ trên trang của cổng thanh toán.'},
+    {on:['pay','api','db'],e:['pay-api','api-db'],t:'Webhook: thanh toán thành công',n:'Một transaction: <code>UPDATE reservation SET status = PAID WHERE id = ? AND status = HELD</code>; nếu khách dùng điểm: <code>UPDATE user_point SET balance = balance - 200 WHERE balance &gt;= 200</code>; ghi <code>point_ledger</code> (+điểm thưởng, unique theo mã đơn); ghi <code>outbox</code>. Webhook tới lần hai: UPDATE trả 0 dòng, trả 200 OK và không làm gì.'},
+    {on:['db','q','wk','ses'],e:['db-q','q-wk','wk-ses'],t:'Gửi mail xác nhận',n:'Relay đọc outbox đẩy vào SQS; worker gửi qua SES, đánh dấu đã gửi. Mail lỗi không ảnh hưởng đơn đã thanh toán; thử lại, quá số lần thì vào DLQ.'},
+    {on:['job','db'],e:['job-db'],t:'Khách bỏ ngang: trả chỗ',n:'Job mỗi phút (một instance, có khoá): <code>UPDATE reservation SET status = EXPIRED WHERE status = HELD AND hold_until &lt; now() RETURNING slot_id, guests</code>, rồi trả lại <code>booked</code>. Cách khác: Redis Sorted Set điểm = thời điểm hết hạn, worker lấy các mục quá hạn.'},
+    {on:['pay','api','db'],e:['pay-api','api-db'],t:'Webhook tới sau khi đã hết hạn',n:'<code>UPDATE … WHERE status = HELD</code> trả 0 dòng vì đơn đã EXPIRED. Không được âm thầm bỏ qua: tự động hoàn tiền (hoặc nếu chỗ vẫn còn thì giữ lại cho khách) và ghi cảnh báo. Đây là câu interviewer rất thích hỏi.'}];
+  function render(){const s=ST[i];svg.innerHTML='';
+    for(const [a,b] of E){const k=a+'-'+b;if(k==='pay-api')continue;const on=s.e.includes(k)||s.e.includes(b+'-'+a);const [x1,y1]=C[a],[x2,y2]=C[b];S('line',{x1,y1,x2,y2,stroke:on?css('--accent'):css('--line'),'stroke-width':on?3:1.5,opacity:on?1:.6},svg);}
+    for(const [k,[x,y,n,c]] of Object.entries(C)){const on=s.on.includes(k);const w=k==='job'?150:k==='pay'||k==='q'?130:110;
+      S('rect',{x:x-w/2,y:y-20,width:w,height:40,rx:8,fill:on?css('--accent-soft'):css('--surface'),stroke:css(c),'stroke-width':on?2.5:1.2,opacity:on?1:.55},svg);T(n,{x,y:y+5,'text-anchor':'middle','font-size':12,'font-weight':600,opacity:on?1:.6},svg);}
+    T(`Bước ${i+1}: ${s.t}`,{x:380,y:325,'text-anchor':'middle','font-weight':700,'font-size':13},svg);
+    $('#hc-note').innerHTML=`<h4>Bước ${i+1}/${ST.length}: ${s.t}</h4><p>${s.n}</p>`;$('#hc-prev').disabled=i===0;$('#hc-next').disabled=i===ST.length-1;}
+  function stop(){if(auto){clearInterval(auto);auto=null;$('#hc-auto').textContent='Tự chạy';}}
+  $('#hc-prev').addEventListener('click',()=>{stop();if(i>0){i--;render();}});$('#hc-next').addEventListener('click',()=>{stop();if(i<ST.length-1){i++;render();}});
+  $('#hc-auto').addEventListener('click',()=>{if(auto){stop();return;}if(i===ST.length-1)i=0;render();$('#hc-auto').textContent='Dừng';auto=setInterval(()=>{if(i<ST.length-1){i++;render();}else stop();},4200);});
+  render();
+})();
+
+/* ===== 15. nearby ===== */
+hbar('#ch-geo',[['Haversine mọi dòng',SD.s9.pg_full_scan_ms],['Hộp bao + index',SD.s9.pg_bbox_index_ms],['Redis GEOSEARCH',SD.s9.redis_geosearch_ms]].map(([n,v],i)=>({name:n,v,color:i?'--s1':'--s2',tip:`<div class="tr"><span>Thời gian</span><b>${fmtN(v)} ms</b></div>`})),{log:true,min:0.1,max:100,ticks:[0.1,1,10,100],padL:130,unit:' ms',aria:'Thời gian tìm nhà hàng gần theo ba cách'});
+(function(){
+  const B32='0123456789bcdefghjkmnpqrstuvwxyz';
+  function enc(lat,lng,p){let la=[-90,90],ln=[-180,180],bits=0,bit=0,even=true,s='';
+    while(s.length<p){if(even){const m=(ln[0]+ln[1])/2;if(lng>=m){bits=bits*2+1;ln[0]=m;}else{bits*=2;ln[1]=m;}}else{const m=(la[0]+la[1])/2;if(lat>=m){bits=bits*2+1;la[0]=m;}else{bits*=2;la[1]=m;}}
+      even=!even;if(++bit===5){s+=B32[bits];bits=0;bit=0;}}return {s,la,ln};}
+  const svg=$('#gh-svg');let user=[35.6812,139.7671];const W=760,H=360;
+  const rnd=(()=>{let x=12345;return ()=>{x=(x*1103515245+12345)&0x7fffffff;return x/0x7fffffff;};})();
+  const RESTS=Array.from({length:180},()=>[35.6812+(rnd()-0.5)*0.12,139.7671+(rnd()-0.5)*0.16]);
+  function draw(){const p=+$('#gh-p').value;$('#gh-p-v').textContent=p;const c=enc(user[0],user[1],p);const dLa=c.la[1]-c.la[0],dLn=c.ln[1]-c.ln[0];
+    const vLn=dLn*6.5,vLa=vLn*H/W*(1/Math.cos(user[0]*Math.PI/180));const cLa=(c.la[0]+c.la[1])/2,cLn=(c.ln[0]+c.ln[1])/2;
+    const X=ln=>(ln-(cLn-vLn/2))/vLn*W,Y=la=>H-(la-(cLa-vLa/2))/vLa*H;svg.innerHTML='';
+    S('rect',{x:0,y:0,width:W,height:H,fill:css('--bg')},svg);
+    const near=new Set();for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++)near.add(enc(cLa+a*dLa,cLn+b*dLn,p).s);
+    const la0=Math.floor((cLa-vLa/2)/dLa)*dLa,ln0=Math.floor((cLn-vLn/2)/dLn)*dLn;
+    for(let la=la0;la<cLa+vLa/2;la+=dLa)for(let ln=ln0;ln<cLn+vLn/2;ln+=dLn){const g=enc(la+dLa/2,ln+dLn/2,p).s;const me=g===c.s,nb=near.has(g);
+      S('rect',{x:X(ln),y:Y(la+dLa),width:X(ln+dLn)-X(ln),height:Y(la)-Y(la+dLa),fill:me?css('--accent'):nb?css('--accent-soft'):'none',opacity:me?.35:1,stroke:css('--line'),'stroke-width':1},svg);
+      if(X(ln+dLn)-X(ln)>70)T(g,{x:(X(ln)+X(ln+dLn))/2,y:(Y(la)+Y(la+dLa))/2+4,'text-anchor':'middle','font-size':11,class:'bt-k',opacity:nb?1:.45},svg);}
+    let inNine=0;RESTS.forEach(([la,ln])=>{const x=X(ln),y=Y(la);if(x<0||x>W||y<0||y>H)return;const ok=near.has(enc(la,ln,p).s);if(ok)inNine++;S('circle',{cx:x,cy:y,r:ok?5:3.5,fill:css(ok?'--s2':'--muted'),opacity:ok?1:.5},svg);});
+    S('circle',{cx:X(user[1]),cy:Y(user[0]),r:8,fill:css('--bad'),stroke:'#fff','stroke-width':2.5},svg);
+    const kmLa=dLa*111,kmLn=dLn*111*Math.cos(user[0]*Math.PI/180);const fk=v=>v>=1?v.toFixed(1).replace('.',',')+' km':Math.round(v*1000)+' m';
+    $('#gh-info').innerHTML=`Ô <code>${c.s}</code> ≈ ${fk(kmLn)} × ${fk(kmLa)} · ${inNine} nhà hàng trong 9 ô (chấm cam) · sau đó vẫn tính Haversine để lọc đúng bán kính và sắp xếp`;
+    svg.onclick=e=>{const r=svg.getBoundingClientRect();const px=(e.clientX-r.left)/r.width*W,py=(e.clientY-r.top)/r.height*H;user=[(cLa-vLa/2)+(H-py)/H*vLa,(cLn-vLn/2)+px/W*vLn];draw();};}
+  $('#gh-p').addEventListener('input',draw);draw();
+})();
+
+/* ===== 16. count-min sketch ===== */
+(function(){
+  const R=4,Cc=12,WORDS=['sushi','ramen','yakiniku','tempura','udon','pizza','steak','curry'];
+  function fnv(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;}return h>>>0;}
+  const hsh=(w,r)=>fnv(r+':'+w)%Cc;let M,truth,lastW=null;
+  function reset(){M=Array.from({length:R},()=>Array(Cc).fill(0));truth={};WORDS.forEach(w=>truth[w]=0);[['sushi',9],['ramen',6],['yakiniku',4],['udon',2],['pizza',1]].forEach(([w,n])=>{for(let k=0;k<n;k++)add(w,true);});lastW=null;render();}
+  function add(w,q){truth[w]++;for(let r=0;r<R;r++)M[r][hsh(w,r)]++;lastW=w;if(!q)render();}
+  const est=w=>Math.min(...Array.from({length:R},(_,r)=>M[r][hsh(w,r)]));
+  function render(){const hl=lastW?Array.from({length:R},(_,r)=>hsh(lastW,r)):[];
+    $('#cms-table').innerHTML=M.map((row,r)=>`<div class="cms-row"><small>h${r+1}</small>${row.map((v,c)=>`<span class="${hl[r]===c?'hit':''}${lastW&&hl[r]===c&&M[r][c]===est(lastW)?' min':''}">${v}</span>`).join('')}</div>`).join('');
+    $('#cms-side').innerHTML=`<table><thead><tr><th>Từ</th><th>Thật</th><th>Ước lượng</th></tr></thead><tbody>${WORDS.map(w=>{const e=est(w);return `<tr class="${w===lastW?'cur':''}"><td>${w}</td><td class="n">${truth[w]}</td><td class="n ${e>truth[w]?'over':''}">${e}${e>truth[w]?' (+'+(e-truth[w])+')':''}</td></tr>`;}).join('')}</tbody></table><p class="cap">Bộ nhớ cố định ${R}×${Cc} ô dù có hàng triệu từ khoá khác nhau. Ước lượng chỉ có thể lớn hơn số thật.</p>`;}
+  $('#cms-btns').innerHTML=WORDS.map(w=>`<button class="btn" type="button" data-w="${w}">+1 ${w}</button>`).join('')+'<button class="btn" type="button" data-r="1">Đặt lại</button>';
+  $('#cms-btns').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.r)reset();else add(b.dataset.w);});
+  reset();
+})();
+
+/* ===== 17. notification ===== */
+(function(){
+  const svg=$('#nt-svg');let q=[],workers=[],sent=0,retry=0,dlq=0,tokens=4,failUntil=0,vis=false,last=0,seq=0,dlqL=[];
+  const RATE=4;
+  function setW(){const n=+$('#nt-w').value;$('#nt-w-v').textContent=n;while(workers.length<n)workers.push({job:null,end:0});workers.length=n;}
+  function tick(dt,now){tokens=Math.min(RATE,tokens+RATE*dt/1000);
+    workers.forEach(w=>{if(w.job&&now>=w.end){const fail=now<failUntil;if(fail){w.job.rc++;if(w.job.rc>=4){dlq++;dlqL.push(w.job);}else{retry++;q.push(w.job);}}else sent++;w.job=null;}
+      if(!w.job&&q.length&&tokens>=1){tokens-=1;w.job=q.shift();w.end=now+450;}});
+    $('#nt-q').textContent=q.length;$('#nt-sent').textContent=sent;$('#nt-retry').textContent=retry;$('#nt-dlq').textContent=dlq;}
+  function draw(now){svg.innerHTML='';const box=(x,y,w,h,t,sub,cls)=>{S('rect',{x,y,width:w,height:h,rx:8,class:'bx'+(cls||'')},svg);T(t,{x:x+w/2,y:y+20,'text-anchor':'middle','font-weight':700,'font-size':12},svg);if(sub)T(sub,{x:x+w/2,y:y+36,'text-anchor':'middle',class:'bt-cap','font-size':10.5},svg);};
+    box(20,95,110,60,'Job cuối ngày','đọc log_mileage');box(180,70,170,110,'SQS queue',q.length+' tin');
+    q.slice(0,24).forEach((j,k)=>S('rect',{x:190+(k%8)*19,y:115+Math.floor(k/8)*19,width:15,height:15,rx:3,fill:css(j.rc?'--warn':'--accent')},svg));
+    box(180,195,170,45,'Dead letter queue',dlq+' tin',dlq?' bad':'');
+    workers.forEach((w,k)=>{const y=40+k*50;box(400,y,120,40,'Worker '+(k+1),w.job?'đang gửi #'+w.job.id:'rảnh',w.job?' hot':'');});
+    S('rect',{x:400,y:5,width:120,height:26,rx:6,fill:'none',stroke:css('--muted'),'stroke-dasharray':'3 3'},svg);
+    for(let k=0;k<RATE;k++)S('circle',{cx:418+k*20,cy:18,r:6,fill:k<Math.floor(tokens)?css('--ok'):css('--sunk')},svg);T('token',{x:500,y:22,class:'bt-cap','font-size':10},svg);
+    const bad=now<failUntil;box(600,95,140,60,'Amazon SES',bad?'lỗi tạm thời (throttling)':`giới hạn ${RATE} mail/s`,bad?' bad':' ok');
+    S('line',{x1:130,y1:125,x2:180,y2:125,stroke:css('--line'),'stroke-width':2},svg);S('line',{x1:350,y1:125,x2:400,y2:125,stroke:css('--line'),'stroke-width':2},svg);S('line',{x1:520,y1:125,x2:600,y2:125,stroke:css('--line'),'stroke-width':2},svg);}
+  function loop(ts){if(!last)last=ts;const dt=Math.min(60,ts-last);last=ts;if(vis){tick(dt,ts);draw(ts);}requestAnimationFrame(loop);}
+  $('#nt-run').addEventListener('click',()=>{for(let k=0;k<30;k++)q.push({id:++seq,rc:0});});
+  $('#nt-fail').addEventListener('click',()=>{failUntil=performance.now()+3000;});
+  $('#nt-w').addEventListener('input',setW);onVisible($('#nt'),v=>vis=v);setW();requestAnimationFrame(loop);
+})();
+
+/* ===== 18. câu hỏi ===== */
+const QA=[
+ {l:'Tầng 1 · Nền tảng và ước lượng'},
+ {q:'Bạn tiếp cận một câu hỏi system design thế nào?',a:'<p>Làm rõ yêu cầu chức năng và phi chức năng (quy mô, độ trễ, nhất quán, sẵn sàng) → ước lượng QPS, dung lượng → API và mô hình dữ liệu → sơ đồ tổng thể, đi một request → đào sâu 2–3 điểm khó với hai phương án và trade-off → điểm nghẽn, giám sát, mở rộng. Nói giả định ra thành lời và hỏi lại interviewer.</p>'},
+ {q:'1 triệu request mỗi ngày là bao nhiêu QPS?',a:'<p>Khoảng 12 QPS trung bình (1 ngày ≈ 86 400 ≈ 10<sup>5</sup> giây), cao điểm nhân 2–5 lần: 25–60 QPS. Một server ứng dụng thường chịu được. Biết con số này giúp không vẽ thừa hạ tầng.</p>'},
+ {q:'Kể vài mốc độ trễ bạn nhớ.',a:'<p>Đo trên máy mình: đọc RAM ngẫu nhiên ~15 ns; đọc 1 MB tuần tự từ RAM ~100 µs, từ SSD ~370 µs; fsync 4 KB ~180 µs; Redis GET và PostgreSQL theo khoá chính cùng máy ~90–100 µs. Mạng cùng vùng AWS 0,3–1 ms, liên lục địa 100–200 ms. Ý chính: mạng và đĩa đắt hơn bộ nhớ nhiều bậc.</p>'},
+ {q:'Scale dọc và scale ngang khác nhau thế nào?',a:'<p>Dọc: máy mạnh hơn, đơn giản nhưng có trần, đắt dần và vẫn là một điểm chết. Ngang: thêm máy, gần như không trần, chịu lỗi tốt, nhưng cần ứng dụng stateless, load balancer, dữ liệu phải chia hoặc nhân bản. Database thường scale dọc và thêm replica lâu nhất có thể trước khi sharding.</p>'},
+ {q:'Stateless nghĩa là gì? Vì sao quan trọng?',a:'<p>Server không giữ trạng thái riêng của người dùng giữa các request (session, file, dữ liệu tạm). Mọi request tới instance nào cũng xử lý được, nên thêm/bớt instance, deploy dần, instance chết đều không ảnh hưởng. Session đưa ra Redis hoặc JWT, file đưa lên S3.</p>'},
+ {q:'Load balancer L4 và L7 khác nhau thế nào?',a:'<p>L4 (AWS NLB) làm việc ở tầng TCP/UDP, nhanh, không đọc nội dung. L7 (ALB, Nginx) hiểu HTTP: định tuyến theo path/host/header, kết thúc TLS, sticky cookie, thêm X-Forwarded-For, health check theo HTTP.</p>'},
+ {q:'Round robin có vấn đề gì?',trap:1,a:'<p>Chia đều số request chứ không chia đều công việc. Server đang dính request chậm vẫn bị chia thêm, request nhanh xếp hàng phía sau. Mô phỏng: p99 của request nhanh 902 ms với round robin, 387 ms với least connections. Least outstanding requests hoặc power of two choices tốt hơn khi request không đồng đều.</p>'},
+ {q:'CDN dùng để làm gì?',a:'<p>Phục vụ nội dung tĩnh (ảnh, JS, CSS, video) từ máy chủ gần người dùng: giảm độ trễ, giảm tải và băng thông cho server gốc, chịu được đỉnh tải. Có thể cache cả response API công khai ít đổi. Cần chiến lược làm mới (đổi tên file theo hash, invalidation).</p>'},
+ {q:'Cache đặt ở những tầng nào?',a:'<p>Trình duyệt/app (Cache-Control, ETag), CDN, cache trong ứng dụng (Caffeine, vài giây), cache phân tán (Redis), buffer pool của database. Đo thật: API thống kê nhà hàng từ 14 lên 715 request/s khi thêm Redis TTL 60 s.</p>'},
+ {q:'Khi nào dùng SQL, khi nào dùng NoSQL?',a:'<p>SQL: dữ liệu có quan hệ, cần transaction, ràng buộc, truy vấn linh hoạt (đặt chỗ, thanh toán, điểm). NoSQL: truy cập theo key rất lớn và đơn giản, cần scale ghi ngang dễ, schema linh hoạt (DynamoDB cho session, URL shortener; Cassandra cho log, time series). Mặc định chọn SQL nếu không có lý do rõ.</p>'},
+ {q:'Read replica có rủi ro gì?',trap:1,a:'<p>Replication lag: dữ liệu vừa ghi chưa có ở replica, người dùng không thấy đơn vừa đặt. Xử lý: đọc primary cho luồng vừa ghi (read-your-writes, vài giây sau khi ghi), hoặc định tuyến theo loại query. Replica cũng không giúp gì cho tải ghi.</p>'},
+ {q:'Sharding là gì? Chọn shard key thế nào?',a:'<p>Chia dữ liệu một bảng ra nhiều database. Shard key nên có trong gần như mọi query, phân bố đều, không tạo hot spot. Range dễ quét khoảng nhưng dễ hot shard; hash đều nhưng đổi số shard phải chuyển nhiều dữ liệu; directory linh hoạt nhưng thêm bảng tra. Cái giá: join, transaction, unique constraint chéo shard.</p>'},
+ {q:'Consistent hashing giải quyết vấn đề gì?',a:'<p>Với hash mod N, đổi N làm gần hết key đổi chỗ (đo thật: 4 → 5 node chuyển 79,7% key). Vòng băm chỉ chuyển khoảng 1/N (20,8%). Virtual node giúp tải đều (node nặng nhất từ 1,96 xuống 1,13 lần trung bình với 100 vnode). Dùng trong cache phân tán, Cassandra, DynamoDB; Redis Cluster dùng 16 384 slot cố định.</p>'},
+ {l:'Tầng 2 · Nhất quán và giao tiếp giữa service'},
+ {q:'Định lý CAP nói gì? Hệ thống của bạn chọn gì?',trap:1,a:'<p>Khi mạng bị chia cắt, chỉ chọn được nhất quán hoặc sẵn sàng. Partition chắc chắn xảy ra nên câu hỏi thật là khi đó chọn gì, và chọn theo từng loại dữ liệu: điểm thưởng, thanh toán chọn C (thà báo lỗi còn hơn trừ sai); hot word, lượt xem chọn A. PACELC bổ sung: lúc bình thường vẫn phải chọn giữa độ trễ và nhất quán (đọc replica).</p>'},
+ {q:'Eventual consistency là gì? Cho ví dụ trong dự án.',a:'<p>Ngừng ghi thì sau một lúc mọi bản sao giống nhau, nhưng trong lúc đó có thể đọc thấy dữ liệu cũ. Ví dụ: cache chi tiết nhà hàng TTL 30 s, read replica, mail xác nhận gửi qua queue, top hot word cập nhật mỗi vài giây.</p>'},
+ {q:'Vì sao dùng message queue?',a:'<p>Tách bên gửi và bên xử lý: request trả nhanh, việc nặng chạy nền, làm phẳng đỉnh tải, một bên chết không kéo bên kia, scale worker độc lập theo độ dài hàng đợi. Đổi lại: nhất quán cuối cùng, phải xử lý trùng, thứ tự, message lỗi.</p>'},
+ {q:'At-least-once, at-most-once, exactly-once?',a:'<p>At-most-once: ack trước, có thể mất. At-least-once: xử lý xong mới ack, có thể trùng; mặc định của SQS/Kafka. Exactly-once thật sự giữa các hệ thống khác nhau gần như không có; thực tế là at-least-once + consumer idempotent.</p>'},
+ {q:'Ghi DB rồi gửi message: chết ở giữa thì sao? Sửa thế nào?',trap:1,a:'<p>Dual-write: đơn có trong DB nhưng sự kiện mất (đo thật: 1 000 đơn, chết 2%, mất 28 sự kiện). Gửi message trước thì ngược lại: có sự kiện cho đơn không tồn tại. Sửa bằng <b>transactional outbox</b>: ghi sự kiện vào bảng outbox cùng transaction, relay/CDC đẩy đi sau. Đo thật: mất 0, trùng 23, nên consumer phải idempotent.</p>'},
+ {q:'Idempotency key là gì? Lưu ở đâu?',a:'<p>Client sinh một key cho một ý định (một lần bấm thanh toán) và gửi lại đúng key khi retry. Server ghi key với ràng buộc unique trong cùng transaction với thay đổi nghiệp vụ, lần sau trả lại kết quả cũ. Đo thật: 100 lần bấm đúp cộng 500 điểm: không có key ra 100 000 điểm, có key ra đúng 50 000.</p>'},
+ {q:'Message lỗi mãi không xử lý được thì sao?',a:'<p>Giới hạn số lần nhận (SQS maxReceiveCount), quá thì chuyển sang dead letter queue và cảnh báo; có công cụ để xem và đẩy lại sau khi sửa. Không để poison message chặn cả hàng hoặc retry vô hạn.</p>'},
+ {q:'Kafka khác SQS/RabbitMQ thế nào?',a:'<p>Kafka là log phân tán: giữ message lâu, nhiều nhóm consumer đọc độc lập, đọc lại được, thứ tự trong partition, thông lượng rất cao; vận hành phức tạp. SQS: hàng đợi được quản lý, gần như không vận hành, đơn giản, không đọc lại. RabbitMQ: broker với định tuyến linh hoạt, độ trễ thấp.</p>'},
+ {q:'Làm sao giữ thứ tự message?',a:'<p>Kafka: thứ tự chỉ trong một partition, nên dùng key (user_id) để mọi sự kiện của một đối tượng vào cùng partition. SQS FIFO: theo MessageGroupId. Consumer xử lý tuần tự trong nhóm đó. Hoặc thiết kế để không cần thứ tự: sự kiện mang version, bỏ qua version cũ hơn.</p>'},
+ {q:'2PC và Saga khác nhau thế nào?',a:'<p>2PC: điều phối hai pha, nhất quán mạnh, nhưng khoá lâu, phụ thuộc bộ điều phối, không hợp với HTTP giữa microservice. Saga: chuỗi transaction cục bộ, lỗi thì chạy hành động bù theo thứ tự ngược; nhất quán cuối cùng, không cô lập, cần trạng thái trung gian rõ ràng. Orchestration dễ theo dõi; choreography ít phụ thuộc.</p>'},
+ {q:'Bước gửi mail lỗi thì có huỷ đơn không?',trap:1,a:'<p>Không. Bước không bù được và không quan trọng với tính đúng (mail, push) nên đặt cuối và thử lại độc lập qua outbox/queue, quá số lần thì DLQ và cảnh báo. Huỷ một đơn đã thanh toán chỉ vì mail lỗi là thiết kế sai.</p>'},
+ {q:'Rate limit nên đặt ở tầng nào?',a:'<p>Nhiều tầng: WAF/API Gateway chặn thô theo IP ở ngoài cùng (rẻ, bảo vệ cả hạ tầng); ứng dụng giới hạn theo user/API key và theo từng endpoint bằng Redis (đúng nghiệp vụ, chung cho mọi instance); bảo vệ phụ thuộc phía sau bằng giới hạn tốc độ gọi ra (SES, cổng thanh toán). Trả 429 kèm Retry-After.</p>'},
+ {l:'Tầng 3 · Chịu lỗi, quan sát và case study'},
+ {q:'Vì sao retry có thể làm sự cố tệ hơn?',trap:1,a:'<p>Khi server quá tải, mỗi lần timeout sinh thêm request; 3 lần retry nhân tải lên 4 lần. Mô phỏng: sự cố 10 giây biến thành sự cố không bao giờ hồi phục vì server xử lý toàn request mà client đã bỏ. Cách làm: exponential backoff + jitter, giới hạn số lần, retry budget, chỉ retry thao tác idempotent, và phía server bỏ request quá hạn, giới hạn hàng đợi.</p>'},
+ {q:'Circuit breaker hoạt động thế nào?',a:'<p>CLOSED: gọi bình thường, đếm lỗi trong cửa sổ. Lỗi vượt ngưỡng → OPEN: trả lỗi nhanh hoặc dữ liệu dự phòng, không gọi service phía sau. Sau một khoảng → HALF_OPEN: cho vài lần gọi thử, thành công thì CLOSED, lỗi thì OPEN lại. Resilience4j trong Spring Boot.</p>'},
+ {q:'Timeout nên đặt bao nhiêu?',a:'<p>Dựa trên p99 thật của phụ thuộc cộng thêm một chút, và nhỏ hơn timeout của lớp gọi phía trên (deadline giảm dần qua từng tầng). Không bao giờ để mặc định vô hạn. Ví dụ: client mobile 10 s, ALB 30 s, API gọi cổng thanh toán 3 s, Redis 500 ms.</p>'},
+ {q:'Bulkhead là gì?',a:'<p>Tách tài nguyên (thread pool, connection pool) cho từng phụ thuộc, như vách ngăn tàu thuỷ. Cổng thanh toán chậm chỉ làm đầy pool của nó, các API đọc vẫn chạy.</p>'},
+ {q:'Tail latency là gì? Vì sao fan-out làm nó tệ hơn?',a:'<p>Độ trễ ở các phân vị cao (p99, p99,9). Request gọi song song N backend phải chờ cái chậm nhất, xác suất gặp ít nhất một backend chậm là 1 − 0,99<sup>N</sup>. Đo thật: N = 100 thì 64,8% request chậm, trung vị từ 5 ms lên 104 ms. Giảm bằng ít fan-out, timeout + dự phòng, hedged request.</p>'},
+ {q:'SLI, SLO, error budget là gì?',a:'<p>SLI là chỉ số đo (tỉ lệ request thành công dưới 300 ms). SLO là mục tiêu (99,9% trong 30 ngày). Error budget là phần được phép hỏng: 99,9% ≈ 43 phút mỗi 30 ngày. Hết budget thì ưu tiên ổn định thay vì tính năng mới.</p>'},
+ {q:'Bạn theo dõi những gì trên production?',a:'<p>Bốn tín hiệu vàng: độ trễ (p50/p95/p99), lưu lượng, tỉ lệ lỗi, độ bão hoà (CPU, bộ nhớ, pool connection, độ dài queue). Log có cấu trúc kèm traceId, trace phân tán. Cảnh báo theo triệu chứng người dùng thấy (lỗi, chậm) hơn là theo nguyên nhân (CPU 80%).</p>'},
+ {q:'Thiết kế URL shortener: sinh mã ngắn thế nào?',a:'<p>Bộ đếm duy nhất (sequence, Redis INCR, cấp theo dải cho mỗi server) rồi base62: không đụng độ nhưng đoán được. Snowflake: 41 bit thời gian + 10 bit máy + 12 bit thứ tự, sinh độc lập mỗi máy. Băm URL: phải xử lý đụng độ. 7 ký tự base62 ≈ 3,5 nghìn tỉ mã. Đọc qua cache, 301 hay 302 tuỳ có cần thống kê click.</p>'},
+ {q:'Chống đặt trùng chỗ cuối cùng khi hai người cùng đặt?',a:'<p>Một câu UPDATE có điều kiện: <code>UPDATE time_slot SET booked = booked + ? WHERE id = ? AND booked + ? &lt;= capacity</code>, kiểm tra số dòng cập nhật. Hoặc khoá dòng <code>FOR UPDATE</code>, hoặc unique constraint nếu đặt theo bàn cụ thể. Redis lock chỉ là lớp phụ.</p>'},
+ {q:'Giữ chỗ 5 phút trong lúc thanh toán làm thế nào?',a:'<p>Trạng thái HELD + hold_until; job mỗi phút chuyển các đơn quá hạn sang EXPIRED và trả chỗ, có khoá để chỉ một instance chạy. Hoặc Redis Sorted Set điểm = thời điểm hết hạn. Xử lý thêm trường hợp webhook thanh toán tới sau khi đã hết hạn: hoàn tiền hoặc giữ chỗ nếu còn.</p>'},
+ {q:'Thiết kế hệ thống điểm thưởng thế nào để không sai?',a:'<p>Sổ cái chỉ thêm (point_ledger) với lý do và mã tham chiếu, unique (reason, ref_id) chống cộng trùng; số dư cập nhật trong cùng transaction hoặc tính từ sổ cái. Trừ điểm bằng UPDATE có điều kiện số dư đủ. Không sửa đè một con số mà không có lịch sử.</p>'},
+ {q:'Tìm nhà hàng gần với 200 000 nhà hàng?',a:'<p>Đo thật: Haversine trên mọi dòng 31,9 ms; lọc hộp bao bằng index (lat, lng) rồi mới tính chính xác 0,72 ms; Redis GEOSEARCH 0,26 ms. Ngoài ra geohash (ô + 8 ô lân cận), PostGIS GiST, quadtree/S2/H3 cho quy mô rất lớn. Cache theo ô geohash cho các khu vực đông.</p>'},
+ {q:'Top-K từ khoá hot ở quy mô hàng triệu lượt mỗi phút?',a:'<p>Nhỏ: Sorted Set mỗi ngày. Lớn hơn: cộng dồn trong ứng dụng rồi đẩy theo lô, chia nhỏ key và gộp định kỳ. Rất lớn: stream (Kafka + Flink) đếm theo cửa sổ thời gian, Count-Min Sketch + heap top-K để tiết kiệm bộ nhớ, kết quả ghi ra Redis để đọc.</p>'},
+ {q:'Thiết kế hệ thống gửi thông báo hàng trăm nghìn mail mỗi ngày?',a:'<p>Producer (job) tạo tin vào queue, idempotent và chỉ một instance chạy; worker scale theo độ dài queue, lấy token từ rate limiter chung theo giới hạn của SES; đánh dấu trạng thái có điều kiện; retry với backoff, DLQ; xử lý bounce/complaint; mỗi kênh (mail, push, LINE) queue riêng.</p>'},
+ {q:'Nếu được làm lại hệ thống Hugeclub, bạn sẽ thay đổi gì?',a:'<p>Trả lời có chọn lọc, không chê hệ thống cũ: thêm idempotency key cho API thanh toán và webhook; dùng outbox cho mail và sự kiện điểm; sổ cái điểm chỉ thêm; giữ chỗ có hạn rõ ràng; metric p99 và alert theo SLO; tách job nặng ra queue. Mỗi ý kèm lý do và cái giá.</p>'}
+];
+$('#qa').innerHTML=QA.map(x=>x.l?`<div class="lvl">${x.l}</div>`:`<details><summary><span>${x.q}</span>${x.trap?'<span class="trap">bẫy</span>':''}</summary><div class="ans">${x.a}</div></details>`).join('');
+
+})();
+</script>
+</body>
+</html>

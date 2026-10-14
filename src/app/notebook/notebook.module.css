@@ -1,0 +1,74 @@
+.reader {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  background: #f2f3ef;
+  color: #171b1f;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 16px clamp(16px, 3vw, 32px);
+  border-bottom: 1px solid #d7dbd5;
+}
+
+.heading {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.heading h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.heading span,
+.picker label {
+  font-size: 13px;
+  color: #5a626a;
+}
+
+.picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+}
+
+.picker select {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #d7dbd5;
+  border-radius: 8px;
+  background: #fff;
+  color: #171b1f;
+  font: inherit;
+  font-size: 14px;
+}
+
+.document {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: #f2f3ef;
+}
+
+@media (max-width: 540px) {
+  .picker {
+    width: 100%;
+  }
+
+  .picker select {
+    flex: 1;
+  }
+}

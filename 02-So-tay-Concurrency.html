@@ -1,0 +1,1561 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sổ tay Concurrency Java</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sổ tay kỹ thuật hai cột (dùng chung với Sổ tay JVM) — mục lục dính bên trái, nội dung đọc bên phải; mỗi chương mở bằng khung "Phỏng vấn sẽ hỏi" */
+:root{
+  --bg:#F2F5F9; --surface:#FFFFFF; --sunk:#E7EDF5; --ink:#0E1A2C; --muted:#4F5F77; --line:#D2DBE7;
+  --accent:#1B5BD4; --accent-ink:#FFFFFF; --accent-soft:#DCE7FB;
+  --s1:#1D5FD6; --s2:#C2620A; --s3:#8A3FA8;
+  --eden:#2F6FE0; --surv:#0F8FB3; --old:#3A3F9E; --dead:#9AA7B8;
+  --ok:#17845A; --ok-soft:#D9F1E6; --warn:#A86A00; --warn-soft:#FBEBCB; --bad:#C23434; --bad-soft:#F9DDDD;
+  --code-bg:#0F1A2B; --code-ink:#D6E2F2; --code-dim:#7F93AE; --code-hl:#8EC1FF; --code-str:#9FD8B8; --code-warn:#FFB4A8;
+  --f-ui:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0A111D; --surface:#101A2A; --sunk:#0D1624; --ink:#E2E9F4; --muted:#93A3BB; --line:#223149;
+  --accent:#5B96F5; --accent-ink:#081120; --accent-soft:#15284A;
+  --s1:#4A86E8; --s2:#CC7222; --s3:#A963C4;
+  --eden:#4A86E8; --surv:#2AA8C9; --old:#7A7FE0; --dead:#4D5B70;
+  --ok:#3FBF8A; --ok-soft:#10301F; --warn:#E0A33A; --warn-soft:#33270E; --bad:#F06A6A; --bad-soft:#3A1717;
+  --code-bg:#060C16; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0A111D; --surface:#101A2A; --sunk:#0D1624; --ink:#E2E9F4; --muted:#93A3BB; --line:#223149;
+  --accent:#5B96F5; --accent-ink:#081120; --accent-soft:#15284A;
+  --s1:#4A86E8; --s2:#CC7222; --s3:#A963C4;
+  --eden:#4A86E8; --surv:#2AA8C9; --old:#7A7FE0; --dead:#4D5B70;
+  --ok:#3FBF8A; --ok-soft:#10301F; --warn:#E0A33A; --warn-soft:#33270E; --bad:#F06A6A; --bad-soft:#3A1717;
+  --code-bg:#060C16; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:16px;line-height:1.65}
+a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+:not(pre)>code{background:var(--sunk);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+h1,h2,h3,h4{margin:0;text-wrap:balance;line-height:1.25}
+p{margin:0}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.shell{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:24px 80px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px}
+@media (max-width:980px){.shell{grid-template-columns:1fr;gap:0}}
+
+/* mục lục */
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:4px}
+.toc .brand{font-weight:800;font-size:1rem;letter-spacing:-.01em;margin-bottom:12px}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.toc a{display:flex;gap:10px;text-decoration:none;color:var(--muted);font-size:.86rem;padding:5px 8px;border-radius:6px;line-height:1.35}
+.toc a span{font-family:var(--f-mono);font-size:.74rem;min-width:18px;color:var(--muted);padding-top:2px}
+.toc a:hover{background:var(--sunk);color:var(--ink)}
+.toc a.on{background:var(--accent-soft);color:var(--ink);font-weight:600}
+@media (max-width:980px){
+  .toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;max-height:none;background:var(--bg);margin-inline:-20px;padding:10px 20px;border-bottom:1px solid var(--line)}
+  .toc .brand{display:none}
+  .toc ol{flex-direction:row;overflow-x:auto;gap:4px;scrollbar-width:none}
+  .toc a{white-space:nowrap;font-size:.8rem}
+}
+
+main{min-width:0;display:flex;flex-direction:column;gap:64px}
+.hero{display:flex;flex-direction:column;gap:14px;padding-top:8px}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.hero h1{font-size:clamp(2rem,4.6vw,3.1rem);font-weight:800;letter-spacing:-.025em}
+.hero .lede{font-size:1.08rem;color:var(--muted);max-width:66ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.facts span{font-family:var(--f-mono);font-size:.76rem;background:var(--surface);border:1px solid var(--line);padding:4px 10px;border-radius:999px;color:var(--muted)}
+
+section.ch{display:flex;flex-direction:column;gap:20px;scroll-margin-top:72px}
+.ch-head{display:flex;flex-direction:column;gap:6px;border-top:2px solid var(--ink);padding-top:14px}
+.ch-head h2{font-size:clamp(1.45rem,2.6vw,1.9rem);font-weight:800;letter-spacing:-.015em}
+.ch-head p{color:var(--muted);max-width:68ch}
+h3{font-size:1.12rem;font-weight:700;margin-top:6px}
+h4{font-size:.98rem;font-weight:700}
+.prose{display:flex;flex-direction:column;gap:12px;max-width:72ch}
+.prose ul,.prose ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+
+.ask{background:var(--accent-soft);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.ask b{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.ask ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:3px}
+.callout{border-left:3px solid var(--accent);padding:10px 14px;background:var(--surface);border-radius:0 8px 8px 0;max-width:76ch}
+.callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-color:var(--ok);background:var(--ok-soft)}
+.callout b.t{display:block;margin-bottom:2px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+
+pre.code{background:var(--code-bg);color:var(--code-ink);border-radius:var(--r);padding:14px 16px;overflow-x:auto;font-family:var(--f-mono);font-size:.8rem;line-height:1.6;margin:0;max-width:100%}
+pre.code .c{color:var(--code-dim)} pre.code .h{color:var(--code-hl);font-weight:600} pre.code .s{color:var(--code-str)} pre.code .w{color:var(--code-warn);font-weight:600}
+.real{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--ok);font-weight:600;letter-spacing:.03em}
+.real::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.cap{font-size:.84rem;color:var(--muted);max-width:76ch}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--sunk)}
+td.n{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td code{white-space:nowrap}
+
+/* kiến trúc */
+.arch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.arch{grid-template-columns:1fr}}
+.arch .blk{border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.arch .blk h4{font-size:.9rem}
+.arch .blk p{font-size:.84rem;color:var(--muted)}
+.arch .lane{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--f-mono);font-size:.8rem}
+.arch .lane span{background:var(--sunk);padding:5px 10px;border-radius:6px}
+.arch .lane i{color:var(--muted);font-style:normal}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill.shared{background:var(--accent-soft);color:var(--accent)}
+
+/* vùng nhớ tương tác */
+.mem{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px}
+.mem>*{min-width:0}
+@media (max-width:860px){.mem{grid-template-columns:1fr}}
+@media (max-width:520px){.areas{grid-template-columns:1fr}}
+.area{min-width:0}
+.chip{overflow-wrap:anywhere}
+.codelines{background:var(--code-bg);border-radius:var(--r);padding:10px 0;font-family:var(--f-mono);font-size:.8rem;overflow-x:auto}
+.codelines button{display:block;width:100%;text-align:left;background:transparent;border:0;color:var(--code-ink);padding:4px 14px;white-space:pre;font-family:inherit;font-size:inherit;border-left:3px solid transparent}
+.codelines button:hover{background:#ffffff0d}
+.codelines button.on{background:#5b96f526;border-left-color:var(--code-hl)}
+.codelines .ln{color:var(--code-dim);margin-right:12px}
+.areas{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.area{border:1px dashed var(--line);border-radius:8px;padding:10px;min-height:96px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.area.heap{grid-column:1/-1}
+.area h4{font-size:.82rem;display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.area .items{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:.74rem;padding:3px 8px;border-radius:6px;background:var(--sunk);border:1px solid var(--line);transition:background-color .3s,border-color .3s}
+.chip.new{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.chip.gone{text-decoration:line-through;opacity:.5}
+.memnote{margin-top:10px;font-size:.9rem}
+
+/* object layout */
+.objrow{display:flex;flex-wrap:wrap;gap:3px;align-items:stretch;font-family:var(--f-mono);font-size:.72rem}
+.objrow div{padding:6px 8px;border-radius:4px;display:flex;flex-direction:column;justify-content:center;min-height:44px}
+.objrow .hdr{background:var(--accent);color:var(--accent-ink)}
+.objrow .kl{background:var(--s3);color:#fff}
+.objrow .fld{background:var(--sunk);border:1px solid var(--line)}
+.objrow .pad{background:repeating-linear-gradient(45deg,var(--sunk),var(--sunk) 4px,var(--surface) 4px,var(--surface) 8px);border:1px dashed var(--line);color:var(--muted)}
+.objrow small{opacity:.85}
+.objrow div{min-width:58px}
+
+/* GC simulator */
+.sim{display:flex;flex-direction:column;gap:14px}
+.sim-ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 13px;font-weight:500;font-size:.88rem}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.sim-ctrl label{font-size:.86rem;color:var(--muted);display:flex;gap:6px;align-items:center}
+.sim-ctrl input[type=range]{width:110px;accent-color:var(--accent)}
+.heapviz{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
+.heapviz .old{grid-column:1/-1}
+@media (max-width:640px){.heapviz{grid-template-columns:1fr 1fr}.heapviz .eden{grid-column:1/-1}}
+.gen{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);min-width:0}
+.gen h4{font-size:.8rem;display:flex;justify-content:space-between;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.gen h4 small{font-family:var(--f-mono);color:var(--muted);font-weight:400}
+.gen.to h4::after{content:"đích copy kế tiếp";font-size:.68rem;font-weight:500;color:var(--surv)}
+.cells{display:grid;gap:4px}
+.eden .cells{grid-template-columns:repeat(8,minmax(0,1fr))}
+.surv .cells{grid-template-columns:repeat(4,minmax(0,1fr))}
+.old .cells{grid-template-columns:repeat(16,minmax(0,1fr))}
+@media (max-width:640px){.old .cells{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.cell{aspect-ratio:1;border-radius:4px;background:var(--sunk);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.66rem;color:#fff;font-weight:600;transition:background-color .25s,transform .25s;max-width:100%}
+.cell.e{background:var(--eden)} .cell.s{background:var(--surv)} .cell.o{background:var(--old)}
+.cell.lt{box-shadow:inset 0 0 0 2px var(--warn)}
+.cell.dead{background:var(--dead);color:transparent}
+.cell.dying{background:var(--bad);transform:scale(.8)}
+.sim-stats{display:flex;flex-wrap:wrap;gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:110px}
+.stat b{display:block;font-family:var(--f-mono);font-size:1.15rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.74rem;color:var(--muted)}
+.simlog{background:var(--code-bg);color:var(--code-ink);font-family:var(--f-mono);font-size:.76rem;border-radius:8px;padding:10px 12px;height:150px;overflow:auto;display:flex;flex-direction:column;gap:3px}
+.simlog .w{color:var(--code-warn)} .simlog .h{color:var(--code-hl)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.oom{display:none;background:var(--bad-soft);border:1px solid var(--bad);border-radius:8px;padding:10px 12px;font-family:var(--f-mono);font-size:.82rem;color:var(--bad)}
+.oom.show{display:block}
+
+/* G1 regions */
+.regions{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px}
+@media (max-width:640px){.regions{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.rg{aspect-ratio:1;border-radius:3px;font-family:var(--f-mono);font-size:.6rem;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+.rg.E{background:var(--eden)} .rg.S{background:var(--surv)} .rg.O{background:var(--old)} .rg.H{background:var(--s2)} .rg.F{background:var(--sunk);color:var(--muted)}
+.rg.C{outline:2px solid var(--bad);outline-offset:-2px}
+
+/* charts */
+.chart{position:relative;min-width:0}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .grid line{stroke:var(--line);stroke-width:1}
+.chart .ax text,.chart text.ax{fill:var(--muted);font-family:var(--f-mono);font-size:10.5px}
+.chart text.lbl{font-family:var(--f-ui);font-size:11.5px;font-weight:600}
+.chart text.val{fill:var(--ink);font-family:var(--f-mono);font-size:11px}
+.chart .hit{fill:transparent}
+.chart .xh{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.78rem;box-shadow:0 6px 18px #0b16281f;min-width:150px;z-index:3;display:none}
+.tip .tt{font-weight:700;margin-bottom:3px}
+.tip .tr{display:flex;justify-content:space-between;gap:12px;font-family:var(--f-mono);font-size:.74rem}
+.tip .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.chart-legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+.chart-title{font-weight:700;font-size:.95rem;margin-bottom:2px}
+
+/* container calc */
+.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px}
+@media (max-width:860px){.calc{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.82rem;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.field label output{font-family:var(--f-mono);font-weight:600;color:var(--accent)}
+.field input[type=range]{width:100%;accent-color:var(--accent)}
+.field small{color:var(--muted);font-size:.76rem}
+.fields{display:flex;flex-direction:column;gap:12px}
+.budget{display:flex;flex-direction:column;gap:12px}
+.bar{position:relative;height:38px;border-radius:6px;background:var(--sunk);overflow:visible;display:flex}
+.bar .seg{height:100%;border-right:2px solid var(--surface);transition:width .3s}
+.bar .seg:first-child{border-radius:6px 0 0 6px}
+.bar .limit{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink)}
+.bar .limit span{position:absolute;top:-20px;transform:translateX(-50%);font-family:var(--f-mono);font-size:.7rem;white-space:nowrap;color:var(--ink)}
+.brows{display:flex;flex-direction:column;gap:4px;font-size:.84rem}
+.brows div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:3px}
+.brows i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.brows b{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.verdict{border-radius:8px;padding:10px 12px;font-weight:600;font-size:.9rem;display:flex;gap:8px;align-items:flex-start}
+.verdict.ok{background:var(--ok-soft);color:var(--ok)} .verdict.warn{background:var(--warn-soft);color:var(--warn)} .verdict.bad{background:var(--bad-soft);color:var(--bad)}
+.verdict span{color:var(--ink);font-weight:400}
+
+/* playbooks */
+.pb{display:flex;flex-direction:column;gap:12px}
+.pb .sym{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sev{font-family:var(--f-mono);font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.04em}
+.sev.bad{background:var(--bad-soft);color:var(--bad)} .sev.warn{background:var(--warn-soft);color:var(--warn)}
+.steps{counter-reset:s;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px}
+.steps li::before{content:counter(s);font-family:var(--f-mono);font-size:.74rem;font-weight:700;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-top:2px}
+
+/* gc log annotate */
+.logline{font-family:var(--f-mono);font-size:.8rem;background:var(--code-bg);color:var(--code-ink);border-radius:8px;padding:12px 14px;overflow-x:auto;white-space:nowrap}
+.logline span{border-bottom:2px solid;padding-bottom:1px}
+.logline .a1{border-color:var(--s1)} .logline .a2{border-color:var(--surv)} .logline .a3{border-color:var(--s2)} .logline .a4{border-color:var(--s3)} .logline .a5{border-color:var(--ok)}
+.anno{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;font-size:.84rem}
+.anno div{border-top:3px solid;padding-top:6px}
+
+/* Q&A */
+.qa{display:flex;flex-direction:column;gap:8px}
+.qa details{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.qa summary{cursor:pointer;padding:12px 14px;font-weight:600;list-style:none;display:flex;gap:10px;align-items:flex-start}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{content:"+";font-family:var(--f-mono);color:var(--accent);font-weight:700;width:14px;flex:none}
+.qa details[open] summary::before{content:"−"}
+.qa .ans{padding:0 16px 14px 38px;display:flex;flex-direction:column;gap:8px;font-size:.94rem}
+.qa .ans ul{margin:0;padding-left:20px}
+.lvl{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:10px;font-weight:700}
+.trap{font-family:var(--f-mono);font-size:.66rem;background:var(--warn-soft);color:var(--warn);padding:1px 6px;border-radius:4px;margin-left:auto;flex:none;align-self:center}
+.foot{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padding-top:16px}
+
+/* ===== thêm cho sổ tay concurrency ===== */
+.states{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:860px){.states{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:460px){.states{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stnode{border:1px solid var(--line);border-radius:8px;padding:10px 8px;text-align:center;background:var(--surface);font-family:var(--f-mono);font-size:.74rem;font-weight:600;transition:background-color .25s,border-color .25s,color .25s;min-width:0;overflow-wrap:anywhere}
+.stnode small{display:block;font-family:var(--f-ui);font-weight:400;color:var(--muted);font-size:.72rem;margin-top:3px}
+.stnode.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.stnode.on small{color:var(--accent-ink);opacity:.85}
+.sim-ctrl .btn:disabled{opacity:.4;cursor:default}
+.seg-ctl{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg-ctl button{border:0;background:transparent;color:var(--muted);padding:7px 12px;font-size:.86rem;border-right:1px solid var(--line)}
+.seg-ctl button:last-child{border-right:0}
+.seg-ctl button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.race{display:grid;grid-template-columns:minmax(0,1fr) 170px minmax(0,1fr);gap:12px;align-items:stretch}
+@media (max-width:700px){.race{grid-template-columns:1fr 1fr}.race .memcol{grid-column:1/-1;grid-row:1;flex-direction:row}}
+.thr{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:8px;min-width:0}
+.thr h4{display:flex;justify-content:space-between;gap:6px;font-size:.88rem;flex-wrap:wrap}
+.thr .badge{font-family:var(--f-mono);font-size:.68rem;padding:2px 7px;border-radius:4px;background:var(--sunk);color:var(--muted)}
+.thr .badge.run{background:var(--accent-soft);color:var(--accent)}
+.thr .badge.blk{background:var(--warn-soft);color:var(--warn)}
+.thr .badge.ok{background:var(--ok-soft);color:var(--ok)}
+.thr ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font-family:var(--f-mono);font-size:.76rem}
+.thr li{padding:4px 8px;border-radius:5px;color:var(--muted);border:1px solid transparent}
+.thr li.cur{border-color:var(--accent);color:var(--ink);background:var(--accent-soft)}
+.thr li.done{color:var(--ok)}
+.thr .reg{font-family:var(--f-mono);font-size:.78rem;background:var(--sunk);border-radius:5px;padding:5px 8px}
+.memcol{display:flex;flex-direction:column;gap:10px;justify-content:center}
+.ram{border:2px solid var(--ink);border-radius:10px;padding:12px;text-align:center;background:var(--surface);flex:1}
+.ram span{display:block;font-size:.72rem;color:var(--muted)}
+.ram b{display:block;font-family:var(--f-mono);font-size:2.2rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.ram small{font-family:var(--f-mono);color:var(--muted)}
+.ram.flash{animation:ramf .6s ease}
+@keyframes ramf{0%{background:var(--accent-soft)}100%{background:var(--surface)}}
+.lockbox{border:1px dashed var(--line);border-radius:8px;padding:8px;text-align:center;font-family:var(--f-mono);font-size:.76rem;color:var(--muted);flex:1}
+.lockbox.held{border-style:solid;border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.cache-diag{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cache-diag .core{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;background:var(--surface);min-width:0}
+.cache-diag .core span{font-size:.8rem;color:var(--muted)}
+.cache-diag .lv{font-family:var(--f-mono);font-size:.76rem;background:var(--sunk);border-radius:5px;padding:5px 8px;overflow-wrap:anywhere}
+.cache-diag i{font-style:normal;font-weight:700;color:var(--s2)}
+.cache-diag i.nw{color:var(--ok)}
+.cache-diag .ram-wide{grid-column:1/-1;border:2px solid var(--ink);border-radius:8px;padding:10px;text-align:center;font-family:var(--f-mono);font-size:.8rem}
+.adder{display:flex;flex-direction:column;gap:8px;margin:4px 0}
+.cells-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.cells-row span{border:1px solid var(--line);border-radius:6px;padding:6px;text-align:center;font-family:var(--f-mono);font-size:.7rem;color:var(--muted);background:var(--surface)}
+.cells-row b{display:block;font-size:1rem;color:var(--ink)}
+.adder .sum{font-family:var(--f-mono);font-size:.82rem;text-align:center;background:var(--accent-soft);border-radius:6px;padding:6px}
+.sel{font:inherit;font-size:.84rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 6px}
+.poolviz{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,.8fr);gap:10px}
+@media (max-width:760px){.poolviz{grid-template-columns:1fr}}
+.workers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.worker{border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-family:var(--f-mono);font-size:.72rem;display:flex;flex-direction:column;gap:4px;min-height:52px;background:var(--surface)}
+.worker.core{border:2px solid var(--accent)}
+.worker .pg{height:6px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.worker .pg i{display:block;height:100%;background:var(--accent);transition:width .4s}
+.worker.idle{color:var(--muted)}
+.worker.new{animation:ramf .8s ease}
+.queue{display:flex;flex-direction:column;gap:4px}
+.qslot{border:1px dashed var(--line);border-radius:5px;padding:4px 8px;font-family:var(--f-mono);font-size:.72rem;color:var(--muted);min-height:26px}
+.qslot.full{border-style:solid;border-color:var(--surv);color:var(--ink);background:var(--sunk)}
+.caller{font-family:var(--f-mono);font-size:.76rem;border:1px dashed var(--line);border-radius:6px;padding:8px;color:var(--muted)}
+.caller.busy{border-style:solid;border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+
+/* ===== hình động bổ sung ===== */
+.anim{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.anim svg{width:100%;min-width:520px;height:auto;display:block}
+.anim text{font-family:var(--f-ui);font-size:13px;fill:var(--ink)}
+.anim text.mono{font-family:var(--f-mono);font-size:12px}
+.anim text.dim{fill:var(--muted);font-size:11.5px}
+.anim text.big{font-family:var(--f-mono);font-size:22px;font-weight:600}
+.anim text.bad{fill:var(--bad);font-weight:600}
+.anim text.ok{fill:var(--ok);font-weight:600}
+.anim text.warn{fill:var(--warn);font-weight:600}
+.anim .bx{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.anim .bx.hot{stroke:var(--accent);stroke-width:2.5}
+.anim .bx.ram{stroke:var(--ink);stroke-width:2}
+.anim .bx.held{fill:var(--warn-soft);stroke:var(--warn);stroke-width:2}
+.anim .bx.cell{fill:var(--surface);stroke:var(--s1);stroke-width:1.5}
+.anim .reg{fill:var(--sunk);stroke:none;transition:fill .2s}
+.anim .reg.ping{fill:var(--accent-soft)}
+.anim .pk{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.anim .pk.old{fill:var(--s2)}
+.anim .edge-own{stroke:var(--accent);stroke-width:3;fill:none}
+.anim .edge-wait{stroke:var(--bad);stroke-width:3;fill:none;stroke-dasharray:8 6;animation:dashmove .8s linear infinite}
+@keyframes dashmove{to{stroke-dashoffset:-28}}
+.anim .th{stroke:var(--surface);stroke-width:3;transition:fill .3s}
+.anim .th.run{fill:var(--accent)} .anim .th.blk{fill:var(--warn)} .anim .th.done{fill:var(--ok)} .anim .th.dead{fill:var(--bad)}
+.anim .fl{stroke-width:3;animation:flfade .65s ease-out forwards}
+.anim .fl.ok{stroke:var(--ok)} .anim .fl.fail{stroke:var(--bad);stroke-dasharray:5 4}
+@keyframes flfade{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
+.anim .mark{animation:flfade .9s ease-out forwards;font-weight:700}
+.anim marker path{fill:var(--muted)}
+@media (prefers-reduced-motion: reduce){.anim .edge-wait{animation:none}}
+.vt-wrap{display:flex;flex-direction:column;gap:10px}
+.vt-carriers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.carrier{border:2px solid var(--ink);border-radius:10px;padding:10px;background:var(--surface);min-height:92px;display:flex;flex-direction:column;gap:6px;transition:border-color .3s,background-color .3s}
+.carrier h4{font-size:.82rem;display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.carrier h4 small{font-family:var(--f-mono);font-weight:400;color:var(--muted)}
+.carrier.pinned{border-color:var(--bad);background:var(--bad-soft)}
+.carrier .slot{min-height:40px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vt-row{border:1px dashed var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);min-width:0}
+.vt-row h4{font-size:.78rem;color:var(--muted);font-weight:600;margin-bottom:6px}
+.vt-row .chips{display:flex;flex-wrap:wrap;gap:6px;min-height:34px}
+.vtchip{font-family:var(--f-mono);font-size:.72rem;border-radius:6px;padding:4px 8px;background:var(--accent-soft);border:1px solid var(--accent);color:var(--ink);display:inline-flex;flex-direction:column;line-height:1.3;will-change:transform}
+.vtchip small{color:var(--muted);font-size:.66rem}
+.vtchip.io{background:var(--sunk);border-color:var(--line)}
+.vtchip.done{background:var(--ok-soft);border-color:var(--ok)}
+.vtchip.pin{border-style:dashed}
+.vtchip.pinwait{background:var(--bad-soft);border-color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="toc" aria-label="Mục lục">
+  <div class="brand">Sổ tay Concurrency</div>
+  <ol id="toc">
+    <li><a href="#map"><span>00</span>Bản đồ và cách học</a></li>
+    <li><a href="#thread"><span>01</span>Thread và vòng đời</a></li>
+    <li><a href="#race"><span>02</span>Race condition</a></li>
+    <li><a href="#jmm"><span>03</span>Java Memory Model và volatile</a></li>
+    <li><a href="#sync"><span>04</span>synchronized, wait, notify</a></li>
+    <li><a href="#locks"><span>05</span>Lock nâng cao và AQS</a></li>
+    <li><a href="#cas"><span>06</span>CAS, Atomic, LongAdder</a></li>
+    <li><a href="#collections"><span>07</span>Collection đồng thời</a></li>
+    <li><a href="#pool"><span>08</span>Thread pool</a></li>
+    <li><a href="#cf"><span>09</span>CompletableFuture</a></li>
+    <li><a href="#vt"><span>10</span>Virtual thread</a></li>
+    <li><a href="#sync-tools"><span>11</span>Latch, Semaphore, Barrier</a></li>
+    <li><a href="#deadlock"><span>12</span>Deadlock và bạn bè</a></li>
+    <li><a href="#spring"><span>13</span>Concurrency trong Spring Boot</a></li>
+    <li><a href="#interview"><span>14</span>Câu hỏi phỏng vấn</a></li>
+    <li><a href="#lab"><span>15</span>Lab tự làm và cách kể</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero" id="top">
+  <div class="eyebrow">Java 21 · java.util.concurrent · Spring Boot</div>
+  <h1>Sổ tay Concurrency Java</h1>
+  <p class="lede">Đi từ một phép <code>count++</code> bị sai cho tới thread pool, CompletableFuture, virtual thread và những lỗi đa luồng hay gặp trong Spring Boot. Mỗi khái niệm có ví dụ code, phần minh hoạ bấm được, và kết quả chạy thật có nhãn <span class="real">ĐO THẬT</span> trên OpenJDK 21, máy 2 vCPU.</p>
+  <div class="facts"><span>OpenJDK 21.0.12</span><span>2 vCPU</span><span>13 chương kiến thức</span><span>7 mô phỏng và hình động</span><span>32 câu hỏi phỏng vấn</span></div>
+</header>
+
+<!-- 00 -->
+<section class="ch" id="map">
+  <div class="ch-head"><div class="eyebrow">Chương 00</div><h2>Bản đồ và cách học</h2>
+    <p>Mọi lỗi đa luồng đều quy về ba vấn đề gốc. Hiểu ba vấn đề này thì mọi công cụ phía sau chỉ là cách giải chúng.</p></div>
+  <div class="grid3">
+    <div class="card prose"><div class="eyebrow">Vấn đề 1</div><h3 style="margin:0">Tính nguyên tử</h3><p>Một thao tác nhìn như một bước (<code>count++</code>) thật ra gồm nhiều bước. Thread khác chen vào giữa thì kết quả sai.</p><p class="cap">Giải bằng: <code>synchronized</code>, <code>Lock</code>, <code>Atomic*</code></p></div>
+    <div class="card prose"><div class="eyebrow">Vấn đề 2</div><h3 style="margin:0">Tính nhìn thấy</h3><p>Thread A đã ghi, nhưng thread B vẫn đọc giá trị cũ trong cache của CPU hoặc thanh ghi, có khi đọc giá trị cũ mãi mãi.</p><p class="cap">Giải bằng: <code>volatile</code>, <code>synchronized</code>, happens-before</p></div>
+    <div class="card prose"><div class="eyebrow">Vấn đề 3</div><h3 style="margin:0">Thứ tự</h3><p>Trình biên dịch và CPU được phép đảo thứ tự lệnh để chạy nhanh hơn. Một thread đơn không thấy khác biệt, nhiều thread thì thấy.</p><p class="cap">Giải bằng: <code>volatile</code>, <code>final</code>, happens-before</p></div>
+  </div>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Tầng câu hỏi</th><th>Họ kiểm tra</th><th>Chương</th></tr></thead>
+    <tbody>
+      <tr><td><b>1. Nền tảng</b></td><td>Thread, vòng đời, race condition, synchronized, volatile</td><td>01 – 04</td></tr>
+      <tr><td><b>2. Công cụ</b></td><td>Lock, CAS, ConcurrentHashMap, thread pool, CompletableFuture</td><td>05 – 09</td></tr>
+      <tr><td><b>3. Hiện đại và thực chiến</b></td><td>Virtual thread, deadlock, lỗi đa luồng trong Spring Boot, chạy nhiều instance</td><td>10 – 13</td></tr>
+      <tr><td><b>4. Câu chuyện của bạn</b></td><td>"Bạn đã xử lý vấn đề đồng thời nào?"</td><td>15</td></tr>
+    </tbody></table></div>
+  <div class="callout warn"><b class="t">Nguyên tắc vàng của người làm lâu năm</b>Cách an toàn nhất để viết code đa luồng là <b>không chia sẻ dữ liệu có thể thay đổi</b>. Theo thứ tự ưu tiên: dùng object bất biến (immutable) → giữ dữ liệu trong một thread (biến cục bộ) → dùng cấu trúc có sẵn của <code>java.util.concurrent</code> → mới tới tự khoá. Ứng viên nói được thứ tự này thường được đánh giá cao hơn ứng viên thuộc nhiều API.</div>
+</section>
+
+<!-- 01 -->
+<section class="ch" id="thread">
+  <div class="ch-head"><div class="eyebrow">Chương 01</div><h2>Thread và vòng đời của nó</h2>
+    <p>Bấm các hành động bên dưới để xem thread chuyển trạng thái thế nào. Đây đúng là các trạng thái bạn sẽ đọc trong thread dump.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Process và thread khác nhau thế nào? Concurrency khác parallelism ra sao?</li><li>Thread có những trạng thái nào? BLOCKED khác WAITING ở đâu?</li><li>Gọi <code>run()</code> khác gọi <code>start()</code> thế nào? <code>sleep()</code> khác <code>wait()</code> thế nào?</li></ul></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:14px">
+    <div class="states" id="states"></div>
+    <div class="sim-ctrl" id="st-actions"></div>
+    <p class="memnote" id="st-note" style="margin:0"></p>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Bốn thread, bốn trạng thái</h4>
+<pre class="code">holder    -&gt; TIMED_WAITING  <span class="c">// đang giữ khoá và sleep(3000)</span>
+doi-khoa  -&gt; <span class="w">BLOCKED</span>        <span class="c">// chờ vào synchronized bị holder giữ</span>
+dang-wait -&gt; WAITING        <span class="c">// gọi wait()</span>
+dang-park -&gt; WAITING        <span class="c">// LockSupport.park(), cách ReentrantLock chờ</span></pre>
+      <p class="cap" style="margin-top:8px">Chi tiết hay bị hỏi: thread chờ <code>synchronized</code> có trạng thái <b>BLOCKED</b>, còn thread chờ <code>ReentrantLock</code> lại là <b>WAITING</b>, vì ReentrantLock dùng <code>LockSupport.park()</code> bên dưới.</p></div>
+    <div class="card prose"><h4>Những điều cơ bản phải chắc</h4>
+      <ul>
+        <li><b>Process</b> có không gian bộ nhớ riêng. <b>Thread</b> là luồng chạy bên trong process, các thread chia sẻ heap nhưng mỗi thread có stack riêng.</li>
+        <li><b>Concurrency</b>: nhiều việc tiến triển xen kẽ (có thể chỉ 1 CPU). <b>Parallelism</b>: nhiều việc chạy cùng lúc thật trên nhiều CPU.</li>
+        <li>Mỗi <code>Thread</code> thông thường (platform thread) ứng với <b>một thread của hệ điều hành</b>, tốn khoảng 1 MB stack và chi phí chuyển ngữ cảnh. Vì vậy không thể tạo hàng trăm nghìn cái.</li>
+        <li><code>t.run()</code> chỉ là gọi hàm bình thường trên thread hiện tại. <code>t.start()</code> mới tạo thread mới. Gọi <code>start()</code> hai lần ném <code>IllegalThreadStateException</code>.</li>
+        <li><code>sleep()</code> giữ nguyên khoá đang cầm. <code>wait()</code> nhả khoá và chờ được đánh thức.</li>
+      </ul></div>
+  </div>
+  <div class="prose">
+    <h3>Dừng một thread đúng cách: interrupt</h3>
+    <p>Java không có cách giết thread an toàn (<code>Thread.stop()</code> đã bị loại bỏ). Cách đúng là <b>interrupt</b>: gửi tín hiệu "hãy dừng", và code trong thread tự kiểm tra rồi dừng.</p>
+  </div>
+<pre class="code"><span class="h">while</span> (!Thread.currentThread().isInterrupted()) {
+    <span class="h">try</span> {
+        processNextBatch();
+        Thread.sleep(1000);
+    } <span class="h">catch</span> (InterruptedException e) {
+        <span class="c">// sleep/wait ném lỗi này và XOÁ cờ interrupt; phải đặt lại để vòng lặp thấy</span>
+        <span class="w">Thread.currentThread().interrupt();</span>
+    }
+}</pre>
+  <div class="callout bad"><b class="t">Lỗi rất phổ biến</b><code>catch (InterruptedException e) {}</code> nuốt mất tín hiệu dừng. Kết quả: <code>executor.shutdownNow()</code> không dừng được task, ứng dụng tắt chậm hoặc treo khi deploy.</div>
+</section>
+
+<!-- 02 -->
+<section class="ch" id="race">
+  <div class="ch-head"><div class="eyebrow">Chương 02</div><h2>Race condition: vì sao <code>count++</code> sai</h2>
+    <p><code>count++</code> trông như một lệnh, nhưng CPU làm ba bước: <b>đọc</b> giá trị từ bộ nhớ, <b>cộng</b> 1 trong thanh ghi, <b>ghi</b> ngược lại. Hãy tự điều khiển hai thread để thấy lần cộng bị mất.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Race condition là gì? Cho ví dụ.</li><li>Vì sao <code>count++</code> không an toàn? Sửa bằng những cách nào?</li><li>Check-then-act là gì?</li></ul></div>
+  <div class="card sim">
+    <div class="sim-ctrl">
+      <span class="seg-ctl" role="radiogroup" aria-label="Cách đồng bộ" id="race-mode">
+        <button type="button" data-m="plain" aria-pressed="true">count++ không khoá</button>
+        <button type="button" data-m="sync" aria-pressed="false">synchronized</button>
+        <button type="button" data-m="cas" aria-pressed="false">AtomicInteger (CAS)</button>
+      </span>
+    </div>
+    <div class="race">
+      <div class="thr" id="thr-A"></div>
+      <div class="memcol">
+        <div class="ram"><span>Bộ nhớ chung</span><b id="race-count">0</b><small>count</small></div>
+        <div class="lockbox" id="race-lock">khoá: trống</div>
+      </div>
+      <div class="thr" id="thr-B"></div>
+    </div>
+    <div class="sim-ctrl">
+      <button class="btn" type="button" id="race-a">Thread A: bước tiếp</button>
+      <button class="btn" type="button" id="race-b">Thread B: bước tiếp</button>
+      <button class="btn primary" type="button" id="race-auto">Chạy kịch bản xen kẽ A, B, A, B…</button>
+      <button class="btn" type="button" id="race-reset">Làm lại</button>
+    </div>
+    <div class="verdict" id="race-verdict"></div>
+    <div class="simlog" id="race-log" aria-live="polite"></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">2 thread, mỗi thread cộng 10 triệu lần</h4>
+<pre class="code">Lần 1:  count = <span class="w">10 651 377</span>   <span class="c">// mất gần một nửa</span>
+Lần 2:  count = <span class="w">10 637 547</span>
+Lần 3:  count = 20 000 000   <span class="c">// đúng!?</span>
+Lần 4:  count = 20 000 000
+Lần 5:  count = 20 000 000
+<span class="c">// một lần chạy khác:</span>
+Lần 2:  count = <span class="w">10 000 000</span>   <span class="c">// mất TRỌN 10 triệu lần cộng của một thread</span></pre></div>
+    <div class="card prose"><h4>Đọc kết quả</h4>
+      <p><b>Có lần ra đúng.</b> Code đa luồng sai không phải lúc nào cũng ra kết quả sai. Sau khi JIT tối ưu, mỗi vòng lặp chạy rất nhanh, nhiều lúc thread thứ nhất xong trước khi thread thứ hai kịp bắt đầu. Test chạy qua vài lần <b>không chứng minh</b> code đúng.</p>
+      <p><b>Có lần mất đúng 10 000 000.</b> JIT được phép giữ <code>count</code> trong thanh ghi suốt vòng lặp và chỉ ghi ra bộ nhớ một lần ở cuối. Hai thread cùng đọc 0, cùng cộng 10 triệu, cùng ghi 10 000 000. Đây là vấn đề <b>nhìn thấy</b> (chương 03) cộng với vấn đề <b>nguyên tử</b>.</p></div>
+  </div>
+  <div class="prose">
+    <h3>Check-then-act: dạng race condition hay gặp nhất trong code nghiệp vụ</h3>
+    <p>Kiểm tra một điều kiện rồi hành động dựa trên nó, trong khi thread khác có thể làm điều kiện đó thay đổi ở giữa. Chính là lỗi đặt trùng chỗ, trừ điểm hai lần mà bạn đã luyện ở phần phỏng vấn trước.</p>
+  </div>
+<pre class="code"><span class="c">// Sai: hai thread cùng thấy "chưa có", cùng tạo</span>
+<span class="h">if</span> (!cache.containsKey(id)) {
+    cache.put(id, loadFromDb(id));
+}
+<span class="c">// Đúng: một thao tác nguyên tử</span>
+cache.computeIfAbsent(id, k -&gt; loadFromDb(k));
+
+<span class="c">// Ở tầng DB cũng vậy: SELECT kiểm tra rồi INSERT là check-then-act</span>
+<span class="c">// → dùng unique constraint, SELECT ... FOR UPDATE, hoặc UPDATE ... WHERE điều kiện</span></pre>
+</section>
+
+<!-- 03 -->
+<section class="ch" id="jmm">
+  <div class="ch-head"><div class="eyebrow">Chương 03</div><h2>Java Memory Model và <code>volatile</code></h2>
+    <p>Chương khó nhất và hay bị hỏi nhất ở vị trí middle trở lên. Bắt đầu bằng một chương trình không bao giờ dừng.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li><code>volatile</code> dùng để làm gì? Có đảm bảo <code>count++</code> an toàn không?</li><li>Happens-before là gì?</li><li>Vì sao double-checked locking cần <code>volatile</code>?</li></ul></div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Không có <code>volatile</code></h4>
+<pre class="code"><span class="h">static boolean</span> running = <span class="h">true</span>;
+<span class="c">// worker: while (running) n++;</span>
+<span class="c">// main:   sleep(500); running = false;</span>
+
+main da dat co = false
+<span class="w">SAU 3 GIAY WORKER VAN CHAY</span></pre>
+      <p class="cap" style="margin-top:8px">Worker không bao giờ thấy <code>running = false</code>. JIT thấy trong vòng lặp không ai sửa <code>running</code> nên đọc nó một lần rồi biến vòng lặp thành <code>while (true)</code>. Điều này hoàn toàn hợp lệ theo Java Memory Model.</p></div>
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Có <code>volatile</code></h4>
+<pre class="code"><span class="h">static volatile boolean</span> vRunning = <span class="h">true</span>;
+
+main da dat co = false
+worker dung lai sau 1060710292 vong
+<span class="h">worker da ket thuc</span></pre>
+      <p class="cap" style="margin-top:8px">Mỗi lần đọc <code>volatile</code> phải lấy giá trị mới nhất, JIT không được giữ trong thanh ghi. Worker dừng ngay sau khi main ghi.</p></div>
+  </div>
+  <div class="card sim" id="vol">
+    <h3 style="margin:0">Hình động: giá trị mới bị kẹt ở core khác</h3>
+    <div class="sim-ctrl">
+      <span class="seg-ctl" role="radiogroup" aria-label="Kiểu biến" id="vol-mode">
+        <button type="button" data-v="0" aria-pressed="true">boolean running</button>
+        <button type="button" data-v="1" aria-pressed="false">volatile boolean running</button>
+      </span>
+    </div>
+    <div class="sim-ctrl">
+      <button class="btn primary" type="button" id="vol-start">1. Worker bắt đầu vòng lặp</button>
+      <button class="btn" type="button" id="vol-stop" disabled>2. main ghi running = false</button>
+      <button class="btn" type="button" id="vol-reset">Làm lại</button>
+    </div>
+    <div class="anim"><svg id="vol-svg" viewBox="0 0 640 300" role="img" aria-label="Hai lõi CPU, thanh ghi và bộ nhớ chính trao đổi giá trị running"></svg></div>
+    <div class="verdict" id="vol-verdict" style="display:none"></div>
+    <p class="cap">Chấm xanh là một lần đọc hoặc ghi đi qua bộ nhớ chính. Không có <code>volatile</code>, worker chỉ đọc bộ nhớ đúng một lần lúc bắt đầu (JIT đưa giá trị vào thanh ghi), sau đó quay vòng trên thanh ghi nên không bao giờ thấy giá trị mới, giống hệt số đo thật ở trên.</p>
+  </div>
+  <div class="prose">
+    <h3>Happens-before: luật "nếu A xảy ra trước B thì B thấy mọi thứ A đã ghi"</h3>
+    <ul>
+      <li><b>Trong một thread:</b> lệnh trước happens-before lệnh sau.</li>
+      <li><b>Khoá:</b> nhả khoá (ra khỏi <code>synchronized</code>, <code>unlock()</code>) happens-before lần lấy cùng khoá đó tiếp theo.</li>
+      <li><b>volatile:</b> ghi vào biến volatile happens-before mọi lần đọc biến đó sau đó.</li>
+      <li><b>Thread:</b> <code>t.start()</code> happens-before mọi lệnh trong <code>t</code>; mọi lệnh trong <code>t</code> happens-before khi <code>t.join()</code> trả về.</li>
+      <li><b>Executor, Future:</b> việc submit task happens-before lúc task chạy; task chạy xong happens-before <code>future.get()</code> trả về.</li>
+      <li><b>final:</b> field <code>final</code> được ghi xong trong constructor thì thread nào thấy object cũng thấy giá trị đúng.</li>
+      <li><b>Bắc cầu:</b> A trước B, B trước C thì A trước C.</li>
+    </ul>
+    <p>Vì có luật bắc cầu, <code>volatile</code> còn "kéo theo" các biến thường: mọi thứ thread A ghi <b>trước</b> khi ghi biến volatile đều được thread B thấy <b>sau</b> khi đọc biến volatile đó.</p>
+    <h3><code>volatile</code> làm được gì và không làm được gì</h3>
+  </div>
+  <div class="tblwrap"><table><thead><tr><th></th><th>volatile</th><th>synchronized / Lock</th><th>Atomic*</th></tr></thead><tbody>
+    <tr><td>Nhìn thấy (visibility)</td><td>Có</td><td>Có</td><td>Có</td></tr>
+    <tr><td>Chống đảo thứ tự</td><td>Có</td><td>Có</td><td>Có</td></tr>
+    <tr><td>Nguyên tử cho <code>count++</code></td><td><b>Không</b></td><td>Có</td><td>Có</td></tr>
+    <tr><td>Bảo vệ nhiều biến cùng lúc</td><td>Không</td><td>Có</td><td>Không (một biến)</td></tr>
+    <tr><td>Dùng khi</td><td>Cờ trạng thái, một thread ghi nhiều thread đọc</td><td>Nhiều bước phải đi cùng nhau</td><td>Bộ đếm, cập nhật một giá trị</td></tr>
+  </tbody></table></div>
+  <div class="prose">
+    <h3>Double-checked locking và đảo thứ tự lệnh</h3>
+    <p><code>instance = new Singleton()</code> gồm ba bước: (1) cấp bộ nhớ, (2) chạy constructor, (3) gán địa chỉ cho <code>instance</code>. CPU và JIT được đảo thành 1 → 3 → 2. Thread khác thấy <code>instance != null</code> ở bước 3 và dùng một object <b>chưa khởi tạo xong</b>.</p>
+  </div>
+<pre class="code"><span class="h">public final class</span> Config {
+    <span class="h">private static</span> <span class="w">volatile</span> Config instance;   <span class="c">// thiếu volatile là sai</span>
+    <span class="h">public static</span> Config get() {
+        Config c = instance;
+        <span class="h">if</span> (c == <span class="h">null</span>) {
+            <span class="h">synchronized</span> (Config.<span class="h">class</span>) {
+                c = instance;
+                <span class="h">if</span> (c == <span class="h">null</span>) instance = c = <span class="h">new</span> Config();
+            }
+        }
+        <span class="h">return</span> c;
+    }
+}
+<span class="c">// Cách gọn hơn và an toàn: holder idiom, JVM đảm bảo nạp class chỉ một lần</span>
+<span class="h">private static class</span> Holder { <span class="h">static final</span> Config I = <span class="h">new</span> Config(); }
+<span class="h">public static</span> Config get() { <span class="h">return</span> Holder.I; }
+<span class="c">// Trong Spring: để container quản lý bean singleton, không cần tự viết</span></pre>
+</section>
+
+<!-- 04 -->
+<section class="ch" id="sync">
+  <div class="ch-head"><div class="eyebrow">Chương 04</div><h2><code>synchronized</code>, <code>wait</code> và <code>notify</code></h2>
+    <p>Công cụ đồng bộ đầu tiên của Java. Đơn giản, đủ dùng cho phần lớn trường hợp, và được JVM tối ưu rất tốt.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li><code>synchronized</code> khoá cái gì? Method static khác method thường ra sao?</li><li>Reentrant là gì?</li><li>Vì sao <code>wait()</code> phải nằm trong vòng <code>while</code>?</li></ul></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Khoá cái gì?</h4>
+<pre class="code"><span class="h">synchronized void</span> a() {}         <span class="c">// khoá this</span>
+<span class="h">static synchronized void</span> b() {}  <span class="c">// khoá OrderService.class</span>
+<span class="h">synchronized</span> (lock) { ... }      <span class="c">// khoá object lock</span>
+
+<span class="c">// Nên: khoá riêng, không ai bên ngoài lấy được</span>
+<span class="h">private final</span> Object lock = <span class="h">new</span> Object();</pre>
+      <p>Mỗi object Java đều có một <b>monitor</b>. Hai method <code>synchronized</code> thường trên <b>cùng một object</b> không chạy song song được, nhưng method static và method thường thì được, vì chúng khoá hai thứ khác nhau.</p>
+      <p><b>Đừng khoá</b> trên <code>String</code> hằng, <code>Integer</code> hoặc object có thể bị đổi (field không final): hai chỗ code khác nhau có thể vô tình dùng chung một khoá.</p></div>
+    <div class="card prose"><h4>Reentrant và cách JVM tối ưu</h4>
+      <p><b>Reentrant</b>: thread đang giữ khoá có thể vào lại chính khoá đó (gọi một method <code>synchronized</code> khác của cùng object) mà không tự khoá chết mình. JVM đếm số lần vào và chỉ nhả khi ra hết.</p>
+      <p>Khi không ai tranh chấp, JVM khoá bằng một phép CAS trên mark word của object header (khoá nhẹ). Khi có tranh chấp thật, khoá "phình" thành monitor của hệ điều hành, thread phải ngủ và được đánh thức.</p>
+      <p class="cap">Biased locking (tối ưu cũ cho trường hợp chỉ một thread dùng khoá) bị tắt mặc định từ Java 15 và bị gỡ ở Java 18. Tài liệu cũ hay nhắc, đừng nói nó là hành vi hiện tại.</p></div>
+  </div>
+  <div class="prose"><h3>wait / notify: hàng đợi người sản xuất – người tiêu dùng</h3></div>
+<pre class="code"><span class="h">class</span> BoundedBuffer&lt;T&gt; {
+    <span class="h">private final</span> Deque&lt;T&gt; items = <span class="h">new</span> ArrayDeque&lt;&gt;();
+    <span class="h">private final int</span> cap = 10;
+
+    <span class="h">synchronized void</span> put(T x) <span class="h">throws</span> InterruptedException {
+        <span class="w">while</span> (items.size() == cap) wait();   <span class="c">// nhả khoá, ngủ chờ</span>
+        items.addLast(x);
+        notifyAll();                          <span class="c">// đánh thức người đang chờ lấy</span>
+    }
+    <span class="h">synchronized</span> T take() <span class="h">throws</span> InterruptedException {
+        <span class="w">while</span> (items.isEmpty()) wait();
+        T x = items.removeFirst();
+        notifyAll();
+        <span class="h">return</span> x;
+    }
+}
+<span class="c">// Thực tế: dùng luôn ArrayBlockingQueue, đã có sẵn put()/take()</span></pre>
+  <div class="grid3">
+    <div class="callout"><b class="t">Phải giữ khoá</b>Gọi <code>wait()</code>/<code>notify()</code> ngoài <code>synchronized</code> của chính object đó ném <code>IllegalMonitorStateException</code>.</div>
+    <div class="callout"><b class="t">Phải dùng while</b>Thread có thể tỉnh dậy mà không ai gọi notify (spurious wakeup), hoặc thread khác đã lấy mất phần tử trước. Luôn kiểm tra lại điều kiện.</div>
+    <div class="callout"><b class="t">Ưu tiên notifyAll</b><code>notify()</code> chỉ đánh thức một thread ngẫu nhiên, có thể đánh thức nhầm loại (người sản xuất thay vì người tiêu dùng) và cả hệ thống đứng.</div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section class="ch" id="locks">
+  <div class="ch-head"><div class="eyebrow">Chương 05</div><h2>Lock nâng cao và AQS</h2>
+    <p><code>java.util.concurrent.locks</code> cho những việc <code>synchronized</code> không làm được: thử khoá, chờ có thời hạn, ngắt được, nhiều điều kiện chờ, khoá đọc/ghi.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>ReentrantLock khác synchronized thế nào? Khi nào dùng cái nào?</li><li>Fair lock là gì? ReadWriteLock dùng khi nào?</li><li>AQS là gì?</li></ul></div>
+  <div class="tblwrap"><table><thead><tr><th></th><th><code>synchronized</code></th><th><code>ReentrantLock</code></th></tr></thead><tbody>
+    <tr><td>Cú pháp</td><td>Khối lệnh, tự nhả kể cả khi có exception</td><td>Phải tự <code>unlock()</code> trong <code>finally</code></td></tr>
+    <tr><td>Thử khoá, không chờ</td><td>Không</td><td><code>tryLock()</code></td></tr>
+    <tr><td>Chờ có thời hạn</td><td>Không</td><td><code>tryLock(3, SECONDS)</code></td></tr>
+    <tr><td>Ngắt khi đang chờ</td><td>Không</td><td><code>lockInterruptibly()</code></td></tr>
+    <tr><td>Công bằng (ai chờ trước được trước)</td><td>Không</td><td><code>new ReentrantLock(true)</code>, chậm hơn</td></tr>
+    <tr><td>Nhiều điều kiện chờ</td><td>Một (<code>wait/notify</code>)</td><td>Nhiều <code>Condition</code>: <code>notFull</code>, <code>notEmpty</code></td></tr>
+    <tr><td>Trạng thái trong thread dump</td><td>BLOCKED</td><td>WAITING (park)</td></tr>
+  </tbody></table></div>
+<pre class="code"><span class="h">private final</span> ReentrantLock lock = <span class="h">new</span> ReentrantLock();
+
+<span class="h">boolean</span> transfer(Account from, Account to, <span class="h">long</span> amount) <span class="h">throws</span> InterruptedException {
+    <span class="h">if</span> (!lock.tryLock(<span class="s">2</span>, TimeUnit.SECONDS)) {
+        <span class="h">return false</span>;              <span class="c">// không chờ mãi: báo bận, để client thử lại</span>
+    }
+    <span class="h">try</span> {
+        from.debit(amount);
+        to.credit(amount);
+        <span class="h">return true</span>;
+    } <span class="h">finally</span> {
+        <span class="w">lock.unlock();</span>              <span class="c">// bắt buộc trong finally</span>
+    }
+}</pre>
+  <div class="grid2">
+    <div class="card prose"><h4>ReadWriteLock và StampedLock</h4>
+      <p><code>ReentrantReadWriteLock</code>: nhiều thread <b>đọc</b> cùng lúc, nhưng <b>ghi</b> thì độc quyền. Hợp với dữ liệu đọc rất nhiều, ghi rất ít (cấu hình, bảng giá).</p>
+      <p><code>StampedLock</code> (Java 8): thêm chế độ <b>đọc lạc quan</b>, không khoá gì cả, đọc xong kiểm tra "có ai ghi trong lúc mình đọc không" bằng <code>validate(stamp)</code>; có thì đọc lại bằng khoá thật. Nhanh hơn nhưng không reentrant, dễ dùng sai.</p></div>
+    <div class="card prose"><h4>AQS: bộ khung bên dưới</h4>
+      <p><code>AbstractQueuedSynchronizer</code> là nền của <code>ReentrantLock</code>, <code>Semaphore</code>, <code>CountDownLatch</code>, <code>ReentrantReadWriteLock</code>. Nó gồm:</p>
+      <ul><li>Một số nguyên <code>state</code> được cập nhật bằng CAS (với lock: 0 là trống, n là số lần vào lại).</li><li>Một hàng đợi các thread đang chờ (biến thể của CLH queue).</li><li>Thread không lấy được thì vào hàng đợi và <code>LockSupport.park()</code>; người nhả khoá <code>unpark()</code> thread đầu hàng.</li></ul>
+      <p class="cap">Nói được "ReentrantLock dùng AQS, state đếm số lần vào lại, thread chờ được park trong hàng đợi" là câu trả lời ở mức senior.</p></div>
+  </div>
+  <div class="card">
+    <span class="real">ĐO THẬT</span>
+    <div class="chart-title" style="margin-top:6px">2 thread cùng tăng một bộ đếm 10 triệu lần mỗi thread</div>
+    <p class="cap">mili giây, càng ngắn càng tốt; cả bốn cách đều ra đúng 20 000 000</p>
+    <div class="chart" id="ch-lock"></div>
+    <p class="cap" style="margin-top:6px">Tranh chấp cực cao (hai thread chỉ làm mỗi việc tăng đếm) nên chênh lệch rất rõ. <code>LongAdder</code> nhanh nhất vì mỗi thread cộng vào ô riêng (chương 06). Trong code thật, phần lớn thời gian là I/O nên chọn khoá theo độ rõ ràng của code trước, tốc độ sau.</p>
+  </div>
+</section>
+
+<!-- 06 -->
+<section class="ch" id="cas">
+  <div class="ch-head"><div class="eyebrow">Chương 06</div><h2>CAS, Atomic và LongAdder</h2>
+    <p>Đồng bộ không cần khoá: thay vì "chặn người khác lại", ta "thử ghi, nếu có người chen vào thì thử lại".</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>CAS là gì? AtomicInteger hoạt động thế nào?</li><li>Vấn đề ABA là gì?</li><li>Vì sao LongAdder nhanh hơn AtomicLong?</li></ul></div>
+  <div class="prose">
+    <p><b>Compare-And-Swap</b> là một lệnh của CPU (trên x86 là <code>LOCK CMPXCHG</code>): "nếu giá trị ở địa chỉ này đang là <i>expected</i> thì đổi thành <i>new</i>, trả về thành công; nếu không thì không làm gì, trả về thất bại". Cả bước so sánh và ghi diễn ra nguyên tử trong phần cứng.</p>
+  </div>
+<pre class="code"><span class="c">// Bên trong AtomicInteger.incrementAndGet(), viết lại cho dễ hiểu</span>
+<span class="h">int</span> incrementAndGet() {
+    <span class="h">while</span> (<span class="h">true</span>) {
+        <span class="h">int</span> expected = value;              <span class="c">// 1. đọc (value là volatile)</span>
+        <span class="h">int</span> next = expected + 1;           <span class="c">// 2. tính</span>
+        <span class="h">if</span> (compareAndSet(expected, next))  <span class="c">// 3. ghi nếu chưa ai chen vào</span>
+            <span class="h">return</span> next;
+        <span class="c">// thất bại: có thread khác vừa ghi, quay lại đọc giá trị mới</span>
+    }
+}</pre>
+  <p class="cap">Thử chế độ "AtomicInteger (CAS)" trong mô phỏng ở chương 02: khi hai thread xen kẽ, thread ghi sau sẽ CAS thất bại và tự thử lại, không mất lần cộng nào.</p>
+  <div class="grid2">
+    <div class="card prose"><h4>Vấn đề ABA</h4>
+      <p>Thread 1 đọc giá trị A. Trong lúc đó thread 2 đổi A → B → A. Thread 1 CAS thấy vẫn là A, tưởng không ai đụng vào. Với bộ đếm thì không sao, nhưng với cấu trúc liên kết (stack, queue không khoá) thì có thể hỏng dữ liệu.</p>
+      <p>Cách xử lý: gắn thêm số phiên bản, <code>AtomicStampedReference</code> so sánh cả giá trị lẫn stamp. Đây cũng chính là ý tưởng của <b>optimistic locking</b> với cột <code>@Version</code> trong JPA.</p></div>
+    <div class="card prose"><h4>LongAdder: chia để giảm tranh chấp</h4>
+      <div class="adder" aria-label="LongAdder chia bộ đếm thành nhiều ô">
+        <div class="cells-row"><span>base<b>4</b></span><span>cell[0]<b>7</b></span><span>cell[1]<b>5</b></span><span>cell[2]<b>6</b></span></div>
+        <div class="sum">sum() = 4 + 7 + 5 + 6 = <b>22</b></div>
+      </div>
+      <p>Tranh chấp cao thì CAS thất bại liên tục, mọi thread quay vòng thử lại trên cùng một biến. <code>LongAdder</code> rải các lần cộng ra nhiều ô, mỗi thread cộng vào ô của mình, <code>sum()</code> cộng tất cả lại. Đổi lại <code>sum()</code> không phải ảnh chụp chính xác tại một thời điểm.</p>
+      <p class="cap">Mỗi ô được đệm cho nằm trên cache line riêng (<code>@Contended</code>) để tránh <b>false sharing</b>: hai biến khác nhau nằm cùng một cache line 64 byte khiến các core tranh nhau dù không dùng chung dữ liệu.</p></div>
+  </div>
+  <div class="card sim" id="cas2">
+    <h3 style="margin:0">Hình động: 4 thread cùng cộng 5 lần</h3>
+    <div class="sim-ctrl">
+      <span class="seg-ctl" role="radiogroup" aria-label="Loại bộ đếm" id="cas-mode">
+        <button type="button" data-m="atomic" aria-pressed="true">AtomicLong (1 ô)</button>
+        <button type="button" data-m="adder" aria-pressed="false">LongAdder (nhiều ô)</button>
+      </span>
+      <button class="btn primary" type="button" id="cas-run">Chạy</button>
+      <button class="btn" type="button" id="cas-reset">Làm lại</button>
+    </div>
+    <div class="anim"><svg id="cas-svg" viewBox="0 0 640 260" role="img" aria-label="Bốn thread cùng cập nhật bộ đếm"></svg></div>
+    <div class="sim-stats">
+      <div class="stat"><b id="cas-ok">0</b><span>CAS thành công</span></div>
+      <div class="stat"><b id="cas-fail">0</b><span>CAS thất bại, phải thử lại</span></div>
+      <div class="stat"><b id="cas-tick">0</b><span>Nhịp</span></div>
+    </div>
+    <div class="verdict" id="cas-verdict" style="display:none"></div>
+    <p class="cap">Mỗi nhịp, mọi thread chưa xong cùng đọc rồi cùng CAS. Với một ô duy nhất, chỉ thread đầu tiên thắng, các thread còn lại thất bại và quay vòng. LongAdder thật bắt đầu bằng một ô <code>base</code> và chỉ tách thêm ô khi phát hiện tranh chấp; ở đây vẽ sẵn 4 ô cho dễ thấy.</p>
+  </div>
+  <div class="callout"><b class="t">Chọn gì</b>Bộ đếm chỉ để thống kê, nhiều thread cộng (số request, số lượt xem): <code>LongAdder</code>. Cần giá trị chính xác ngay sau khi tăng (cấp số thứ tự, id): <code>AtomicLong</code>. Cập nhật một object theo giá trị cũ: <code>AtomicReference.updateAndGet</code>.</div>
+</section>
+
+<!-- 07 -->
+<section class="ch" id="collections">
+  <div class="ch-head"><div class="eyebrow">Chương 07</div><h2>Collection đồng thời</h2>
+    <p>Dùng <code>HashMap</code> từ nhiều thread không ném lỗi. Nó lặng lẽ làm mất dữ liệu.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Vì sao HashMap không thread-safe? Chuyện gì xảy ra?</li><li>ConcurrentHashMap hoạt động thế nào (Java 8+)? Khác Hashtable và Collections.synchronizedMap ra sao?</li><li>Vì sao ConcurrentHashMap không cho key hoặc value null?</li></ul></div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">4 thread, mỗi thread put 100 000 key khác nhau</h4>
+<pre class="code">run1 HashMap.size=<span class="w">398729</span>  ConcurrentHashMap.size=400000
+run2 HashMap.size=<span class="w">398241</span>  ConcurrentHashMap.size=400000
+run3 HashMap.size=<span class="w">392201</span>  ConcurrentHashMap.size=400000
+                               (đúng: 400000)</pre>
+      <p class="cap" style="margin-top:8px">Hàng nghìn phần tử biến mất mà không có exception nào. Hai thread cùng ghi vào một bucket, hoặc một thread đang resize mảng trong khi thread khác ghi. Ở Java 7, resize đồng thời còn có thể tạo vòng lặp trong danh sách liên kết, làm <code>get()</code> chạy mãi với CPU 100%.</p></div>
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">ConcurrentHashMap vẫn sai nếu dùng sai</h4>
+<pre class="code"><span class="c">// 4 thread x 250 000 lần tăng lượt xem</span>
+Integer v = views.get(<span class="s">"p1"</span>);
+views.put(<span class="s">"p1"</span>, v + 1);          <span class="c">// → <span class="w">863 634</span></span>
+
+views2.merge(<span class="s">"p1"</span>, 1, Integer::sum); <span class="c">// → 1 000 000</span></pre>
+      <p class="cap" style="margin-top:8px">Từng thao tác <code>get</code>, <code>put</code> an toàn, nhưng <b>ghép hai thao tác</b> thì không. Dùng các method nguyên tử: <code>merge</code>, <code>compute</code>, <code>computeIfAbsent</code>, <code>putIfAbsent</code>.</p></div>
+  </div>
+  <div class="prose">
+    <h3>ConcurrentHashMap bên trong (Java 8 trở đi)</h3>
+    <ul>
+      <li><b>Đọc không khoá:</b> mảng bucket và giá trị trong node là <code>volatile</code>, nên <code>get()</code> không cần khoá.</li>
+      <li><b>Ghi vào bucket trống:</b> dùng CAS đặt node đầu tiên, không khoá.</li>
+      <li><b>Ghi vào bucket đã có phần tử:</b> <code>synchronized</code> trên node đầu của <b>riêng bucket đó</b>. Hai thread ghi vào hai bucket khác nhau chạy song song hoàn toàn.</li>
+      <li><b>Bucket dài:</b> từ 8 phần tử trở lên (và mảng có từ 64 bucket) thì chuyển thành cây đỏ đen, tìm kiếm O(log n) thay vì O(n).</li>
+      <li><b>Resize:</b> nhiều thread cùng giúp chuyển dữ liệu sang mảng mới.</li>
+      <li><b>size():</b> đếm bằng cơ chế giống LongAdder nên có thể không chính xác tuyệt đối khi đang có ghi đồng thời.</li>
+      <li><b>Java 7</b> dùng cách khác: chia thành 16 segment, mỗi segment một ReentrantLock. Nếu interviewer hỏi "segment", hãy nói đó là cách cũ.</li>
+    </ul>
+    <p><b>Vì sao cấm null?</b> Với map đồng thời, <code>get(k)</code> trả về <code>null</code> thì không phân biệt được "không có key" hay "key có giá trị null", và cũng không thể kiểm tra lại bằng <code>containsKey</code> vì trạng thái có thể đổi giữa hai lần gọi.</p>
+  </div>
+  <div class="tblwrap"><table><thead><tr><th>Cấu trúc</th><th>Cách đồng bộ</th><th>Dùng khi</th></tr></thead><tbody>
+    <tr><td><code>Hashtable</code>, <code>Collections.synchronizedMap</code></td><td>Một khoá cho cả map</td><td>Gần như không dùng nữa; mọi thao tác xếp hàng nhau</td></tr>
+    <tr><td><code>ConcurrentHashMap</code></td><td>CAS + khoá theo từng bucket</td><td>Map dùng chung, cache đơn giản trong bộ nhớ</td></tr>
+    <tr><td><code>CopyOnWriteArrayList</code></td><td>Mỗi lần ghi copy cả mảng mới</td><td>Đọc rất nhiều, ghi rất hiếm: danh sách listener, cấu hình</td></tr>
+    <tr><td><code>ArrayBlockingQueue</code></td><td>Một ReentrantLock, có giới hạn</td><td>Hàng đợi producer – consumer có giới hạn</td></tr>
+    <tr><td><code>LinkedBlockingQueue</code></td><td>Hai khoá (đầu, cuối)</td><td>Hàng đợi; nhớ <b>truyền capacity</b>, mặc định là vô hạn</td></tr>
+    <tr><td><code>ConcurrentLinkedQueue</code></td><td>CAS, không khoá</td><td>Hàng đợi không chặn, không giới hạn</td></tr>
+    <tr><td><code>ConcurrentSkipListMap</code></td><td>CAS</td><td>Map có thứ tự, dùng đồng thời (giống Sorted Set của Redis)</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- 08 -->
+<section class="ch" id="pool">
+  <div class="ch-head"><div class="eyebrow">Chương 08</div><h2>Thread pool</h2>
+    <p>Chủ đề quan trọng nhất cho dev backend. Hiểu sai thứ tự core → hàng đợi → max là sai cấu hình.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Các tham số của ThreadPoolExecutor là gì? Task mới được xử lý theo thứ tự nào?</li><li>Vì sao không nên dùng <code>Executors.newFixedThreadPool</code>?</li><li>Chọn số thread thế nào? Các chính sách từ chối là gì?</li></ul></div>
+<pre class="code"><span class="h">new</span> ThreadPoolExecutor(
+    <span class="h">corePoolSize</span>,      <span class="c">// số thread luôn giữ</span>
+    <span class="h">maximumPoolSize</span>,   <span class="c">// số thread tối đa</span>
+    <span class="h">keepAliveTime</span>,     <span class="c">// thread ngoài core rảnh bao lâu thì bị huỷ</span>
+    unit,
+    <span class="h">workQueue</span>,         <span class="c">// hàng đợi chứa task chờ</span>
+    threadFactory,     <span class="c">// đặt tên thread: rất quan trọng khi đọc thread dump</span>
+    <span class="h">handler</span>);          <span class="c">// làm gì khi đầy hết</span></pre>
+  <div class="card sim">
+    <h3 style="margin:0">Mô phỏng ThreadPoolExecutor</h3>
+    <div class="sim-ctrl">
+      <label for="p-core">core <input type="range" id="p-core" min="1" max="4" value="2"><output id="p-core-v" class="mono">2</output></label>
+      <label for="p-max">max <input type="range" id="p-max" min="1" max="6" value="4"><output id="p-max-v" class="mono">4</output></label>
+      <label for="p-q">hàng đợi <input type="range" id="p-q" min="0" max="6" value="3"><output id="p-q-v" class="mono">3</output></label>
+      <label for="p-pol">khi đầy
+        <select id="p-pol" class="sel"><option value="abort">AbortPolicy (ném lỗi)</option><option value="caller">CallerRunsPolicy</option><option value="discard">DiscardPolicy (lặng lẽ bỏ)</option></select></label>
+    </div>
+    <div class="sim-ctrl">
+      <button class="btn primary" type="button" id="p-one">Gửi 1 task</button>
+      <button class="btn" type="button" id="p-burst">Gửi dồn 8 task</button>
+      <button class="btn" type="button" id="p-pause" aria-pressed="false">Tạm dừng</button>
+      <button class="btn" type="button" id="p-reset">Làm lại</button>
+    </div>
+    <div class="poolviz">
+      <div class="gen"><h4>Thread <small id="p-wc"></small></h4><div class="workers" id="p-workers"></div></div>
+      <div class="gen"><h4>Hàng đợi <small id="p-qc"></small></h4><div class="queue" id="p-queue"></div></div>
+      <div class="gen"><h4>Thread gửi task (caller)</h4><div id="p-caller" class="caller">rảnh</div></div>
+    </div>
+    <div class="sim-stats">
+      <div class="stat"><b id="p-done">0</b><span>Đã xong</span></div>
+      <div class="stat"><b id="p-rej">0</b><span>Bị từ chối</span></div>
+      <div class="stat"><b id="p-lost">0</b><span>Bị bỏ lặng lẽ</span></div>
+    </div>
+    <div class="simlog" id="p-log" aria-live="polite"></div>
+    <p class="cap">Mỗi task chạy 6 nhịp (khoảng 3 giây). Thread ngoài core rảnh 4 nhịp thì bị huỷ, như <code>keepAliveTime</code>. Viền đậm là thread core.</p>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">core 2, max 4, hàng đợi 3, gửi 8 task</h4>
+<pre class="code">task1: pool=1 queue=0   <span class="c">// dưới core → tạo thread</span>
+task2: pool=2 queue=0
+task3: pool=2 queue=1   <span class="c">// đủ core → vào hàng đợi</span>
+task4: pool=2 queue=2
+task5: pool=2 queue=3
+task6: pool=3 queue=3   <span class="c">// hàng đợi đầy → mới tạo thêm thread</span>
+task7: pool=4 queue=3
+task8: <span class="w">BI TU CHOI</span>         <span class="c">// đủ max, hàng đợi đầy</span></pre>
+      <p class="cap" style="margin-top:8px">Nhiều người tưởng pool tăng lên max <b>trước</b> rồi mới xếp hàng. Thực tế ngược lại: chỉ khi hàng đợi đầy mới tạo thêm thread vượt core.</p></div>
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Cái bẫy của <code>Executors.newFixedThreadPool(4)</code></h4>
+<pre class="code"><span class="c">// submit 50 000 task, mỗi task 50 ms</span>
+active=4  queue=<span class="w">49996</span>
+queue.remainingCapacity=<span class="w">2147433651</span>
+
+<span class="c">// ThreadPoolExecutor(core 4, max 8, ArrayBlockingQueue(100))</span>
+<span class="c">// gửi 1 000 task:</span>
+pool=8 queue=100  bị từ chối=<span class="h">892</span>/1000</pre>
+      <p class="cap" style="margin-top:8px">Hàng đợi của <code>newFixedThreadPool</code> là <code>LinkedBlockingQueue</code> sức chứa <code>Integer.MAX_VALUE</code>: tải tăng thì task chất đống trên heap tới khi OutOfMemoryError. Pool có giới hạn thì từ chối sớm, hệ thống còn sống.</p></div>
+  </div>
+  <div class="tblwrap"><table><thead><tr><th>Factory của <code>Executors</code></th><th>Rủi ro</th></tr></thead><tbody>
+    <tr><td><code>newFixedThreadPool(n)</code>, <code>newSingleThreadExecutor()</code></td><td>Hàng đợi vô hạn → OOM</td></tr>
+    <tr><td><code>newCachedThreadPool()</code></td><td>Số thread tối đa <code>Integer.MAX_VALUE</code> → <code>unable to create native thread</code></td></tr>
+    <tr><td><code>newScheduledThreadPool(n)</code></td><td>Hàng đợi hẹn giờ vô hạn</td></tr>
+    <tr><td><code>newVirtualThreadPerTaskExecutor()</code></td><td>Tạo thread không giới hạn là đúng thiết kế, nhưng phải tự giới hạn tài nguyên phía sau (DB, API) bằng Semaphore</td></tr>
+  </tbody></table></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Chọn số thread</h4>
+      <ul>
+        <li><b>Việc tính toán (CPU-bound):</b> khoảng bằng số core (hoặc core + 1). Nhiều hơn chỉ tốn chuyển ngữ cảnh.</li>
+        <li><b>Việc chờ I/O (gọi DB, HTTP):</b> <code>số core × (1 + thời gian chờ / thời gian tính)</code>. Ví dụ 2 core, mỗi request chờ DB 90 ms và tính 10 ms: 2 × (1 + 9) = 20 thread.</li>
+        <li>Công thức chỉ là điểm bắt đầu. Đo bằng K6, nhìn CPU, độ trễ, hàng đợi rồi chỉnh. Và nhớ giới hạn phía sau: 50 thread mà connection pool DB chỉ có 10 thì 40 thread đứng chờ.</li>
+      </ul></div>
+    <div class="card prose"><h4>Bốn chính sách khi đầy</h4>
+      <ul>
+        <li><b>AbortPolicy</b> (mặc định): ném <code>RejectedExecutionException</code>. Rõ ràng, nên dùng cho API để trả 503/429.</li>
+        <li><b>CallerRunsPolicy</b>: thread gửi task tự chạy luôn task đó. Tự nhiên làm chậm phía gửi (back-pressure). Hợp với job nội bộ.</li>
+        <li><b>DiscardPolicy</b>: lặng lẽ bỏ. Nguy hiểm, mất dữ liệu không ai biết.</li>
+        <li><b>DiscardOldestPolicy</b>: bỏ task cũ nhất trong hàng đợi để nhận task mới.</li>
+      </ul></div>
+  </div>
+  <div class="callout bad"><b class="t">execute() và submit() xử lý exception khác nhau</b><code>execute(task)</code>: exception được in ra (qua UncaughtExceptionHandler) và thread đó chết, pool tạo thread mới. <code>submit(task)</code>: exception bị <b>gói vào Future</b>; nếu không ai gọi <code>future.get()</code> thì lỗi biến mất hoàn toàn, không có dòng log nào. Đây là lý do nhiều job "chạy mà không làm gì, không báo lỗi".</div>
+<pre class="code"><span class="c">// Tắt pool đúng cách khi ứng dụng dừng</span>
+executor.shutdown();                                  <span class="c">// không nhận task mới, chạy nốt task đang có</span>
+<span class="h">if</span> (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+    executor.shutdownNow();                           <span class="c">// interrupt các task còn chạy</span>
+}
+<span class="c">// Java 19+: ExecutorService là AutoCloseable → try (var ex = ...) { } tự shutdown và chờ</span></pre>
+</section>
+
+<!-- 09 -->
+<section class="ch" id="cf">
+  <div class="ch-head"><div class="eyebrow">Chương 09</div><h2>CompletableFuture</h2>
+    <p>Gọi nhiều dịch vụ song song rồi ghép kết quả. Và một hành vi ẩn phụ thuộc vào số CPU mà ít người biết.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Future khác CompletableFuture thế nào?</li><li>thenApply, thenCompose, thenCombine khác nhau ra sao? Xử lý exception thế nào?</li><li>CompletableFuture chạy trên thread nào?</li></ul></div>
+<pre class="code"><span class="c">// Trang "tài khoản" cần 3 thông tin độc lập, mỗi lời gọi 300 ms</span>
+<span class="h">var</span> user   = CompletableFuture.supplyAsync(() -&gt; userClient.get(id),   <span class="h">ioPool</span>);
+<span class="h">var</span> orders = CompletableFuture.supplyAsync(() -&gt; orderClient.list(id), <span class="h">ioPool</span>);
+<span class="h">var</span> points = CompletableFuture.supplyAsync(() -&gt; pointClient.get(id),  <span class="h">ioPool</span>)
+        .completeOnTimeout(Points.UNKNOWN, 500, TimeUnit.MILLISECONDS);  <span class="c">// chậm quá thì dùng giá trị mặc định</span>
+
+AccountPage page = user
+        .thenCombine(orders, (u, o) -&gt; <span class="h">new</span> Partial(u, o))
+        .thenCombine(points, (p, pt) -&gt; <span class="h">new</span> AccountPage(p, pt))
+        .exceptionally(ex -&gt; { log.error(<span class="s">"load account failed"</span>, ex); <span class="h">return</span> AccountPage.EMPTY; })
+        .join();</pre>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">3 lời gọi, mỗi lời 300 ms</h4>
+<pre class="code">gọi tuần tự                   = <span class="w">900 ms</span>
+supplyAsync với pool riêng     = <span class="h">302 ms</span></pre></div>
+    <div class="card prose"><h4>Bảng tra nhanh</h4>
+      <ul>
+        <li><code>thenApply</code>: biến đổi kết quả (giống <code>map</code>).</li>
+        <li><code>thenCompose</code>: bước sau cũng trả CompletableFuture, nối phẳng lại (giống <code>flatMap</code>).</li>
+        <li><code>thenCombine</code>: ghép kết quả của hai future độc lập.</li>
+        <li><code>allOf</code> / <code>anyOf</code>: chờ tất cả / chờ cái đầu tiên.</li>
+        <li><code>exceptionally</code>: chỉ chạy khi lỗi. <code>handle</code>: luôn chạy, nhận cả kết quả và lỗi. <code>whenComplete</code>: luôn chạy, không đổi kết quả.</li>
+        <li><code>join()</code> ném <code>CompletionException</code> (unchecked); <code>get()</code> ném <code>ExecutionException</code> (checked).</li>
+        <li>Phiên bản <code>...Async</code> chạy bước đó trên executor thay vì thread vừa hoàn thành bước trước.</li>
+      </ul></div>
+  </div>
+  <div class="card">
+    <span class="real">ĐO THẬT</span>
+    <div class="chart-title" style="margin-top:6px">12 lần <code>supplyAsync</code> KHÔNG truyền executor, mỗi lần chờ 300 ms</div>
+    <p class="cap">mili giây; cùng một đoạn code, chỉ khác số CPU JVM nhìn thấy</p>
+    <div class="chart" id="ch-cf"></div>
+    <div class="tblwrap" style="margin-top:10px"><table><thead><tr><th>CPU</th><th>commonPool parallelism</th><th>Số thread thực sự dùng</th><th>Thời gian</th></tr></thead><tbody>
+      <tr><td class="n">2</td><td class="n">1</td><td>12 thread mới tên <code>Thread-0</code>…<code>Thread-11</code></td><td class="n">306 ms</td></tr>
+      <tr><td class="n">4</td><td class="n">3</td><td>3 thread <code>ForkJoinPool.commonPool-worker</code></td><td class="n">1 205 ms</td></tr>
+      <tr><td class="n">8</td><td class="n">7</td><td>7 thread commonPool</td><td class="n">607 ms</td></tr>
+    </tbody></table></div>
+  </div>
+  <div class="callout bad"><b class="t">Phát hiện từ số đo: hành vi đổi theo cấu hình máy</b>Không truyền executor thì CompletableFuture dùng <code>ForkJoinPool.commonPool()</code>, có số thread = số CPU − 1. Riêng khi con số đó nhỏ hơn 2 (máy 1–2 CPU), JDK chuyển sang <b>tạo một thread mới cho mỗi task</b>. Hệ quả: trên task ECS 2 vCPU code chạy nhanh (nhưng tạo thread không giới hạn), lên 4 vCPU lại chậm gấp 4 lần vì 12 việc chờ I/O xếp hàng qua 3 thread. Commonpool còn dùng chung với <code>parallelStream()</code> của toàn ứng dụng. <b>Quy tắc: việc chờ I/O luôn truyền executor riêng có giới hạn.</b></div>
+</section>
+
+<!-- 10 -->
+<section class="ch" id="vt">
+  <div class="ch-head"><div class="eyebrow">Chương 10</div><h2>Virtual thread (Java 21)</h2>
+    <p>Thay đổi lớn nhất của concurrency Java trong mười năm. Viết code chặn (blocking) bình thường nhưng chịu tải như code bất đồng bộ.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Virtual thread là gì, khác platform thread thế nào?</li><li>Pinning là gì?</li><li>Khi nào không nên dùng virtual thread?</li></ul></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Cách hoạt động</h4>
+      <p>Platform thread = 1 thread hệ điều hành, stack cố định khoảng 1 MB, tạo vài nghìn là hết sức. <b>Virtual thread</b> do JVM quản lý, stack lưu dạng object trên heap và co giãn, tạo hàng triệu cái được.</p>
+      <p>Virtual thread chạy "cõng" trên một số ít <b>carrier thread</b> (một ForkJoinPool, mặc định số thread = số CPU). Khi virtual thread gặp thao tác chặn (đọc socket, <code>sleep</code>, chờ lock), JVM <b>tháo nó khỏi carrier</b>, cất stack lên heap, và carrier đi chạy virtual thread khác. Xong I/O thì gắn lại.</p>
+      <p class="cap">Mô hình M:N: hàng triệu virtual thread trên vài carrier, giống goroutine của Go.</p></div>
+    <div class="card"><span class="real">ĐO THẬT</span>
+      <div class="chart-title" style="margin-top:6px">10 000 task, mỗi task chờ I/O 100 ms</div>
+      <p class="cap">mili giây trên máy 2 vCPU</p>
+      <div class="chart" id="ch-vt"></div>
+      <p class="cap" style="margin-top:6px">Pool 200 thread phải chạy 50 đợt × 100 ms ≈ 5 giây. Virtual thread chạy cả 10 000 cùng lúc, xong trong 0,24 giây, nhanh hơn khoảng 21 lần.</p></div>
+  </div>
+  <div class="card sim" id="vtsim">
+    <h3 style="margin:0">Hình động: 8 virtual thread trên 2 carrier thread</h3>
+    <div class="sim-ctrl">
+      <button class="btn primary" type="button" id="vt-run">Chạy</button>
+      <button class="btn danger" type="button" id="vt-pin" aria-pressed="false">Pinning: tắt</button>
+      <button class="btn" type="button" id="vt-reset">Làm lại</button>
+    </div>
+    <div class="vt-wrap" id="vt-area">
+      <div class="vt-carriers" id="vt-carriers"></div>
+      <div class="vt-row"><h4>Hàng chờ được chạy</h4><div class="chips" id="vt-queue"></div></div>
+      <div class="vt-row"><h4>Đang chờ I/O · đã tháo khỏi carrier, stack cất trên heap</h4><div class="chips" id="vt-parked"></div></div>
+      <div class="vt-row"><h4>Đã xong</h4><div class="chips" id="vt-done"></div></div>
+    </div>
+    <div class="sim-stats">
+      <div class="stat"><b id="vt-tick">0</b><span>Nhịp đã chạy</span></div>
+      <div class="stat"><b id="vt-busy">0%</b><span>Carrier làm việc thật</span></div>
+      <div class="stat"><b id="vt-pinned">0</b><span>Nhịp carrier bị ghim</span></div>
+    </div>
+    <div class="simlog" id="vt-log" aria-live="polite" style="height:120px"></div>
+    <p class="cap">Mỗi virtual thread: tính 1 nhịp → chờ I/O 4 nhịp → tính 1 nhịp. VT3 và VT6 (viền đứt) gọi I/O bên trong <code>synchronized</code>. Bật pinning để thấy chúng giữ chặt carrier trong lúc chờ, các thread khác phải xếp hàng. Chạy cả hai chế độ và so số nhịp.</p>
+  </div>
+  <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Pinning: virtual thread bị "dính" vào carrier</h4>
+<pre class="code">$ java -Djdk.tracePinnedThreads=full Pin
+VirtualThread[#18]/runnable@ForkJoinPool-1-worker-1 <span class="w">reason:MONITOR</span>
+    java.lang.Thread.sleep(Thread.java:507)
+    Pin.lambda$main$0(<span class="h">Pin.java:4</span>) <span class="w">&lt;== monitors:1</span></pre>
+    <p class="cap" style="margin-top:8px">Chặn bên trong <code>synchronized</code> (ở Java 21–23) hoặc trong code native thì virtual thread không tháo ra được, giữ luôn carrier. Vài chỗ như vậy cùng lúc là hết carrier, cả hệ thống đứng. Cách xử lý ở Java 21: đổi <code>synchronized</code> quanh I/O thành <code>ReentrantLock</code>. Java 24 (JEP 491) đã sửa trường hợp <code>synchronized</code>.</p></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Nên dùng</h4>
+      <ul><li>Web service phần lớn thời gian chờ DB, HTTP, Redis.</li><li>Spring Boot 3.2+: <code>spring.threads.virtual.enabled=true</code>, Tomcat và <code>@Async</code> chạy trên virtual thread.</li><li>Thay cho code reactive phức tạp khi chỉ cần chịu tải I/O cao.</li></ul></div>
+    <div class="card prose"><h4>Không nên hoặc cần cẩn thận</h4>
+      <ul><li>Việc tính toán nặng CPU: không nhanh hơn, vì số CPU không đổi.</li><li><b>Không gom virtual thread vào pool</b>: chúng rẻ, tạo mới cho mỗi task.</li><li>Phải tự giới hạn tài nguyên phía sau: 10 000 virtual thread cùng lao vào DB có 10 connection. Dùng <code>Semaphore</code> hoặc dựa vào connection pool.</li><li>ThreadLocal chứa dữ liệu lớn: nhân lên hàng triệu bản. Java 21 có Scoped Values (preview) thay thế.</li></ul></div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="ch" id="sync-tools">
+  <div class="ch-head"><div class="eyebrow">Chương 11</div><h2>CountDownLatch, Semaphore, CyclicBarrier</h2>
+    <p>Các công cụ phối hợp nhiều thread. Mỗi cái giải đúng một kiểu bài toán.</p></div>
+  <div class="grid3">
+    <div class="card prose"><h4>CountDownLatch</h4><p>Chờ <b>N việc</b> xong rồi mới đi tiếp. Dùng một lần, không đặt lại được.</p>
+<pre class="code">var done = <span class="h">new</span> CountDownLatch(3);
+<span class="c">// mỗi worker xong:</span>
+done.countDown();
+<span class="c">// main chờ:</span>
+done.await(5, SECONDS);</pre><p class="cap">Ví dụ: chờ 3 cache nạp xong mới mở cổng nhận traffic. Rất hay dùng trong test đa luồng.</p></div>
+    <div class="card prose"><h4>Semaphore</h4><p>Giới hạn <b>tối đa N thread</b> cùng làm một việc.</p>
+<pre class="code">var slots = <span class="h">new</span> Semaphore(5);
+slots.acquire();
+<span class="h">try</span> { callPartnerApi(); }
+<span class="h">finally</span> { slots.release(); }</pre><p class="cap">Ví dụ: API đối tác chỉ cho 5 kết nối đồng thời; giới hạn virtual thread vào một tài nguyên.</p></div>
+    <div class="card prose"><h4>CyclicBarrier</h4><p>N thread <b>đợi nhau</b> tại một điểm rồi cùng đi tiếp. Dùng lại được nhiều vòng.</p>
+<pre class="code">var b = <span class="h">new</span> CyclicBarrier(4,
+  () -&gt; mergeResults());
+<span class="c">// mỗi thread:</span>
+computePart(); b.await();</pre><p class="cap">Ví dụ: chia dữ liệu thành 4 phần xử lý song song, đủ 4 phần mới gộp. Phaser là bản linh hoạt hơn.</p></div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="ch" id="deadlock">
+  <div class="ch-head"><div class="eyebrow">Chương 12</div><h2>Deadlock, livelock, starvation</h2>
+    <p>Ba kiểu hệ thống "sống nhưng không tiến lên được".</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Điều kiện để xảy ra deadlock? Cách phòng tránh?</li><li>Phát hiện deadlock trên production thế nào?</li><li>Livelock khác deadlock ra sao?</li></ul></div>
+  <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Hai giao dịch chuyển tiền ngược chiều nhau</h4>
+<pre class="code"><span class="c">// thread 1: transfer(A, B) → khoá A rồi khoá B</span>
+<span class="c">// thread 2: transfer(B, A) → khoá B rồi khoá A</span>
+$ jstack &lt;pid&gt;
+<span class="w">Found one Java-level deadlock:</span>
+"transfer-A-to-B":
+  waiting to lock monitor ... which is held by "transfer-B-to-A"
+"transfer-B-to-A":
+  waiting to lock monitor ... which is held by "transfer-A-to-B"
+	at Deadlock.transfer(<span class="h">Deadlock.java:11</span>)
+<span class="w">Found 1 deadlock.</span></pre></div>
+  <div class="card sim" id="dl">
+    <h3 style="margin:0">Hình động: hai thread chuyển tiền ngược chiều</h3>
+    <div class="sim-ctrl">
+      <span class="seg-ctl" role="radiogroup" aria-label="Thứ tự lấy khoá" id="dl-mode">
+        <button type="button" data-m="param" aria-pressed="true">Khoá theo thứ tự tham số (from, to)</button>
+        <button type="button" data-m="id" aria-pressed="false">Khoá theo id nhỏ trước</button>
+      </span>
+      <button class="btn primary" type="button" id="dl-run">Chạy</button>
+      <button class="btn" type="button" id="dl-reset">Làm lại</button>
+    </div>
+    <div class="anim"><svg id="dl-svg" viewBox="0 0 640 270" role="img" aria-label="Hai thread và hai khoá tài khoản"></svg></div>
+    <div class="verdict" id="dl-verdict" style="display:none"></div>
+    <div class="simlog" id="dl-log" aria-live="polite" style="height:120px"></div>
+    <p class="cap">Đường liền: thread đang giữ khoá. Đường đứt chạy: thread đang chờ khoá. Khi hai đường chờ tạo thành vòng tròn là deadlock.</p>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Bốn điều kiện (Coffman), phá một là hết</h4>
+      <ol><li><b>Độc quyền</b>: tài nguyên chỉ một người giữ.</li><li><b>Giữ và chờ</b>: giữ cái này trong khi chờ cái kia.</li><li><b>Không cướp được</b>: không ai lấy khoá từ tay người đang giữ.</li><li><b>Chờ vòng tròn</b>: A chờ B, B chờ A.</li></ol>
+      <p>Cách phá thực tế nhất là điều kiện 4: <b>luôn khoá theo cùng một thứ tự</b>.</p>
+<pre class="code">Account first  = a.id() &lt; b.id() ? a : b;
+Account second = a.id() &lt; b.id() ? b : a;
+<span class="h">synchronized</span> (first) { <span class="h">synchronized</span> (second) { ... } }</pre>
+      <p>Hoặc phá điều kiện 3 bằng <code>tryLock(timeout)</code>: chờ quá lâu thì nhả hết và thử lại.</p></div>
+    <div class="card prose"><h4>Họ hàng của deadlock</h4>
+      <ul>
+        <li><b>Livelock</b>: các thread không bị chặn mà liên tục nhường nhau, ví dụ cùng <code>tryLock</code> thất bại, cùng nhả, cùng thử lại đúng lúc. Sửa bằng thời gian chờ ngẫu nhiên trước khi thử lại.</li>
+        <li><b>Starvation</b>: một thread mãi không được chạy vì thread khác luôn giành trước (khoá không công bằng, ưu tiên thấp). Fair lock giảm được nhưng chậm hơn.</li>
+        <li><b>Deadlock ở tầng DB</b>: hai transaction khoá các dòng ngược thứ tự. MySQL tự phát hiện và huỷ một bên với lỗi <code>Deadlock found when trying to get lock</code>. Xem bằng <code>SHOW ENGINE INNODB STATUS</code>; sửa bằng cách cập nhật dòng theo thứ tự id cố định, giữ transaction ngắn, và cho phép thử lại.</li>
+        <li><b>Thread pool tự khoá</b>: task trong pool submit task con vào chính pool đó rồi chờ kết quả. Pool đầy thì task cha chờ task con, task con chờ chỗ trống mãi.</li>
+      </ul></div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="ch" id="spring">
+  <div class="ch-head"><div class="eyebrow">Chương 13</div><h2>Concurrency trong Spring Boot</h2>
+    <p>Bạn ít khi tự tạo thread trong Spring Boot, nhưng mỗi request đã là một thread. Đây là những lỗi thật hay gặp nhất.</p></div>
+  <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">1. Bean singleton giữ trạng thái trong field</h4>
+<pre class="code">@Service  <span class="c">// chỉ có MỘT instance cho mọi request</span>
+<span class="h">class</span> GreetingService {
+    <span class="w">private String currentUser;</span>             <span class="c">// lỗi: dữ liệu của request nằm trong field</span>
+    String greet(String user) { currentUser = user; work(); <span class="h">return</span> <span class="s">"Xin chao "</span> + currentUser; }
+}
+<span class="c">// 2 thread, mỗi thread 100 000 lần, một thread chào "An", một thread chào "Binh"</span>
+so lan chao nham nguoi: <span class="w">171384 / 200000</span></pre>
+    <p class="cap" style="margin-top:8px">Hơn 85% lần chào nhầm người. Trong ứng dụng thật, đây là lỗi lộ dữ liệu người dùng này cho người dùng khác, và thường chỉ xuất hiện khi có tải. Bean singleton phải <b>không có trạng thái</b>: dữ liệu của request đi qua tham số và biến cục bộ.</p></div>
+  <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">2. ThreadLocal không được dọn trong thread pool</h4>
+<pre class="code">request 1 cua loc: user=loc@rikkei
+request 2 cua khach an danh: user=<span class="w">loc@rikkei  &lt;- du lieu cua request truoc</span></pre>
+    <p class="cap" style="margin-top:8px">Thread của Tomcat được dùng lại. Luôn <code>remove()</code> trong <code>finally</code> (xem chương 12 của sổ tay JVM). Spring Security cũng lưu <code>SecurityContext</code> trong ThreadLocal, nên code chạy ở thread khác (<code>@Async</code>, CompletableFuture) <b>không có</b> thông tin đăng nhập trừ khi dùng <code>DelegatingSecurityContextExecutor</code>.</p></div>
+  <div class="grid2">
+    <div class="card prose"><h4>3. @Async</h4>
+      <ul>
+        <li>Cần <code>@EnableAsync</code>. Gọi method <code>@Async</code> từ <b>chính class đó</b> thì không chạy bất đồng bộ, vì Spring dùng proxy và lời gọi nội bộ không đi qua proxy.</li>
+        <li>Pool mặc định của Spring Boot: 8 thread core, <b>hàng đợi không giới hạn</b>. Cấu hình <code>spring.task.execution.pool.queue-capacity</code> và <code>max-size</code>.</li>
+        <li>Method trả về <code>void</code> mà ném exception thì lỗi chỉ đi tới <code>AsyncUncaughtExceptionHandler</code>; không cấu hình là mất. Trả về <code>CompletableFuture</code> nếu cần biết kết quả.</li>
+      </ul></div>
+    <div class="card prose"><h4>4. @Transactional và thread</h4>
+      <p>Transaction của Spring gắn với thread hiện tại (lưu trong ThreadLocal của <code>TransactionSynchronizationManager</code>). Code chạy trong <code>@Async</code> hay CompletableFuture <b>nằm ngoài transaction</b> của method gọi nó, không thấy dữ liệu chưa commit, và không rollback cùng.</p>
+<pre class="code">@Transactional
+<span class="h">public void</span> placeOrder(Order o) {
+    repo.save(o);
+    <span class="c">// sai: email có thể gửi trước khi commit, hoặc order rollback mà email đã đi</span>
+    mailService.sendAsync(o);
+}
+<span class="c">// đúng: chạy sau khi commit thành công</span>
+@TransactionalEventListener(phase = AFTER_COMMIT)
+<span class="h">void</span> onPlaced(OrderPlaced e) { mailService.send(e.order()); }</pre></div>
+    <div class="card prose"><h4>5. @Scheduled chỉ có một thread</h4>
+      <p>Mặc định Spring Boot dùng scheduler <b>1 thread</b> (<code>spring.task.scheduling.pool.size=1</code>). Một job chạy lâu (ví dụ job gửi mail điểm thưởng) sẽ làm mọi job khác bị trễ theo. Tăng pool size, hoặc tách job nặng sang executor riêng.</p></div>
+    <div class="card prose"><h4>6. Nhiều instance thì khoá trong JVM vô dụng</h4>
+      <p><code>synchronized</code>, <code>ReentrantLock</code>, <code>ConcurrentHashMap</code> chỉ có tác dụng <b>trong một JVM</b>. Chạy 3 task ECS sau load balancer là 3 JVM độc lập. Đồng bộ giữa các instance phải dùng thứ dùng chung:</p>
+      <ul><li>Database: <code>SELECT ... FOR UPDATE</code>, unique constraint, <code>@Version</code>.</li><li>Redis: <code>SET key value NX PX</code>, Redisson.</li><li>Job định kỳ: ShedLock, hoặc chạy bằng ECS Scheduled Task như dự án của bạn.</li></ul></div>
+  </div>
+  <div class="callout"><b class="t">Nối với dự án của bạn</b>Khi được hỏi "bạn đã xử lý vấn đề đồng thời nào", các điểm có thật để kể: job gửi mail điểm chạy bằng ECS Scheduled Task nên không bị nhiều instance cùng chạy, và có cột trạng thái mail để chạy lại không gửi trùng; rate limit dùng Lua script trên Redis vì nhiều instance cần đếm chung và các bước phải nguyên tử; Sorted Set của Redis xử lý <code>ZINCRBY</code> đồng thời mà không cần khoá phía ứng dụng.</div>
+</section>
+
+<!-- 14 -->
+<section class="ch" id="interview">
+  <div class="ch-head"><div class="eyebrow">Chương 14</div><h2>32 câu hỏi phỏng vấn và cách trả lời</h2>
+    <p>Tự trả lời thành tiếng trước, rồi mới mở đáp án. Nhãn "bẫy" là những câu hay bị trả lời sai.</p></div>
+  <div class="qa" id="qa"></div>
+</section>
+
+<!-- 15 -->
+<section class="ch" id="lab">
+  <div class="ch-head"><div class="eyebrow">Chương 15</div><h2>Lab tự làm và cách kể khi phỏng vấn</h2>
+    <p>Ba bài lab nhỏ, mỗi bài một buổi tối, cho bạn những câu chuyện có thật và số liệu của chính bạn.</p></div>
+  <div class="grid3">
+    <div class="card pb"><h4>Lab 1: Race condition trong Spring Boot</h4>
+      <ol class="steps"><li><div>API <code>POST /products/{id}/view</code> tăng lượt xem bằng <code>get</code> rồi <code>put</code> vào map.</div></li><li><div>K6 bắn 200 người dùng ảo, đếm lệch so với tổng request.</div></li><li><div>Sửa ba cách: <code>synchronized</code>, <code>merge</code>, <code>LongAdder</code>. So sánh p95.</div></li><li><div>Lên DB: <code>UPDATE ... SET views = views + 1</code> và so với cách đọc rồi ghi.</div></li></ol></div>
+    <div class="card pb"><h4>Lab 2: Thread pool và back-pressure</h4>
+      <ol class="steps"><li><div>Endpoint gọi API giả chậm 200 ms qua <code>@Async</code> mặc định.</div></li><li><div>Tăng tải đến khi heap phình (xem bằng Actuator).</div></li><li><div>Đổi sang pool có giới hạn + <code>CallerRunsPolicy</code> hoặc trả 503.</div></li><li><div>Bật <code>spring.threads.virtual.enabled=true</code>, đo lại, thêm Semaphore giới hạn.</div></li></ol></div>
+    <div class="card pb"><h4>Lab 3: Deadlock và chẩn đoán</h4>
+      <ol class="steps"><li><div>Viết service chuyển điểm giữa hai thành viên, khoá theo thứ tự tham số.</div></li><li><div>Gọi ngược chiều đồng thời đến khi treo, lấy <code>jstack</code>.</div></li><li><div>Sửa bằng thứ tự theo id; làm lại ở tầng MySQL với <code>FOR UPDATE</code> và đọc <code>SHOW ENGINE INNODB STATUS</code>.</div></li></ol></div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Cách kể theo STAR</h4>
+      <p><b>S:</b> "Em tự dựng lại lỗi đếm sai khi nhiều request cùng tăng lượt xem, chạy bằng K6 với 200 người dùng đồng thời."</p>
+      <p><b>T:</b> "Mục tiêu là hiểu vì sao sai và so sánh các cách sửa bằng số đo."</p>
+      <p><b>A:</b> "Em xác định đây là check-then-act: get rồi put không nguyên tử. Em thử synchronized, ConcurrentHashMap.merge và LongAdder, rồi đưa xuống DB bằng UPDATE cộng trực tiếp vì app chạy nhiều instance."</p>
+      <p><b>R:</b> "Bản gốc lệch N lượt trên M request; cả ba cách đều đúng, LongAdder có p95 thấp nhất trong app, nhưng chỉ cách ở tầng DB đúng khi chạy nhiều instance."</p>
+      <p class="cap">Thay N, M bằng số bạn đo được. Nói rõ đó là lab tự làm.</p></div>
+    <div class="card prose"><h4>Cách ghi trong CV</h4>
+      <ul>
+        <li><b>Chưa làm lab:</b> <code>Multithreading fundamentals (synchronization, java.util.concurrent)</code></li>
+        <li><b>Đã làm lab:</b> <code>Concurrency: thread pools, CompletableFuture, concurrent collections, race condition debugging</code></li>
+        <li><b>Đã dùng thật trong dự án:</b> giữ <code>Concurrent Programming</code> và có bullet cụ thể trong phần dự án.</li>
+      </ul>
+      <p>Đừng ghi những thứ chưa từng chạm tới như "lock-free data structures" hay "reactive programming": đó là các từ khoá sẽ bị hỏi rất sâu.</p></div>
+  </div>
+  <p class="foot">Môi trường đo: OpenJDK 21.0.12, 2 vCPU, 8 GB RAM; các trường hợp 1, 4, 8 CPU giả lập bằng <code>-XX:ActiveProcessorCount</code>. Chương trình thí nghiệm: Race, Visibility, Maps, Pools, CF, TL, Pin, States, Singleton, Deadlock. Số liệu chạy một lần, dùng để thấy hình dạng và mức chênh lệch, không phải benchmark chính thức.</p>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function logTo(id,msg,cls){const d=document.createElement('div');if(cls)d.className=cls;d.textContent=msg;const l=$(id);l.appendChild(d);while(l.children.length>60)l.firstChild.remove();l.scrollTop=l.scrollHeight;}
+
+/* ===== mục lục ===== */
+const links=$$('#toc a');const secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));const on=links.find(l=>l.classList.contains('on'));if(on&&innerWidth<980)on.scrollIntoView({block:'nearest',inline:'center'});}});},{rootMargin:'-30% 0px -60% 0px'});
+secs.forEach(s=>s&&io.observe(s));
+
+/* ===== chương 01: vòng đời thread ===== */
+const STATES=[['NEW','đã new Thread()'],['RUNNABLE','đang chạy hoặc chờ CPU'],['BLOCKED','chờ vào synchronized'],['WAITING','chờ vô hạn'],['TIMED_WAITING','chờ có hạn'],['TERMINATED','đã kết thúc']];
+const ACTS=[
+ {from:'NEW',to:'RUNNABLE',l:'start()',n:'start() tạo thread của hệ điều hành và đưa vào RUNNABLE. RUNNABLE gồm cả "đang chạy" và "sẵn sàng, chờ được cấp CPU"; Java không tách hai trạng thái này.'},
+ {from:'RUNNABLE',to:'BLOCKED',l:'vào synchronized đang bị giữ',n:'Thread muốn vào khối synchronized nhưng thread khác đang giữ monitor đó. Đây là trạng thái duy nhất có tên BLOCKED.'},
+ {from:'BLOCKED',to:'RUNNABLE',l:'thread kia nhả khoá',n:'Monitor được nhả, thread giành được khoá và chạy tiếp. Nếu nhiều thread cùng chờ, không có thứ tự đảm bảo.'},
+ {from:'RUNNABLE',to:'WAITING',l:'wait() / join() / park()',n:'Chờ vô thời hạn cho tới khi được đánh thức: wait() chờ notify, join() chờ thread khác kết thúc, LockSupport.park() là cách ReentrantLock, CountDownLatch cho thread chờ.'},
+ {from:'WAITING',to:'RUNNABLE',l:'notify() / unpark()',n:'Được đánh thức. Riêng trường hợp wait(): thread phải giành lại monitor trước, nên có thể đi qua BLOCKED một lúc rồi mới RUNNABLE.'},
+ {from:'RUNNABLE',to:'TIMED_WAITING',l:'sleep(100) / wait(100)',n:'Chờ có giới hạn thời gian: sleep, wait(timeout), join(timeout), parkNanos, tryLock(timeout). Lưu ý sleep KHÔNG nhả khoá đang giữ.'},
+ {from:'TIMED_WAITING',to:'RUNNABLE',l:'hết giờ / interrupt()',n:'Hết thời gian chờ thì quay lại RUNNABLE. Nếu bị interrupt trong lúc sleep/wait, thread tỉnh dậy với InterruptedException.'},
+ {from:'RUNNABLE',to:'TERMINATED',l:'run() kết thúc',n:'run() chạy xong hoặc ném exception không bắt. Thread không thể start() lại; muốn chạy tiếp phải tạo Thread mới, đó là lý do thread pool tồn tại.'}
+];
+let st='NEW';
+function renderStates(note){
+  $('#states').innerHTML=STATES.map(([k,d])=>`<div class="stnode${k===st?' on':''}">${k}<small>${d}</small></div>`).join('');
+  $('#st-actions').innerHTML=ACTS.map((a,i)=>`<button class="btn" type="button" data-i="${i}" ${a.from===st?'':'disabled'}>${esc(a.l)}</button>`).join('')+'<button class="btn" type="button" data-i="r">Tạo thread mới</button>';
+  $('#st-note').textContent=note||'Thread vừa được tạo bằng new Thread(task). Chưa có thread nào của hệ điều hành; bấm start() để bắt đầu.';
+}
+$('#st-actions').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;if(b.dataset.i==='r'){st='NEW';renderStates();return;}const a=ACTS[+b.dataset.i];st=a.to;renderStates(a.n);});
+renderStates();
+
+/* ===== chương 02: mô phỏng race condition ===== */
+const STEPS={plain:['READ','ADD','WRITE'],sync:['LOCK','READ','ADD','WRITE','UNLOCK'],cas:['READ','ADD','CAS']};
+const DESC={READ:'đọc count từ bộ nhớ vào thanh ghi',ADD:'cộng 1 trong thanh ghi',WRITE:'ghi thanh ghi ra bộ nhớ',LOCK:'lấy khoá',UNLOCK:'nhả khoá',CAS:'compareAndSet(expected, mới)'};
+const R={mode:'plain',count:0,lock:null,T:{},timer:null};
+function newT(){return {pc:0,reg:null,exp:null,done:false,blocked:false,retries:0};}
+function raceReset(){clearTimeout(R.timer);R.timer=null;R.count=0;R.lock=null;R.T={A:newT(),B:newT()};$('#race-log').innerHTML='';logTo('#race-log','Mỗi thread sẽ cộng 1 vào count. Kết quả đúng phải là 2.');raceRender();}
+function stepT(name){
+  const t=R.T[name],other=name==='A'?'B':'A';const steps=STEPS[R.mode];
+  if(t.done){logTo('#race-log',`Thread ${name} đã xong phần việc.`);return;}
+  const op=steps[t.pc];t.blocked=false;
+  if(op==='LOCK'){ if(R.lock&&R.lock!==name){t.blocked=true;logTo('#race-log',`Thread ${name}: BLOCKED, khoá đang do ${R.lock} giữ, phải chờ.`,'w');raceRender();return;} R.lock=name;logTo('#race-log',`Thread ${name}: lấy được khoá.`);t.pc++; }
+  else if(op==='READ'){t.reg=R.count;if(R.mode==='cas')t.exp=R.count;logTo('#race-log',`Thread ${name}: đọc count = ${R.count} vào thanh ghi.`);t.pc++;}
+  else if(op==='ADD'){t.reg=t.reg+1;logTo('#race-log',`Thread ${name}: thanh ghi = ${t.reg}.`);t.pc++;}
+  else if(op==='WRITE'){R.count=t.reg;flashRam();logTo('#race-log',`Thread ${name}: ghi count = ${t.reg}.`,'h');t.pc++;if(R.mode==='plain')t.done=true;}
+  else if(op==='UNLOCK'){R.lock=null;logTo('#race-log',`Thread ${name}: nhả khoá.`);t.pc++;t.done=true;}
+  else if(op==='CAS'){ if(R.count===t.exp){R.count=t.reg;flashRam();logTo('#race-log',`Thread ${name}: CAS thành công (count đang là ${t.exp} như mong đợi) → ghi ${t.reg}.`,'h');t.pc++;t.done=true;}
+    else{t.retries++;logTo('#race-log',`Thread ${name}: CAS THẤT BẠI, mong đợi ${t.exp} nhưng count đã là ${R.count} (thread ${other} vừa ghi). Quay lại đọc.`,'w');t.pc=0;t.reg=null;t.exp=null;} }
+  raceRender();
+}
+function flashRam(){const r=$('.ram');if(!r||RM)return;r.classList.remove('flash');void r.offsetWidth;r.classList.add('flash');}
+function thrHtml(name){const t=R.T[name];const steps=STEPS[R.mode];
+  const badge=t.done?'<span class="badge ok">xong</span>':t.blocked?'<span class="badge blk">BLOCKED</span>':'<span class="badge run">RUNNABLE</span>';
+  return `<h4>Thread ${name} ${badge}</h4><ol>${steps.map((s,i)=>`<li class="${t.done||i<t.pc?'done':''}${!t.done&&i===t.pc?' cur':''}">${i+1}. ${s}: ${DESC[s]}</li>`).join('')}</ol><div class="reg">thanh ghi = ${t.reg===null?'–':t.reg}${R.mode==='cas'&&t.exp!==null?` · expected = ${t.exp}`:''}${t.retries?` · thử lại ${t.retries} lần`:''}</div>`;}
+function raceRender(){
+  $('#thr-A').innerHTML=thrHtml('A');$('#thr-B').innerHTML=thrHtml('B');$('#race-count').textContent=R.count;
+  const lb=$('#race-lock');lb.hidden=R.mode!=='sync';lb.className='lockbox'+(R.lock?' held':'');lb.textContent=R.lock?`khoá: Thread ${R.lock} giữ`:'khoá: trống';
+  const v=$('#race-verdict');const both=R.T.A.done&&R.T.B.done;
+  if(!both){v.className='verdict';v.style.display='none';}
+  else{v.style.display='flex';if(R.count===2){v.className='verdict ok';v.innerHTML=`count = 2, đúng. <span>${R.mode==='sync'?'Khoá buộc ba bước của mỗi thread đi liền nhau.':R.mode==='cas'?'Thread ghi sau phát hiện bị chen ngang và tự làm lại.':'Lần này hai thread không chen vào nhau. Thử bấm "Chạy kịch bản xen kẽ".'}</span>`;}
+    else{v.className='verdict bad';v.innerHTML=`count = ${R.count}, mất ${2-R.count} lần cộng. <span>Hai thread cùng đọc giá trị cũ, thread ghi sau đè lên kết quả của thread ghi trước (lost update).</span>`;}}
+}
+$('#race-a').addEventListener('click',()=>stepT('A'));
+$('#race-b').addEventListener('click',()=>stepT('B'));
+$('#race-reset').addEventListener('click',raceReset);
+$('#race-auto').addEventListener('click',()=>{raceReset();let turn='A',n=0;
+  const go=()=>{ if((R.T.A.done&&R.T.B.done)||n>30){R.timer=null;return;}
+    const t=R.T[turn].done?(turn==='A'?'B':'A'):turn; stepT(t); turn=turn==='A'?'B':'A'; n++; R.timer=setTimeout(go,RM?60:650);};
+  go();});
+$('#race-mode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;R.mode=b.dataset.m;$$('#race-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));raceReset();});
+raceReset();
+
+/* ===== chương 08: mô phỏng thread pool ===== */
+const P={core:2,max:4,qcap:3,pol:'abort',workers:[],queue:[],next:1,done:0,rej:0,lost:0,caller:null,paused:false,wid:0};
+const DUR=6,KEEP=4;
+function pLog(m,c){logTo('#p-log',m,c);}
+function mkTask(){return {id:P.next++,left:DUR};}
+function addWorker(task,isCore){P.wid++;P.workers.push({id:P.wid,core:isCore,task,idle:0,fresh:true});}
+function submit(){
+  if(P.caller){pLog('Thread gửi đang bận tự chạy task (CallerRunsPolicy), chưa gửi tiếp được.','w');return;}
+  const t=mkTask();
+  if(P.workers.length<P.core){addWorker(t,true);pLog(`task${t.id}: số thread (${P.workers.length-1}) < core (${P.core}) → tạo thread mới, kể cả khi đang có thread rảnh.`);}
+  else{const idle=P.workers.find(w=>!w.task);
+    if(P.qcap===0&&idle){idle.task=t;idle.idle=0;pLog(`task${t.id}: không có hàng đợi, giao thẳng cho thread đang rảnh.`);}
+    else if(P.queue.length<P.qcap){P.queue.push(t);pLog(`task${t.id}: đã đủ core → vào hàng đợi (${P.queue.length}/${P.qcap}).`);if(idle){idle.task=P.queue.shift();idle.idle=0;}}
+    else if(P.workers.length<P.max){addWorker(t,false);pLog(`task${t.id}: hàng đợi đầy, số thread < max (${P.max}) → tạo thread ngoài core.`,'h');}
+    else if(P.pol==='abort'){P.rej++;pLog(`task${t.id}: thread đã đủ max và hàng đợi đầy → RejectedExecutionException.`,'w');}
+    else if(P.pol==='discard'){P.lost++;pLog(`task${t.id}: bị bỏ lặng lẽ (DiscardPolicy). Không ai biết task này đã mất.`,'w');}
+    else {P.caller=t;pLog(`task${t.id}: CallerRunsPolicy → chính thread gửi task tự chạy nó, nên tạm thời không gửi thêm được (tự giảm tốc phía gửi).`,'w');}
+  }
+  pRender();
+}
+function pTick(){ if(P.paused)return;
+  for(const w of P.workers){w.fresh=false;
+    if(w.task){w.task.left--;if(w.task.left<=0){P.done++;w.task=P.queue.shift()||null;w.idle=0;}}
+    else w.idle++;}
+  const before=P.workers.length;
+  P.workers=P.workers.filter(w=>w.core||w.task||w.idle<KEEP);
+  if(P.workers.length<before)pLog(`Thread ngoài core rảnh quá keepAliveTime → bị huỷ. Còn ${P.workers.length} thread.`);
+  if(P.caller){P.caller.left--;if(P.caller.left<=0){P.done++;pLog(`Thread gửi chạy xong task${P.caller.id}, tiếp tục gửi được.`);P.caller=null;}}
+  pRender();
+}
+function pRender(){
+  $('#p-workers').innerHTML=P.workers.length?P.workers.map(w=>`<div class="worker${w.core?' core':''}${w.task?'':' idle'}${w.fresh&&!RM?' new':''}"><span>${w.core?'core':'thêm'} #${w.id}</span><span>${w.task?'task'+w.task.id:'rảnh'+(w.core?'':` (${w.idle}/${KEEP})`)}</span><div class="pg"><i style="width:${w.task?(DUR-w.task.left)/DUR*100:0}%"></i></div></div>`).join(''):'<span class="cap">chưa có thread nào</span>';
+  let q='';for(let i=0;i<Math.max(P.qcap,1);i++){const t=P.queue[i];q+=P.qcap===0?'<div class="qslot">không có hàng đợi (SynchronousQueue)</div>':`<div class="qslot${t?' full':''}">${t?'task'+t.id:'trống'}</div>`;if(P.qcap===0)break;}
+  $('#p-queue').innerHTML=q;
+  $('#p-wc').textContent=`${P.workers.length} / max ${P.max}`;$('#p-qc').textContent=`${P.queue.length} / ${P.qcap}`;
+  const c=$('#p-caller');c.className='caller'+(P.caller?' busy':'');c.textContent=P.caller?`đang tự chạy task${P.caller.id} (${DUR-P.caller.left}/${DUR})`:'rảnh, gửi task được';
+  $('#p-done').textContent=P.done;$('#p-rej').textContent=P.rej;$('#p-lost').textContent=P.lost;
+  $('#p-one').disabled=!!P.caller;$('#p-burst').disabled=!!P.caller;
+}
+function pReset(){Object.assign(P,{workers:[],queue:[],next:1,done:0,rej:0,lost:0,caller:null,wid:0});$('#p-log').innerHTML='';pLog(`Pool mới: core=${P.core}, max=${P.max}, hàng đợi=${P.qcap}. Đã gửi sẵn 5 task.`);for(let i=0;i<5;i++)submit();}
+function syncParams(){P.core=+$('#p-core').value;let mx=+$('#p-max').value;if(mx<P.core){mx=P.core;$('#p-max').value=mx;}P.max=mx;P.qcap=+$('#p-q').value;P.pol=$('#p-pol').value;
+  $('#p-core-v').textContent=P.core;$('#p-max-v').textContent=P.max;$('#p-q-v').textContent=P.qcap;}
+['#p-core','#p-max','#p-q'].forEach(s=>$(s).addEventListener('input',()=>{syncParams();pReset();}));
+$('#p-pol').addEventListener('change',()=>{syncParams();pLog('Đổi chính sách khi đầy: '+$('#p-pol').selectedOptions[0].textContent);});
+$('#p-one').addEventListener('click',submit);
+$('#p-burst').addEventListener('click',()=>{for(let i=0;i<8;i++){if(P.caller)break;submit();}});
+$('#p-pause').addEventListener('click',e=>{P.paused=!P.paused;e.currentTarget.setAttribute('aria-pressed',P.paused);e.currentTarget.textContent=P.paused?'Chạy tiếp':'Tạm dừng';});
+$('#p-reset').addEventListener('click',pReset);
+syncParams();pReset();setInterval(pTick,RM?900:550);
+
+/* ===== biểu đồ ===== */
+const NS='http://www.w3.org/2000/svg';
+function el(tag,a,p){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function tipShow(box,html,x,y){let t=box.querySelector('.tip');if(!t){t=document.createElement('div');t.className='tip';box.appendChild(t);}t.innerHTML=html;t.style.display='block';const tw=t.offsetWidth;let left=x+14;if(left+tw>box.clientWidth)left=x-tw-14;if(left<0)left=0;t.style.left=left+'px';t.style.top=Math.max(0,y-10)+'px';}
+function tipHide(box){const t=box.querySelector('.tip');if(t)t.style.display='none';}
+const fmtN=v=>Math.round(v).toLocaleString('vi-VN');
+function hbar(id,rows,opt){
+  const box=$(id);box.innerHTML='';const W=520,rowH=34,padL=opt.padL||120,padR=70,top=6;const H=top+rows.length*rowH+24;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':opt.aria},box);
+  const iw=W-padL-padR;const sx=v=>padL+v/opt.max*iw;
+  const g=el('g',{class:'grid'},svg),ax=el('g',{class:'ax'},svg);
+  for(const t of opt.ticks){const x=sx(t);el('line',{x1:x,x2:x,y1:top,y2:H-22},g);const tx=el('text',{x,y:H-6,'text-anchor':'middle'},ax);tx.textContent=t.toLocaleString('vi-VN');}
+  rows.forEach((r,i)=>{const y=top+i*rowH+8,h=rowH-16;
+    const lb=el('text',{x:padL-8,y:y+h/2+4,'text-anchor':'end',class:'lbl'},svg);lb.textContent=r.name;lb.setAttribute('fill',css('--ink'));
+    const w=Math.max(2,sx(r.v)-padL),rr=Math.min(4,w/2);
+    el('path',{d:`M${padL},${y} H${padL+w-rr} Q${padL+w},${y} ${padL+w},${y+rr} V${y+h-rr} Q${padL+w},${y+h} ${padL+w-rr},${y+h} H${padL} Z`,fill:css('--s1')},svg);
+    const vt=el('text',{x:padL+w+6,y:y+h/2+4,class:'val'},svg);vt.textContent=fmtN(r.v)+' ms';
+    const hit=el('rect',{x:0,y:top+i*rowH,width:W,height:rowH,class:'hit'},svg);
+    hit.addEventListener('mousemove',ev=>{const b=box.getBoundingClientRect();tipShow(box,`<div class="tt">${esc(r.name)}</div>${r.tip}`,ev.clientX-b.left,ev.clientY-b.top);});
+    hit.addEventListener('mouseleave',()=>tipHide(box));});
+}
+function drawCharts(){
+  hbar('#ch-lock',[
+    {name:'synchronized',v:907,tip:'<div class="tr"><span>Kết quả</span><b>20 000 000</b></div><div class="tr"><span>Thời gian</span><b>907 ms</b></div>'},
+    {name:'ReentrantLock',v:1228,tip:'<div class="tr"><span>Kết quả</span><b>20 000 000</b></div><div class="tr"><span>Thời gian</span><b>1 228 ms</b></div>'},
+    {name:'AtomicLong',v:397,tip:'<div class="tr"><span>Kết quả</span><b>20 000 000</b></div><div class="tr"><span>Thời gian</span><b>397 ms</b></div>'},
+    {name:'LongAdder',v:131,tip:'<div class="tr"><span>Kết quả</span><b>20 000 000</b></div><div class="tr"><span>Thời gian</span><b>131 ms</b></div>'}],
+    {max:1400,ticks:[0,400,800,1200],aria:'Thời gian tăng bộ đếm đồng thời của bốn cách đồng bộ'});
+  hbar('#ch-vt',[
+    {name:'Pool 200 thread',v:5046,tip:'<div class="tr"><span>Thời gian</span><b>5 046 ms</b></div><div class="tr"><span>Số đợt</span><b>10 000 ÷ 200 = 50</b></div>'},
+    {name:'Virtual thread',v:237,tip:'<div class="tr"><span>Thời gian</span><b>237 ms</b></div><div class="tr"><span>Số thread</span><b>10 000 virtual</b></div>'}],
+    {max:6000,ticks:[0,2000,4000,6000],aria:'10 000 task I/O: pool 200 thread so với virtual thread'});
+  hbar('#ch-cf',[
+    {name:'2 CPU',v:306,tip:'<div class="tr"><span>Thread dùng</span><b>12 thread mới</b></div><div class="tr"><span>Thời gian</span><b>306 ms</b></div>'},
+    {name:'4 CPU',v:1205,tip:'<div class="tr"><span>Thread dùng</span><b>3 commonPool</b></div><div class="tr"><span>Thời gian</span><b>1 205 ms</b></div>'},
+    {name:'8 CPU',v:607,tip:'<div class="tr"><span>Thread dùng</span><b>7 commonPool</b></div><div class="tr"><span>Thời gian</span><b>607 ms</b></div>'}],
+    {max:1400,ticks:[0,400,800,1200],padL:70,aria:'Thời gian 12 lần supplyAsync theo số CPU'});
+}
+drawCharts();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',drawCharts);
+new MutationObserver(drawCharts).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+/* ===== chương 14: câu hỏi ===== */
+const QA=[
+ {l:'Tầng 1 · Nền tảng'},
+ {q:'Process và thread khác nhau thế nào?',a:'<p>Process có không gian bộ nhớ riêng, giao tiếp giữa các process tốn kém. Thread chạy trong một process, chia sẻ heap và tài nguyên, mỗi thread có stack và bộ đếm lệnh riêng. Vì chia sẻ heap nên thread trao đổi dữ liệu dễ, nhưng cũng sinh ra race condition.</p>'},
+ {q:'Concurrency khác parallelism thế nào?',a:'<p>Concurrency là cấu trúc chương trình có nhiều việc tiến triển xen kẽ, có thể chỉ trên 1 CPU. Parallelism là nhiều việc chạy cùng một lúc trên nhiều CPU. Web server xử lý 200 request đang chờ DB là concurrency; chia một mảng lớn cho 8 core tính là parallelism.</p>'},
+ {q:'Thread có những trạng thái nào? BLOCKED khác WAITING ra sao?',trap:1,a:'<p>NEW, RUNNABLE, BLOCKED, WAITING, TIMED_WAITING, TERMINATED. BLOCKED chỉ dành cho thread chờ vào <code>synchronized</code>. WAITING là chờ vô hạn bằng <code>wait()</code>, <code>join()</code>, <code>park()</code>. Thread chờ <code>ReentrantLock</code> hiện là WAITING chứ không phải BLOCKED, vì lock dùng <code>park()</code>.</p>'},
+ {q:'Gọi run() khác gọi start() thế nào?',a:'<p><code>run()</code> chỉ là lời gọi hàm bình thường trên thread hiện tại, không tạo thread mới. <code>start()</code> tạo thread mới rồi thread đó gọi <code>run()</code>. Gọi <code>start()</code> lần hai ném <code>IllegalThreadStateException</code>.</p>'},
+ {q:'sleep() khác wait() thế nào?',a:'<ul><li><code>sleep</code> là method static của Thread, không cần giữ khoá, <b>không nhả</b> khoá đang giữ.</li><li><code>wait</code> là method của Object, phải gọi khi đang giữ monitor của object đó, và <b>nhả</b> monitor trong lúc chờ.</li><li><code>wait</code> được đánh thức bằng <code>notify</code>; <code>sleep</code> tự tỉnh khi hết giờ. Cả hai tỉnh khi bị interrupt.</li></ul>'},
+ {q:'Race condition là gì? Vì sao count++ không an toàn?',a:'<p>Race condition là khi kết quả phụ thuộc vào thứ tự xen kẽ của các thread. <code>count++</code> gồm đọc, cộng, ghi; hai thread cùng đọc giá trị cũ thì một lần cộng bị mất. Sửa bằng <code>synchronized</code>, <code>AtomicInteger</code>, <code>LongAdder</code>, hoặc tránh chia sẻ biến.</p>'},
+ {q:'volatile dùng để làm gì? Có làm count++ an toàn không?',trap:1,a:'<p><code>volatile</code> đảm bảo nhìn thấy (mọi lần đọc lấy giá trị mới nhất) và chống đảo thứ tự quanh biến đó. Nó <b>không</b> làm <code>count++</code> nguyên tử, vì đọc và ghi vẫn là hai bước. Dùng cho cờ trạng thái, một thread ghi nhiều thread đọc.</p>'},
+ {q:'Happens-before là gì?',a:'<p>Là quy tắc của Java Memory Model: nếu hành động A happens-before B thì B chắc chắn thấy mọi thứ A đã ghi. Các luật chính: thứ tự trong một thread, nhả khoá trước lần lấy khoá sau, ghi volatile trước lần đọc sau, <code>start()</code> trước code của thread, code của thread trước <code>join()</code>, field final sau constructor, và tính bắc cầu.</p>'},
+ {q:'Vì sao double-checked locking cần volatile?',trap:1,a:'<p>Phép <code>instance = new X()</code> có thể bị đảo thành: cấp bộ nhớ, gán tham chiếu, rồi mới chạy constructor. Thread khác thấy <code>instance != null</code> và dùng object chưa khởi tạo xong. <code>volatile</code> cấm đảo thứ tự này. Cách gọn hơn: holder idiom hoặc enum.</p>'},
+ {q:'synchronized khoá cái gì? Static synchronized khác gì?',a:'<p>Method thường khoá <code>this</code>, method static khoá object <code>Class</code>, khối <code>synchronized(x)</code> khoá <code>x</code>. Hai method thường của cùng object loại trừ nhau, nhưng method static và method thường thì không vì khoá khác nhau. Nên khoá trên một object <code>private final</code>.</p>'},
+ {q:'Vì sao wait() phải nằm trong vòng while?',a:'<p>Thread có thể tỉnh mà không ai gọi notify (spurious wakeup), hoặc khi tỉnh thì điều kiện đã bị thread khác thay đổi. Phải kiểm tra lại điều kiện sau mỗi lần tỉnh.</p>'},
+ {l:'Tầng 2 · Công cụ'},
+ {q:'ReentrantLock khác synchronized thế nào? Khi nào dùng?',a:'<p>ReentrantLock có <code>tryLock</code>, chờ có thời hạn, ngắt được khi chờ, fair mode và nhiều <code>Condition</code>; đổi lại phải tự <code>unlock()</code> trong <code>finally</code>. Mặc định dùng <code>synchronized</code> vì gọn và an toàn; dùng ReentrantLock khi cần các tính năng trên, hoặc tránh pinning của virtual thread ở Java 21.</p>'},
+ {q:'AQS là gì?',a:'<p>AbstractQueuedSynchronizer là khung xây ReentrantLock, Semaphore, CountDownLatch, ReentrantReadWriteLock. Gồm một biến <code>state</code> cập nhật bằng CAS và một hàng đợi các thread chờ; thread không lấy được thì vào hàng và bị <code>park()</code>, người nhả sẽ <code>unpark()</code> thread kế tiếp.</p>'},
+ {q:'CAS là gì? AtomicInteger hoạt động ra sao?',a:'<p>Compare-And-Swap là lệnh CPU nguyên tử: chỉ ghi giá trị mới nếu giá trị hiện tại bằng giá trị mong đợi. AtomicInteger đọc giá trị (volatile), tính giá trị mới, CAS; thất bại thì lặp lại. Không khoá nên không có deadlock, nhưng tranh chấp cao thì tốn CPU quay vòng.</p>'},
+ {q:'Vấn đề ABA là gì?',a:'<p>Giá trị đổi từ A sang B rồi về A trong lúc một thread đang chuẩn bị CAS; CAS thấy vẫn là A nên tưởng không có gì thay đổi. Xử lý bằng số phiên bản: <code>AtomicStampedReference</code>, hay cột <code>@Version</code> trong optimistic locking.</p>'},
+ {q:'Vì sao LongAdder nhanh hơn AtomicLong?',a:'<p>AtomicLong dồn mọi thread vào một biến, tranh chấp cao thì CAS thất bại liên tục. LongAdder chia thành nhiều ô, mỗi thread cộng vào ô riêng, <code>sum()</code> cộng lại. Đo thật: 131 ms so với 397 ms. Đổi lại <code>sum()</code> không phải ảnh chụp chính xác tức thời.</p>'},
+ {q:'HashMap dùng đồng thời thì sao?',a:'<p>Mất dữ liệu lặng lẽ (đo thật: 392 201 thay vì 400 000), size sai, ở Java 7 còn có thể tạo vòng lặp khi resize làm CPU 100%. Dùng ConcurrentHashMap.</p>'},
+ {q:'ConcurrentHashMap hoạt động thế nào?',a:'<p>Java 8+: đọc không khoá nhờ volatile; ghi vào bucket trống bằng CAS; ghi vào bucket có sẵn thì <code>synchronized</code> trên node đầu của bucket đó; bucket dài thì thành cây đỏ đen; resize có nhiều thread cùng giúp. Java 7 dùng 16 segment, mỗi segment một lock.</p>'},
+ {q:'Dùng ConcurrentHashMap là hết race condition?',trap:1,a:'<p>Không. Từng thao tác an toàn nhưng ghép <code>get</code> rồi <code>put</code> là check-then-act. Đo thật: 863 634 thay vì 1 000 000. Dùng <code>merge</code>, <code>compute</code>, <code>computeIfAbsent</code>, <code>putIfAbsent</code>.</p>'},
+ {q:'Các tham số của ThreadPoolExecutor? Task mới đi đâu?',trap:1,a:'<p>corePoolSize, maximumPoolSize, keepAliveTime, workQueue, threadFactory, handler. Thứ tự: dưới core thì tạo thread → đủ core thì vào hàng đợi → hàng đợi đầy mới tạo thêm tới max → vẫn đầy thì gọi chính sách từ chối. Nhiều người nói ngược là tăng lên max trước.</p>'},
+ {q:'Vì sao không nên dùng Executors.newFixedThreadPool?',a:'<p>Hàng đợi là <code>LinkedBlockingQueue</code> sức chứa <code>Integer.MAX_VALUE</code>; tải cao làm task chất đống tới khi OOM. <code>newCachedThreadPool</code> thì không giới hạn số thread. Nên tự tạo <code>ThreadPoolExecutor</code> với hàng đợi có giới hạn, đặt tên thread, và chọn chính sách từ chối.</p>'},
+ {q:'Chọn số thread cho pool thế nào?',a:'<p>Việc CPU: khoảng số core. Việc I/O: số core × (1 + thời gian chờ / thời gian tính). Đó là điểm bắt đầu, sau đó đo bằng tải thật và nhìn giới hạn phía sau như số connection DB.</p>'},
+ {q:'execute() và submit() khác nhau thế nào khi task ném exception?',trap:1,a:'<p><code>execute</code>: exception đi tới UncaughtExceptionHandler, được in ra, thread đó bị thay. <code>submit</code>: exception bị gói trong Future, chỉ thấy khi gọi <code>get()</code>; không gọi thì lỗi biến mất không có log.</p>'},
+ {q:'thenApply, thenCompose, thenCombine khác nhau ra sao?',a:'<p><code>thenApply</code> biến đổi kết quả (map). <code>thenCompose</code> nối một bước cũng trả CompletableFuture (flatMap). <code>thenCombine</code> ghép kết quả của hai future độc lập. Lỗi xử lý bằng <code>exceptionally</code>, <code>handle</code>, <code>whenComplete</code>.</p>'},
+ {q:'CompletableFuture.supplyAsync không truyền executor thì chạy ở đâu?',trap:1,a:'<p>ForkJoinPool.commonPool với số thread = CPU − 1, dùng chung toàn ứng dụng (cả parallelStream). Nếu con số đó dưới 2 thì JDK tạo thread mới cho mỗi task. Đo thật cùng một code: 2 CPU 306 ms với 12 thread mới, 4 CPU 1 205 ms với 3 thread. Việc I/O luôn truyền executor riêng.</p>'},
+ {l:'Tầng 3 · Hiện đại và thực chiến'},
+ {q:'Virtual thread là gì? Khác platform thread thế nào?',a:'<p>Thread do JVM quản lý, chạy trên vài carrier thread. Khi gặp thao tác chặn, JVM tháo nó khỏi carrier và cất stack lên heap, carrier đi chạy việc khác. Tạo được hàng triệu cái. Đo thật: 10 000 task I/O 100 ms mất 237 ms so với 5 046 ms của pool 200 thread.</p>'},
+ {q:'Pinning là gì?',a:'<p>Virtual thread không tháo khỏi carrier được khi đang chặn bên trong <code>synchronized</code> (Java 21–23) hoặc code native, nên giữ chặt carrier. Phát hiện bằng <code>-Djdk.tracePinnedThreads=full</code> (Java 21) hoặc JFR. Sửa bằng ReentrantLock; Java 24 đã xử lý trường hợp synchronized.</p>'},
+ {q:'Khi nào không nên dùng virtual thread?',a:'<p>Việc nặng CPU; khi cố gom chúng vào pool; khi dùng ThreadLocal chứa dữ liệu lớn; và luôn phải tự giới hạn truy cập tài nguyên hữu hạn như connection DB bằng Semaphore.</p>'},
+ {q:'Deadlock xảy ra khi nào? Phòng tránh thế nào?',a:'<p>Đủ bốn điều kiện: độc quyền, giữ và chờ, không cướp được, chờ vòng tròn. Phòng tránh: khoá theo thứ tự cố định, <code>tryLock</code> có thời hạn, thu nhỏ vùng khoá, không gọi code bên ngoài khi đang giữ khoá. Phát hiện bằng <code>jstack</code>: "Found one Java-level deadlock".</p>'},
+ {q:'Bean Spring là singleton thì có thread-safe không?',trap:1,a:'<p>Singleton chỉ nói có một instance, không nói gì về thread-safe. Bean phải không giữ trạng thái của request trong field. Đo thật: service lưu user trong field chào nhầm người 171 384 / 200 000 lần.</p>'},
+ {q:'@Async có những bẫy gì?',a:'<p>Cần <code>@EnableAsync</code>; gọi từ chính class đó thì không async (proxy); pool mặc định có hàng đợi không giới hạn; method void ném lỗi thì chỉ tới AsyncUncaughtExceptionHandler; chạy ngoài transaction và ngoài SecurityContext của thread gọi.</p>'},
+ {q:'Ứng dụng chạy 3 instance, dùng synchronized để chống trùng được không?',trap:1,a:'<p>Không. Khoá trong JVM chỉ có tác dụng trong một tiến trình. Giữa nhiều instance phải dùng thứ dùng chung: khoá dòng hoặc unique constraint trong DB, distributed lock trên Redis, ShedLock cho job định kỳ.</p>'}
+];
+$('#qa').innerHTML=QA.map(x=>x.l?`<div class="lvl">${x.l}</div>`:`<details><summary><span>${x.q}</span>${x.trap?'<span class="trap">bẫy</span>':''}</summary><div class="ans">${x.a}</div></details>`).join('');
+
+/* ===== HÌNH ĐỘNG BỔ SUNG ===== */
+const SVGN='http://www.w3.org/2000/svg';
+function S(tag,a,p){const e=document.createElementNS(SVGN,tag);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function T(txt,a,p){const e=S('text',a,p);e.textContent=txt;return e;}
+const sleepMs=ms=>new Promise(r=>setTimeout(r,RM?Math.min(ms,80):ms));
+
+/* ---------- 1. volatile ---------- */
+(function(){
+  const svg=$('#vol-svg');
+  const V={vol:false,phase:'idle',reg:null,cache2:true,ram:true,n:0,packets:[],tStop:0,raf:0,readTimer:0,run:0};
+  const P1={x:140,y:150},P2={x:500,y:150},PR={x:320,y:212};
+  let nodes={};
+  function build(){svg.innerHTML='';
+    S('rect',{class:'bx hot',x:20,y:20,width:240,height:130,rx:10},svg);
+    T('CPU core 1 · Thread worker',{x:36,y:44},svg);
+    nodes.loop=T('vòng lặp: chưa chạy',{x:36,y:72,class:'mono'},svg);
+    nodes.regR=S('rect',{class:'reg',x:32,y:90,width:216,height:44,rx:6},svg);
+    nodes.regT=T('thanh ghi: (trống)',{x:44,y:117,class:'mono'},svg);
+    S('rect',{class:'bx',x:380,y:20,width:240,height:130,rx:10},svg);
+    T('CPU core 2 · Thread main',{x:396,y:44},svg);
+    nodes.main=T('main: chờ 500 ms',{x:396,y:72,class:'mono'},svg);
+    S('rect',{class:'reg',x:392,y:90,width:216,height:44,rx:6},svg);
+    nodes.c2=T('cache: running = true',{x:404,y:117,class:'mono'},svg);
+    S('rect',{class:'bx ram',x:170,y:212,width:300,height:62,rx:10},svg);
+    T('Bộ nhớ chính (RAM)',{x:186,y:236},svg);
+    nodes.ram=T('running = true',{x:186,y:260,class:'mono'},svg);
+    S('line',{x1:P1.x,y1:P1.y,x2:PR.x-40,y2:PR.y,stroke:'var(--line)','stroke-width':2,'stroke-dasharray':'4 4'},svg);
+    S('line',{x1:P2.x,y1:P2.y,x2:PR.x+40,y2:PR.y,stroke:'var(--line)','stroke-width':2,'stroke-dasharray':'4 4'},svg);
+    nodes.pk=S('g',{},svg);
+    nodes.note=T('',{x:320,y:196,'text-anchor':'middle',class:'dim'},svg);
+  }
+  function txt(){
+    nodes.loop.textContent=V.phase==='idle'?'vòng lặp: chưa chạy':V.phase==='stopped'?`đã dừng sau n = ${V.n.toLocaleString('vi-VN')}`:`while(running) n++  · n = ${V.n.toLocaleString('vi-VN')}`;
+    nodes.loop.setAttribute('class',V.phase==='stopped'?'mono ok':'mono');
+    nodes.regT.textContent=V.reg===null?'thanh ghi: (trống)':`thanh ghi: running = ${V.reg}`;
+    nodes.regT.setAttribute('class','mono'+(V.reg===true&&V.ram===false?' bad':''));
+    nodes.c2.textContent=`cache: running = ${V.cache2}`;nodes.c2.setAttribute('class','mono'+(V.cache2===false?' ok':''));
+    nodes.ram.textContent=`running = ${V.ram}`;nodes.ram.setAttribute('class','mono'+(V.ram===false?' ok':''));
+    if(V.phase==='running'&&V.tStop&&!V.vol){const s=((performance.now()-V.tStop)/1000).toFixed(1);nodes.main.textContent=`main: ghi false ${s}s trước`;}
+  }
+  function packet(from,to,val,dur,cb){V.packets.push({from,to,val,t0:performance.now(),dur:RM?60:dur,cb,el:S('circle',{r:9,class:'pk'+(val?' old':'')},nodes.pk)});}
+  function frame(now){
+    if(V.phase==='running')V.n+=48271;
+    V.packets=V.packets.filter(p=>{const k=Math.min(1,(now-p.t0)/p.dur);const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+      p.el.setAttribute('cx',p.from.x+(p.to.x-p.from.x)*e);p.el.setAttribute('cy',p.from.y+(p.to.y-p.from.y)*e);
+      if(k>=1){p.el.remove();p.cb&&p.cb();return false;}return true;});
+    txt();
+    if(V.phase==='running'&&V.tStop&&!V.vol&&now-V.tStop>3000&&!V.shown){V.shown=true;verdict('bad','Sau 3 giây worker vẫn chạy.','Giá trị false đã nằm trong RAM, nhưng worker không bao giờ đọc lại RAM nữa. Bấm Làm lại, chọn volatile rồi thử lại.');}
+    V.raf=requestAnimationFrame(frame);
+  }
+  function verdict(cls,b,s){const v=$('#vol-verdict');v.style.display='flex';v.className='verdict '+cls;v.innerHTML=`${b} <span>${s}</span>`;}
+  function pingReg(){nodes.regR.classList.add('ping');setTimeout(()=>nodes.regR.classList.remove('ping'),180);}
+  function reset(){cancelAnimationFrame(V.raf);clearInterval(V.readTimer);Object.assign(V,{phase:'idle',reg:null,cache2:true,ram:true,n:0,packets:[],tStop:0,shown:false});build();
+    $('#vol-verdict').style.display='none';$('#vol-start').disabled=false;$('#vol-stop').disabled=true;V.raf=requestAnimationFrame(frame);}
+  $('#vol-start').addEventListener('click',()=>{ if(V.phase!=='idle')return; $('#vol-start').disabled=true;
+    nodes.note.textContent='đọc running từ RAM';
+    packet(PR,P1,false,700,()=>{V.reg=V.ram;V.phase='running';$('#vol-stop').disabled=false;
+      if(V.vol){nodes.note.textContent='volatile: mỗi vòng đều đọc lại bộ nhớ';
+        V.readTimer=setInterval(()=>{ if(V.phase!=='running')return; packet(PR,P1,false,650,()=>{V.reg=V.ram;pingReg();if(V.reg===false){V.phase='stopped';clearInterval(V.readTimer);nodes.note.textContent='worker thấy false → thoát vòng lặp';verdict('ok','Worker dừng ngay.','Với volatile, ghi của main được đẩy ra bộ nhớ ngay và mỗi lần đọc của worker phải lấy giá trị mới nhất.');}});},800);}
+      else{nodes.note.textContent='JIT: đọc một lần, sau đó chỉ dùng thanh ghi';
+        V.readTimer=setInterval(()=>{if(V.phase==='running')pingReg();},450);}
+    });});
+  $('#vol-stop').addEventListener('click',()=>{ if(V.phase!=='running'||V.tStop)return; $('#vol-stop').disabled=true;
+    V.cache2=false;V.tStop=performance.now();nodes.main.textContent='main: running = false';
+    if(V.vol){packet(P2,PR,false,500,()=>{V.ram=false;});}
+    else{nodes.note.textContent='giá trị mới mới nằm ở cache core 2';setTimeout(()=>{packet(P2,PR,false,700,()=>{V.ram=false;nodes.note.textContent='RAM đã là false, nhưng worker không đọc lại';});},1100);}
+  });
+  $('#vol-mode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;V.vol=b.dataset.v==='1';$$('#vol-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));reset();});
+  $('#vol-reset').addEventListener('click',reset);
+  reset();
+})();
+
+/* ---------- 2. deadlock ---------- */
+(function(){
+  const svg=$('#dl-svg');const D={mode:'param',run:0};
+  const TH={T1:{x:90,y:135},T2:{x:550,y:135}},LK={A:{x:250,y:30},B:{x:250,y:185}},LW=140,LH=56;
+  let st;
+  function fresh(){return {own:{A:null,B:null},wait:{T1:null,T2:null},state:{T1:'run',T2:'run'},dead:false,t0:0};}
+  function edgePts(t,l){const a=TH[t],b=LK[l];const bx=t==='T1'?b.x:b.x+LW,by=b.y+LH/2;const ang=Math.atan2(by-a.y,bx-a.x);return {x1:a.x+Math.cos(ang)*34,y1:a.y+Math.sin(ang)*34,x2:bx,y2:by};}
+  function draw(){svg.innerHTML='';
+    for(const l of ['A','B']){S('rect',{class:'bx'+(st.own[l]?' held':''),x:LK[l].x,y:LK[l].y,width:LW,height:LH,rx:8},svg);
+      T(`khoá tài khoản ${l}`,{x:LK[l].x+LW/2,y:LK[l].y+24,'text-anchor':'middle'},svg);
+      T(st.own[l]?`${st.own[l]==='T1'?'Thread 1':'Thread 2'} giữ`:'trống',{x:LK[l].x+LW/2,y:LK[l].y+44,'text-anchor':'middle',class:'dim'},svg);}
+    for(const t of ['T1','T2'])for(const l of ['A','B']){
+      if(st.own[l]===t){const p=edgePts(t,l);S('line',{class:'edge-own',...p},svg);}
+      if(st.wait[t]===l){const p=edgePts(t,l);S('line',{class:'edge-wait',...p},svg);}}
+    for(const t of ['T1','T2']){const p=TH[t];S('circle',{class:'th '+st.state[t],cx:p.x,cy:p.y,r:32},svg);
+      T(t==='T1'?'T1':'T2',{x:p.x,y:p.y+5,'text-anchor':'middle',fill:'#fff',style:'fill:#fff;font-weight:700'},svg);
+      T(t==='T1'?'transfer(A → B)':'transfer(B → A)',{x:p.x,y:p.y+56,'text-anchor':'middle',class:'mono'},svg);
+      const lbl={run:'RUNNABLE',blk:'BLOCKED',done:'xong',dead:'BLOCKED mãi'}[st.state[t]];
+      T(lbl,{x:p.x,y:p.y+74,'text-anchor':'middle',class:st.state[t]==='done'?'ok':st.state[t]==='run'?'dim':'bad'},svg);}
+    if(st.dead){const s=Math.floor((performance.now()-st.t0)/1000);T(`DEADLOCK · đã chờ ${s} giây`,{x:320,y:140,'text-anchor':'middle',class:'bad'},svg);}
+  }
+  function log(m,c){logTo('#dl-log',m,c);}
+  function verdict(cls,b,s){const v=$('#dl-verdict');v.style.display='flex';v.className='verdict '+cls;v.innerHTML=`${b} <span>${s}</span>`;}
+  let tick=0;
+  function reset(){D.run++;clearInterval(tick);st=fresh();$('#dl-log').innerHTML='';$('#dl-verdict').style.display='none';$('#dl-run').disabled=false;
+    log(D.mode==='param'?'Mỗi thread khoá tài khoản "from" trước, rồi tới "to".':'Cả hai thread luôn khoá tài khoản có id nhỏ hơn (A) trước.');draw();}
+  async function run(){const my=++D.run;$('#dl-run').disabled=true;st=fresh();$('#dl-log').innerHTML='';draw();
+    const step=async(ms,fn)=>{await sleepMs(ms);if(my!==D.run)throw 0;fn();draw();};
+    try{
+    if(D.mode==='param'){
+      await step(600,()=>{st.own.A='T1';log('T1: synchronized(A) → lấy được A.');});
+      await step(700,()=>{st.own.B='T2';log('T2: synchronized(B) → lấy được B.');});
+      await step(800,()=>{st.wait.T1='B';st.state.T1='blk';log('T1: cần B để chuyển tiền, nhưng B do T2 giữ → BLOCKED.','w');});
+      await step(800,()=>{st.wait.T2='A';st.state.T2='blk';log('T2: cần A, nhưng A do T1 giữ → BLOCKED.','w');});
+      await step(600,()=>{st.state.T1='dead';st.state.T2='dead';st.dead=true;st.t0=performance.now();log('Vòng tròn: T1 chờ T2, T2 chờ T1. Không ai nhả khoá, không ai tiến lên được.','w');
+        verdict('bad','Deadlock.','Đủ cả bốn điều kiện, trong đó có chờ vòng tròn. jstack sẽ in "Found one Java-level deadlock". Chuyển sang "Khoá theo id nhỏ trước" rồi chạy lại.');
+        tick=setInterval(()=>{if(my===D.run)draw();else clearInterval(tick);},1000);});
+    }else{
+      await step(600,()=>{st.own.A='T1';log('T1: A có id nhỏ hơn → khoá A trước.');});
+      await step(700,()=>{st.wait.T2='A';st.state.T2='blk';log('T2: cũng phải khoá A trước (id nhỏ hơn B), A đang bị giữ → chờ. T2 chưa giữ gì nên không chặn ai.','w');});
+      await step(800,()=>{st.own.B='T1';log('T1: khoá tiếp B.');});
+      await step(800,()=>{log('T1: chuyển tiền A → B xong.','h');st.own.B=null;st.own.A=null;st.state.T1='done';log('T1: nhả B, nhả A.');});
+      await step(700,()=>{st.wait.T2=null;st.own.A='T2';st.state.T2='run';log('T2: lấy được A.');});
+      await step(700,()=>{st.own.B='T2';log('T2: khoá B.');});
+      await step(800,()=>{st.own.A=null;st.own.B=null;st.state.T2='done';log('T2: chuyển B → A xong, nhả cả hai khoá.','h');
+        verdict('ok','Cả hai giao dịch hoàn tất.','Mọi thread lấy khoá theo cùng một thứ tự nên không thể có vòng tròn chờ. T2 chỉ phải đợi một lúc.');});
+    }}catch(e){}
+    $('#dl-run').disabled=false;
+  }
+  $('#dl-run').addEventListener('click',run);$('#dl-reset').addEventListener('click',reset);
+  $('#dl-mode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;D.mode=b.dataset.m;$$('#dl-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));reset();});
+  reset();
+})();
+
+/* ---------- 3. virtual thread ---------- */
+(function(){
+  const V={vts:[],queue:[],parked:[],done:[],carriers:[null,null],tick:0,busy:0,pinned:0,pin:false,timer:0};
+  function mk(){V.vts=[];for(let i=1;i<=8;i++)V.vts.push({id:i,pin:i%3===0,ph:[{t:'cpu',r:1},{t:'io',r:4},{t:'cpu',r:1}],pi:0,pw:false});}
+  function log(m,c){logTo('#vt-log',m,c);}
+  function chip(v){const p=v.ph[v.pi];const lab=!p?'xong':p.t==='cpu'?'đang tính':v.pw?`GHIM · I/O còn ${p.r}`:`I/O còn ${p.r}`;
+    const cls='vtchip'+(v.pin?' pin':'')+(!p?' done':v.pw?' pinwait':p.t==='io'?' io':'');
+    return `<span class="${cls}" data-id="${v.id}">VT${v.id}${v.pin?' · sync':''}<small>${lab}</small></span>`;}
+  function render(){
+    const before={};if(!RM)$$('#vt-area .vtchip').forEach(e=>before[e.dataset.id]=e.getBoundingClientRect());
+    $('#vt-carriers').innerHTML=V.carriers.map((v,i)=>`<div class="carrier${v&&v.pw?' pinned':''}"><h4>carrier-${i+1} <small>thread thật của hệ điều hành</small></h4><div class="slot">${v?chip(v):'<span class="cap">rảnh</span>'}${v&&v.pw?'<span class="cap" style="color:var(--bad)">bị ghim: đang chờ I/O nhưng không tháo ra được</span>':''}</div></div>`).join('');
+    $('#vt-queue').innerHTML=V.queue.map(chip).join('')||'<span class="cap">trống</span>';
+    $('#vt-parked').innerHTML=V.parked.map(chip).join('')||'<span class="cap">trống</span>';
+    $('#vt-done').innerHTML=V.done.map(chip).join('')||'<span class="cap">chưa có</span>';
+    $('#vt-tick').textContent=V.tick;$('#vt-busy').textContent=V.tick?Math.round(V.busy/(V.tick*2)*100)+'%':'0%';$('#vt-pinned').textContent=V.pinned;
+    if(!RM)$$('#vt-area .vtchip').forEach(e=>{const b=before[e.dataset.id];if(!b)return;const a=e.getBoundingClientRect();const dx=b.left-a.left,dy=b.top-a.top;if(Math.abs(dx)+Math.abs(dy)>2)e.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:480,easing:'cubic-bezier(.2,.8,.2,1)'});});
+  }
+  function step(){
+    V.tick++;
+    for(const v of [...V.parked]){const p=v.ph[v.pi];p.r--;if(p.r<=0){v.pi++;V.parked.splice(V.parked.indexOf(v),1);V.queue.push(v);log(`VT${v.id}: I/O xong → vào hàng chờ được chạy.`);}}
+    V.carriers.forEach((v,i)=>{ if(!v)return; const p=v.ph[v.pi];
+      if(p.t==='cpu'){V.busy++;p.r--;if(p.r<=0){v.pi++;const n=v.ph[v.pi];
+          if(!n){V.carriers[i]=null;V.done.push(v);log(`VT${v.id}: xong, carrier-${i+1} rảnh.`,'h');}
+          else if(n.t==='io'){ if(v.pin&&V.pin){v.pw=true;log(`VT${v.id}: gọi I/O bên trong synchronized → không tháo được, carrier-${i+1} bị ghim.`,'w');}
+            else{V.carriers[i]=null;V.parked.push(v);log(`VT${v.id}: gặp I/O → tháo khỏi carrier-${i+1}, stack cất lên heap.`);}}}}
+      else if(v.pw){V.pinned++;p.r--;if(p.r<=0){v.pi++;v.pw=false;log(`VT${v.id}: I/O xong, vẫn nằm trên carrier-${i+1}, tính tiếp.`);}}
+    });
+    V.carriers.forEach((v,i)=>{if(!v&&V.queue.length){const n=V.queue.shift();V.carriers[i]=n;log(`carrier-${i+1}: gắn VT${n.id} vào chạy.`);}});
+    render();
+    if(V.done.length===8){stop();const v=$('#vt-tick');log(`Xong 8 virtual thread sau ${V.tick} nhịp${V.pin?' (có pinning)':''}.`,'h');}
+  }
+  function stop(){clearInterval(V.timer);V.timer=0;$('#vt-run').textContent='Chạy';}
+  function reset(){stop();mk();V.queue=[...V.vts];V.parked=[];V.done=[];V.carriers=[null,null];V.tick=0;V.busy=0;V.pinned=0;$('#vt-log').innerHTML='';
+    V.carriers=[V.queue.shift(),V.queue.shift()];log('8 virtual thread chờ chạy trên 2 carrier. VT1 và VT2 được gắn trước.');render();}
+  $('#vt-run').addEventListener('click',()=>{if(V.timer){stop();return;}if(V.done.length===8)reset();$('#vt-run').textContent='Tạm dừng';V.timer=setInterval(step,RM?400:900);});
+  $('#vt-pin').addEventListener('click',e=>{V.pin=!V.pin;e.currentTarget.setAttribute('aria-pressed',V.pin);e.currentTarget.textContent='Pinning: '+(V.pin?'bật':'tắt');reset();});
+  $('#vt-reset').addEventListener('click',reset);
+  reset();
+})();
+
+/* ---------- 4. CAS và LongAdder ---------- */
+(function(){
+  const svg=$('#cas-svg');const C={mode:'atomic',timer:0,rem:[5,5,5,5],cells:[0,0,0,0],val:0,ok:0,fail:0,tick:0};
+  const TX=[110,250,390,530],TY=50,CY=180;
+  let layer;
+  function cellX(i){return C.mode==='atomic'?320:TX[i];}
+  function draw(){svg.innerHTML='';
+    S('defs',{},svg).innerHTML='';
+    if(C.mode==='atomic'){S('rect',{class:'bx cell',x:250,y:CY-30,width:140,height:60,rx:8},svg);T('value',{x:320,y:CY-10,'text-anchor':'middle',class:'dim'},svg);T(String(C.val),{x:320,y:CY+18,'text-anchor':'middle',class:'big'},svg);}
+    else{for(let i=0;i<4;i++){S('rect',{class:'bx cell',x:TX[i]-50,y:CY-30,width:100,height:60,rx:8},svg);T(`cell[${i}]`,{x:TX[i],y:CY-10,'text-anchor':'middle',class:'dim'},svg);T(String(C.cells[i]),{x:TX[i],y:CY+18,'text-anchor':'middle',class:'big'},svg);}
+      T(`sum() = ${C.cells.join(' + ')} = ${C.cells.reduce((a,b)=>a+b,0)}`,{x:320,y:CY+58,'text-anchor':'middle',class:'mono'},svg);}
+    for(let i=0;i<4;i++){const done=C.rem[i]===0;S('circle',{class:'th '+(done?'done':'run'),cx:TX[i],cy:TY,r:24},svg);T(`T${i+1}`,{x:TX[i],y:TY+5,'text-anchor':'middle',style:'fill:#fff;font-weight:700'},svg);
+      T(done?'xong':`còn ${C.rem[i]}`,{x:TX[i]+34,y:TY+5,class:done?'ok':'dim'},svg);}
+    layer=S('g',{},svg);
+  }
+  function flash(i,ok){const x2=cellX(i),y2=CY-30;S('line',{class:'fl '+(ok?'ok':'fail'),x1:TX[i],y1:TY+24,x2:C.mode==='atomic'?x2+(i-1.5)*18:x2,y2},layer);
+    T(ok?'✓':'✗ thử lại',{x:TX[i],y:TY-32,'text-anchor':'middle',class:'mark '+(ok?'ok':'bad')},layer);}
+  function stats(){$('#cas-ok').textContent=C.ok;$('#cas-fail').textContent=C.fail;$('#cas-tick').textContent=C.tick;}
+  function step(){
+    const act=[0,1,2,3].filter(i=>C.rem[i]>0);if(!act.length){stop();return;}
+    C.tick++;const res=[];
+    if(C.mode==='atomic'){const order=act.slice().sort(()=>Math.random()-.5);order.forEach((i,k)=>{if(k===0){C.val++;C.rem[i]--;C.ok++;res.push([i,true]);}else{C.fail++;res.push([i,false]);}});}
+    else{act.forEach(i=>{C.cells[i]++;C.rem[i]--;C.ok++;res.push([i,true]);});}
+    draw();res.forEach(([i,ok])=>flash(i,ok));stats();
+    if(C.rem.every(r=>r===0)){stop();const v=$('#cas-verdict');v.style.display='flex';
+      if(C.mode==='atomic'){v.className='verdict warn';v.innerHTML=`Xong sau ${C.tick} nhịp, ${C.fail} lần CAS thất bại. <span>Mỗi nhịp chỉ một thread thắng; CPU của các thread thua bị đốt vào việc quay vòng thử lại. Thử LongAdder để so sánh.</span>`;}
+      else{v.className='verdict ok';v.innerHTML=`Xong sau ${C.tick} nhịp, 0 lần thất bại. <span>Mỗi thread cộng vào ô của mình nên không ai tranh chấp. Đổi lại muốn biết tổng phải cộng tất cả các ô bằng sum().</span>`;}}
+  }
+  function stop(){clearInterval(C.timer);C.timer=0;$('#cas-run').textContent='Chạy';}
+  function reset(){stop();Object.assign(C,{rem:[5,5,5,5],cells:[0,0,0,0],val:0,ok:0,fail:0,tick:0});$('#cas-verdict').style.display='none';draw();stats();}
+  $('#cas-run').addEventListener('click',()=>{if(C.timer){stop();return;}if(C.rem.every(r=>r===0))reset();$('#cas-run').textContent='Tạm dừng';step();C.timer=setInterval(step,RM?300:800);});
+  $('#cas-reset').addEventListener('click',reset);
+  $('#cas-mode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;C.mode=b.dataset.m;$$('#cas-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));reset();});
+  reset();
+})();
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1610 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sổ tay Database</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sổ tay kỹ thuật hai cột (dùng chung với Sổ tay JVM) — mục lục dính bên trái, nội dung đọc bên phải; mỗi chương mở bằng khung "Phỏng vấn sẽ hỏi" */
+:root{
+  --bg:#F2F5F9; --surface:#FFFFFF; --sunk:#E7EDF5; --ink:#0E1A2C; --muted:#4F5F77; --line:#D2DBE7;
+  --accent:#1B5BD4; --accent-ink:#FFFFFF; --accent-soft:#DCE7FB;
+  --s1:#1D5FD6; --s2:#C2620A; --s3:#8A3FA8;
+  --eden:#2F6FE0; --surv:#0F8FB3; --old:#3A3F9E; --dead:#9AA7B8;
+  --ok:#17845A; --ok-soft:#D9F1E6; --warn:#A86A00; --warn-soft:#FBEBCB; --bad:#C23434; --bad-soft:#F9DDDD;
+  --code-bg:#0F1A2B; --code-ink:#D6E2F2; --code-dim:#7F93AE; --code-hl:#8EC1FF; --code-str:#9FD8B8; --code-warn:#FFB4A8;
+  --f-ui:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0A111D; --surface:#101A2A; --sunk:#0D1624; --ink:#E2E9F4; --muted:#93A3BB; --line:#223149;
+  --accent:#5B96F5; --accent-ink:#081120; --accent-soft:#15284A;
+  --s1:#4A86E8; --s2:#CC7222; --s3:#A963C4;
+  --eden:#4A86E8; --surv:#2AA8C9; --old:#7A7FE0; --dead:#4D5B70;
+  --ok:#3FBF8A; --ok-soft:#10301F; --warn:#E0A33A; --warn-soft:#33270E; --bad:#F06A6A; --bad-soft:#3A1717;
+  --code-bg:#060C16; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0A111D; --surface:#101A2A; --sunk:#0D1624; --ink:#E2E9F4; --muted:#93A3BB; --line:#223149;
+  --accent:#5B96F5; --accent-ink:#081120; --accent-soft:#15284A;
+  --s1:#4A86E8; --s2:#CC7222; --s3:#A963C4;
+  --eden:#4A86E8; --surv:#2AA8C9; --old:#7A7FE0; --dead:#4D5B70;
+  --ok:#3FBF8A; --ok-soft:#10301F; --warn:#E0A33A; --warn-soft:#33270E; --bad:#F06A6A; --bad-soft:#3A1717;
+  --code-bg:#060C16; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:16px;line-height:1.65}
+a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+:not(pre)>code{background:var(--sunk);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+h1,h2,h3,h4{margin:0;text-wrap:balance;line-height:1.25}
+p{margin:0}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.shell{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:24px 80px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px}
+@media (max-width:980px){.shell{grid-template-columns:1fr;gap:0}}
+
+/* mục lục */
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:4px}
+.toc .brand{font-weight:800;font-size:1rem;letter-spacing:-.01em;margin-bottom:12px}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.toc a{display:flex;gap:10px;text-decoration:none;color:var(--muted);font-size:.86rem;padding:5px 8px;border-radius:6px;line-height:1.35}
+.toc a span{font-family:var(--f-mono);font-size:.74rem;min-width:18px;color:var(--muted);padding-top:2px}
+.toc a:hover{background:var(--sunk);color:var(--ink)}
+.toc a.on{background:var(--accent-soft);color:var(--ink);font-weight:600}
+@media (max-width:980px){
+  .toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;max-height:none;background:var(--bg);margin-inline:-20px;padding:10px 20px;border-bottom:1px solid var(--line)}
+  .toc .brand{display:none}
+  .toc ol{flex-direction:row;overflow-x:auto;gap:4px;scrollbar-width:none}
+  .toc a{white-space:nowrap;font-size:.8rem}
+}
+
+main{min-width:0;display:flex;flex-direction:column;gap:64px}
+.hero{display:flex;flex-direction:column;gap:14px;padding-top:8px}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.hero h1{font-size:clamp(2rem,4.6vw,3.1rem);font-weight:800;letter-spacing:-.025em}
+.hero .lede{font-size:1.08rem;color:var(--muted);max-width:66ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.facts span{font-family:var(--f-mono);font-size:.76rem;background:var(--surface);border:1px solid var(--line);padding:4px 10px;border-radius:999px;color:var(--muted)}
+
+section.ch{display:flex;flex-direction:column;gap:20px;scroll-margin-top:72px}
+.ch-head{display:flex;flex-direction:column;gap:6px;border-top:2px solid var(--ink);padding-top:14px}
+.ch-head h2{font-size:clamp(1.45rem,2.6vw,1.9rem);font-weight:800;letter-spacing:-.015em}
+.ch-head p{color:var(--muted);max-width:68ch}
+h3{font-size:1.12rem;font-weight:700;margin-top:6px}
+h4{font-size:.98rem;font-weight:700}
+.prose{display:flex;flex-direction:column;gap:12px;max-width:72ch}
+.prose ul,.prose ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+
+.ask{background:var(--accent-soft);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.ask b{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.ask ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:3px}
+.callout{border-left:3px solid var(--accent);padding:10px 14px;background:var(--surface);border-radius:0 8px 8px 0;max-width:76ch}
+.callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-color:var(--ok);background:var(--ok-soft)}
+.callout b.t{display:block;margin-bottom:2px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+
+pre.code{background:var(--code-bg);color:var(--code-ink);border-radius:var(--r);padding:14px 16px;overflow-x:auto;font-family:var(--f-mono);font-size:.8rem;line-height:1.6;margin:0;max-width:100%}
+pre.code .c{color:var(--code-dim)} pre.code .h{color:var(--code-hl);font-weight:600} pre.code .s{color:var(--code-str)} pre.code .w{color:var(--code-warn);font-weight:600}
+.real{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--ok);font-weight:600;letter-spacing:.03em}
+.real::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.cap{font-size:.84rem;color:var(--muted);max-width:76ch}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--sunk)}
+td.n{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td code{white-space:nowrap}
+
+/* kiến trúc */
+.arch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.arch{grid-template-columns:1fr}}
+.arch .blk{border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.arch .blk h4{font-size:.9rem}
+.arch .blk p{font-size:.84rem;color:var(--muted)}
+.arch .lane{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--f-mono);font-size:.8rem}
+.arch .lane span{background:var(--sunk);padding:5px 10px;border-radius:6px}
+.arch .lane i{color:var(--muted);font-style:normal}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill.shared{background:var(--accent-soft);color:var(--accent)}
+
+/* vùng nhớ tương tác */
+.mem{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px}
+.mem>*{min-width:0}
+@media (max-width:860px){.mem{grid-template-columns:1fr}}
+@media (max-width:520px){.areas{grid-template-columns:1fr}}
+.area{min-width:0}
+.chip{overflow-wrap:anywhere}
+.codelines{background:var(--code-bg);border-radius:var(--r);padding:10px 0;font-family:var(--f-mono);font-size:.8rem;overflow-x:auto}
+.codelines button{display:block;width:100%;text-align:left;background:transparent;border:0;color:var(--code-ink);padding:4px 14px;white-space:pre;font-family:inherit;font-size:inherit;border-left:3px solid transparent}
+.codelines button:hover{background:#ffffff0d}
+.codelines button.on{background:#5b96f526;border-left-color:var(--code-hl)}
+.codelines .ln{color:var(--code-dim);margin-right:12px}
+.areas{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.area{border:1px dashed var(--line);border-radius:8px;padding:10px;min-height:96px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.area.heap{grid-column:1/-1}
+.area h4{font-size:.82rem;display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.area .items{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:.74rem;padding:3px 8px;border-radius:6px;background:var(--sunk);border:1px solid var(--line);transition:background-color .3s,border-color .3s}
+.chip.new{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.chip.gone{text-decoration:line-through;opacity:.5}
+.memnote{margin-top:10px;font-size:.9rem}
+
+/* object layout */
+.objrow{display:flex;flex-wrap:wrap;gap:3px;align-items:stretch;font-family:var(--f-mono);font-size:.72rem}
+.objrow div{padding:6px 8px;border-radius:4px;display:flex;flex-direction:column;justify-content:center;min-height:44px}
+.objrow .hdr{background:var(--accent);color:var(--accent-ink)}
+.objrow .kl{background:var(--s3);color:#fff}
+.objrow .fld{background:var(--sunk);border:1px solid var(--line)}
+.objrow .pad{background:repeating-linear-gradient(45deg,var(--sunk),var(--sunk) 4px,var(--surface) 4px,var(--surface) 8px);border:1px dashed var(--line);color:var(--muted)}
+.objrow small{opacity:.85}
+.objrow div{min-width:58px}
+
+/* GC simulator */
+.sim{display:flex;flex-direction:column;gap:14px}
+.sim-ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 13px;font-weight:500;font-size:.88rem}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.sim-ctrl label{font-size:.86rem;color:var(--muted);display:flex;gap:6px;align-items:center}
+.sim-ctrl input[type=range]{width:110px;accent-color:var(--accent)}
+.heapviz{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
+.heapviz .old{grid-column:1/-1}
+@media (max-width:640px){.heapviz{grid-template-columns:1fr 1fr}.heapviz .eden{grid-column:1/-1}}
+.gen{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);min-width:0}
+.gen h4{font-size:.8rem;display:flex;justify-content:space-between;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.gen h4 small{font-family:var(--f-mono);color:var(--muted);font-weight:400}
+.gen.to h4::after{content:"đích copy kế tiếp";font-size:.68rem;font-weight:500;color:var(--surv)}
+.cells{display:grid;gap:4px}
+.eden .cells{grid-template-columns:repeat(8,minmax(0,1fr))}
+.surv .cells{grid-template-columns:repeat(4,minmax(0,1fr))}
+.old .cells{grid-template-columns:repeat(16,minmax(0,1fr))}
+@media (max-width:640px){.old .cells{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.cell{aspect-ratio:1;border-radius:4px;background:var(--sunk);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.66rem;color:#fff;font-weight:600;transition:background-color .25s,transform .25s;max-width:100%}
+.cell.e{background:var(--eden)} .cell.s{background:var(--surv)} .cell.o{background:var(--old)}
+.cell.lt{box-shadow:inset 0 0 0 2px var(--warn)}
+.cell.dead{background:var(--dead);color:transparent}
+.cell.dying{background:var(--bad);transform:scale(.8)}
+.sim-stats{display:flex;flex-wrap:wrap;gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:110px}
+.stat b{display:block;font-family:var(--f-mono);font-size:1.15rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.74rem;color:var(--muted)}
+.simlog{background:var(--code-bg);color:var(--code-ink);font-family:var(--f-mono);font-size:.76rem;border-radius:8px;padding:10px 12px;height:150px;overflow:auto;display:flex;flex-direction:column;gap:3px}
+.simlog .w{color:var(--code-warn)} .simlog .h{color:var(--code-hl)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.oom{display:none;background:var(--bad-soft);border:1px solid var(--bad);border-radius:8px;padding:10px 12px;font-family:var(--f-mono);font-size:.82rem;color:var(--bad)}
+.oom.show{display:block}
+
+/* G1 regions */
+.regions{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px}
+@media (max-width:640px){.regions{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.rg{aspect-ratio:1;border-radius:3px;font-family:var(--f-mono);font-size:.6rem;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+.rg.E{background:var(--eden)} .rg.S{background:var(--surv)} .rg.O{background:var(--old)} .rg.H{background:var(--s2)} .rg.F{background:var(--sunk);color:var(--muted)}
+.rg.C{outline:2px solid var(--bad);outline-offset:-2px}
+
+/* charts */
+.chart{position:relative;min-width:0}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .grid line{stroke:var(--line);stroke-width:1}
+.chart .ax text,.chart text.ax{fill:var(--muted);font-family:var(--f-mono);font-size:10.5px}
+.chart text.lbl{font-family:var(--f-ui);font-size:11.5px;font-weight:600}
+.chart text.val{fill:var(--ink);font-family:var(--f-mono);font-size:11px}
+.chart .hit{fill:transparent}
+.chart .xh{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.78rem;box-shadow:0 6px 18px #0b16281f;min-width:150px;z-index:3;display:none}
+.tip .tt{font-weight:700;margin-bottom:3px}
+.tip .tr{display:flex;justify-content:space-between;gap:12px;font-family:var(--f-mono);font-size:.74rem}
+.tip .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.chart-legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+.chart-title{font-weight:700;font-size:.95rem;margin-bottom:2px}
+
+/* container calc */
+.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px}
+@media (max-width:860px){.calc{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.82rem;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.field label output{font-family:var(--f-mono);font-weight:600;color:var(--accent)}
+.field input[type=range]{width:100%;accent-color:var(--accent)}
+.field small{color:var(--muted);font-size:.76rem}
+.fields{display:flex;flex-direction:column;gap:12px}
+.budget{display:flex;flex-direction:column;gap:12px}
+.bar{position:relative;height:38px;border-radius:6px;background:var(--sunk);overflow:visible;display:flex}
+.bar .seg{height:100%;border-right:2px solid var(--surface);transition:width .3s}
+.bar .seg:first-child{border-radius:6px 0 0 6px}
+.bar .limit{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink)}
+.bar .limit span{position:absolute;top:-20px;transform:translateX(-50%);font-family:var(--f-mono);font-size:.7rem;white-space:nowrap;color:var(--ink)}
+.brows{display:flex;flex-direction:column;gap:4px;font-size:.84rem}
+.brows div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:3px}
+.brows i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.brows b{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.verdict{border-radius:8px;padding:10px 12px;font-weight:600;font-size:.9rem;display:flex;gap:8px;align-items:flex-start}
+.verdict.ok{background:var(--ok-soft);color:var(--ok)} .verdict.warn{background:var(--warn-soft);color:var(--warn)} .verdict.bad{background:var(--bad-soft);color:var(--bad)}
+.verdict span{color:var(--ink);font-weight:400}
+
+/* playbooks */
+.pb{display:flex;flex-direction:column;gap:12px}
+.pb .sym{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sev{font-family:var(--f-mono);font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.04em}
+.sev.bad{background:var(--bad-soft);color:var(--bad)} .sev.warn{background:var(--warn-soft);color:var(--warn)}
+.steps{counter-reset:s;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px}
+.steps li::before{content:counter(s);font-family:var(--f-mono);font-size:.74rem;font-weight:700;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-top:2px}
+
+/* gc log annotate */
+.logline{font-family:var(--f-mono);font-size:.8rem;background:var(--code-bg);color:var(--code-ink);border-radius:8px;padding:12px 14px;overflow-x:auto;white-space:nowrap}
+.logline span{border-bottom:2px solid;padding-bottom:1px}
+.logline .a1{border-color:var(--s1)} .logline .a2{border-color:var(--surv)} .logline .a3{border-color:var(--s2)} .logline .a4{border-color:var(--s3)} .logline .a5{border-color:var(--ok)}
+.anno{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;font-size:.84rem}
+.anno div{border-top:3px solid;padding-top:6px}
+
+/* Q&A */
+.qa{display:flex;flex-direction:column;gap:8px}
+.qa details{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.qa summary{cursor:pointer;padding:12px 14px;font-weight:600;list-style:none;display:flex;gap:10px;align-items:flex-start}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{content:"+";font-family:var(--f-mono);color:var(--accent);font-weight:700;width:14px;flex:none}
+.qa details[open] summary::before{content:"−"}
+.qa .ans{padding:0 16px 14px 38px;display:flex;flex-direction:column;gap:8px;font-size:.94rem}
+.qa .ans ul{margin:0;padding-left:20px}
+.lvl{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:10px;font-weight:700}
+.trap{font-family:var(--f-mono);font-size:.66rem;background:var(--warn-soft);color:var(--warn);padding:1px 6px;border-radius:4px;margin-left:auto;flex:none;align-self:center}
+.foot{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padding-top:16px}
+
+/* ===== thêm cho sổ tay concurrency ===== */
+.states{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:860px){.states{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:460px){.states{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stnode{border:1px solid var(--line);border-radius:8px;padding:10px 8px;text-align:center;background:var(--surface);font-family:var(--f-mono);font-size:.74rem;font-weight:600;transition:background-color .25s,border-color .25s,color .25s;min-width:0;overflow-wrap:anywhere}
+.stnode small{display:block;font-family:var(--f-ui);font-weight:400;color:var(--muted);font-size:.72rem;margin-top:3px}
+.stnode.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.stnode.on small{color:var(--accent-ink);opacity:.85}
+.sim-ctrl .btn:disabled{opacity:.4;cursor:default}
+.seg-ctl{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg-ctl button{border:0;background:transparent;color:var(--muted);padding:7px 12px;font-size:.86rem;border-right:1px solid var(--line)}
+.seg-ctl button:last-child{border-right:0}
+.seg-ctl button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.race{display:grid;grid-template-columns:minmax(0,1fr) 170px minmax(0,1fr);gap:12px;align-items:stretch}
+@media (max-width:700px){.race{grid-template-columns:1fr 1fr}.race .memcol{grid-column:1/-1;grid-row:1;flex-direction:row}}
+.thr{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:8px;min-width:0}
+.thr h4{display:flex;justify-content:space-between;gap:6px;font-size:.88rem;flex-wrap:wrap}
+.thr .badge{font-family:var(--f-mono);font-size:.68rem;padding:2px 7px;border-radius:4px;background:var(--sunk);color:var(--muted)}
+.thr .badge.run{background:var(--accent-soft);color:var(--accent)}
+.thr .badge.blk{background:var(--warn-soft);color:var(--warn)}
+.thr .badge.ok{background:var(--ok-soft);color:var(--ok)}
+.thr ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font-family:var(--f-mono);font-size:.76rem}
+.thr li{padding:4px 8px;border-radius:5px;color:var(--muted);border:1px solid transparent}
+.thr li.cur{border-color:var(--accent);color:var(--ink);background:var(--accent-soft)}
+.thr li.done{color:var(--ok)}
+.thr .reg{font-family:var(--f-mono);font-size:.78rem;background:var(--sunk);border-radius:5px;padding:5px 8px}
+.memcol{display:flex;flex-direction:column;gap:10px;justify-content:center}
+.ram{border:2px solid var(--ink);border-radius:10px;padding:12px;text-align:center;background:var(--surface);flex:1}
+.ram span{display:block;font-size:.72rem;color:var(--muted)}
+.ram b{display:block;font-family:var(--f-mono);font-size:2.2rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.ram small{font-family:var(--f-mono);color:var(--muted)}
+.ram.flash{animation:ramf .6s ease}
+@keyframes ramf{0%{background:var(--accent-soft)}100%{background:var(--surface)}}
+.lockbox{border:1px dashed var(--line);border-radius:8px;padding:8px;text-align:center;font-family:var(--f-mono);font-size:.76rem;color:var(--muted);flex:1}
+.lockbox.held{border-style:solid;border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.cache-diag{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cache-diag .core{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;background:var(--surface);min-width:0}
+.cache-diag .core span{font-size:.8rem;color:var(--muted)}
+.cache-diag .lv{font-family:var(--f-mono);font-size:.76rem;background:var(--sunk);border-radius:5px;padding:5px 8px;overflow-wrap:anywhere}
+.cache-diag i{font-style:normal;font-weight:700;color:var(--s2)}
+.cache-diag i.nw{color:var(--ok)}
+.cache-diag .ram-wide{grid-column:1/-1;border:2px solid var(--ink);border-radius:8px;padding:10px;text-align:center;font-family:var(--f-mono);font-size:.8rem}
+.adder{display:flex;flex-direction:column;gap:8px;margin:4px 0}
+.cells-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.cells-row span{border:1px solid var(--line);border-radius:6px;padding:6px;text-align:center;font-family:var(--f-mono);font-size:.7rem;color:var(--muted);background:var(--surface)}
+.cells-row b{display:block;font-size:1rem;color:var(--ink)}
+.adder .sum{font-family:var(--f-mono);font-size:.82rem;text-align:center;background:var(--accent-soft);border-radius:6px;padding:6px}
+.sel{font:inherit;font-size:.84rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 6px}
+.poolviz{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,.8fr);gap:10px}
+@media (max-width:760px){.poolviz{grid-template-columns:1fr}}
+.workers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.worker{border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-family:var(--f-mono);font-size:.72rem;display:flex;flex-direction:column;gap:4px;min-height:52px;background:var(--surface)}
+.worker.core{border:2px solid var(--accent)}
+.worker .pg{height:6px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.worker .pg i{display:block;height:100%;background:var(--accent);transition:width .4s}
+.worker.idle{color:var(--muted)}
+.worker.new{animation:ramf .8s ease}
+.queue{display:flex;flex-direction:column;gap:4px}
+.qslot{border:1px dashed var(--line);border-radius:5px;padding:4px 8px;font-family:var(--f-mono);font-size:.72rem;color:var(--muted);min-height:26px}
+.qslot.full{border-style:solid;border-color:var(--surv);color:var(--ink);background:var(--sunk)}
+.caller{font-family:var(--f-mono);font-size:.76rem;border:1px dashed var(--line);border-radius:6px;padding:8px;color:var(--muted)}
+.caller.busy{border-style:solid;border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+
+/* ===== hình động bổ sung ===== */
+.anim{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.anim svg{width:100%;min-width:520px;height:auto;display:block}
+.anim text{font-family:var(--f-ui);font-size:13px;fill:var(--ink)}
+.anim text.mono{font-family:var(--f-mono);font-size:12px}
+.anim text.dim{fill:var(--muted);font-size:11.5px}
+.anim text.big{font-family:var(--f-mono);font-size:22px;font-weight:600}
+.anim text.bad{fill:var(--bad);font-weight:600}
+.anim text.ok{fill:var(--ok);font-weight:600}
+.anim text.warn{fill:var(--warn);font-weight:600}
+.anim .bx{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.anim .bx.hot{stroke:var(--accent);stroke-width:2.5}
+.anim .bx.ram{stroke:var(--ink);stroke-width:2}
+.anim .bx.held{fill:var(--warn-soft);stroke:var(--warn);stroke-width:2}
+.anim .bx.cell{fill:var(--surface);stroke:var(--s1);stroke-width:1.5}
+.anim .reg{fill:var(--sunk);stroke:none;transition:fill .2s}
+.anim .reg.ping{fill:var(--accent-soft)}
+.anim .pk{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.anim .pk.old{fill:var(--s2)}
+.anim .edge-own{stroke:var(--accent);stroke-width:3;fill:none}
+.anim .edge-wait{stroke:var(--bad);stroke-width:3;fill:none;stroke-dasharray:8 6;animation:dashmove .8s linear infinite}
+@keyframes dashmove{to{stroke-dashoffset:-28}}
+.anim .th{stroke:var(--surface);stroke-width:3;transition:fill .3s}
+.anim .th.run{fill:var(--accent)} .anim .th.blk{fill:var(--warn)} .anim .th.done{fill:var(--ok)} .anim .th.dead{fill:var(--bad)}
+.anim .fl{stroke-width:3;animation:flfade .65s ease-out forwards}
+.anim .fl.ok{stroke:var(--ok)} .anim .fl.fail{stroke:var(--bad);stroke-dasharray:5 4}
+@keyframes flfade{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
+.anim .mark{animation:flfade .9s ease-out forwards;font-weight:700}
+.anim marker path{fill:var(--muted)}
+@media (prefers-reduced-motion: reduce){.anim .edge-wait{animation:none}}
+.vt-wrap{display:flex;flex-direction:column;gap:10px}
+.vt-carriers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.carrier{border:2px solid var(--ink);border-radius:10px;padding:10px;background:var(--surface);min-height:92px;display:flex;flex-direction:column;gap:6px;transition:border-color .3s,background-color .3s}
+.carrier h4{font-size:.82rem;display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.carrier h4 small{font-family:var(--f-mono);font-weight:400;color:var(--muted)}
+.carrier.pinned{border-color:var(--bad);background:var(--bad-soft)}
+.carrier .slot{min-height:40px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vt-row{border:1px dashed var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);min-width:0}
+.vt-row h4{font-size:.78rem;color:var(--muted);font-weight:600;margin-bottom:6px}
+.vt-row .chips{display:flex;flex-wrap:wrap;gap:6px;min-height:34px}
+.vtchip{font-family:var(--f-mono);font-size:.72rem;border-radius:6px;padding:4px 8px;background:var(--accent-soft);border:1px solid var(--accent);color:var(--ink);display:inline-flex;flex-direction:column;line-height:1.3;will-change:transform}
+.vtchip small{color:var(--muted);font-size:.66rem}
+.vtchip.io{background:var(--sunk);border-color:var(--line)}
+.vtchip.done{background:var(--ok-soft);border-color:var(--ok)}
+.vtchip.pin{border-style:dashed}
+.vtchip.pinwait{background:var(--bad-soft);border-color:var(--bad)}
+
+/* ===== thêm cho sổ tay Spring Boot ===== */
+.spring{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--s3);font-weight:600;letter-spacing:.03em}
+.spring::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--s3)}
+.w-txt{color:var(--bad);font-weight:700}
+.anim .bx.ok{fill:var(--ok-soft);stroke:var(--ok);stroke-width:2}
+.anim .bx.bad{fill:var(--bad-soft);stroke:var(--bad);stroke-width:2.5}
+/* lifecycle */
+.lc-track{position:relative;padding:8px 6px 30px}
+.lc-line{position:absolute;left:24px;right:24px;top:24px;height:4px;background:var(--sunk);border-radius:2px}
+.lc-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.lc-dots{position:relative;display:flex;justify-content:space-between;gap:2px}
+.lc-dot{background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:6px;width:11%;min-width:0;color:var(--muted)}
+.lc-dot span{width:32px;height:32px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.78rem;font-weight:700;transition:all .3s}
+.lc-dot small{font-size:.7rem;text-align:center;line-height:1.2;overflow-wrap:anywhere}
+.lc-dot.done span{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.lc-dot.cur span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);transform:scale(1.15)}
+.lc-dot.cur small{color:var(--ink);font-weight:700}
+.lc-bean{display:none}
+@media (max-width:640px){.lc-dot small{display:none}.lc-dot span{width:26px;height:26px}}
+.lc-detail{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.lc-detail h4{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+.lc-detail h4 code{font-weight:400}
+/* cache 3 cấp */
+.c3-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:860px){.c3-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.c3-box{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);min-height:110px;min-width:0}
+.c3-box h4{font-size:.8rem;display:flex;flex-direction:column;margin-bottom:8px}
+.c3-box h4 small{font-weight:400;color:var(--muted);font-size:.72rem}
+.c3-box .chips{display:flex;flex-wrap:wrap;gap:6px}
+/* auto-config */
+.ac-opts{display:flex;flex-direction:column;gap:6px}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:.9rem;cursor:pointer}
+.chk input{margin-top:4px;accent-color:var(--accent)}
+.ac-out{display:flex;flex-direction:column;gap:4px}
+.cond{display:grid;grid-template-columns:20px minmax(0,1fr);gap:6px;font-family:var(--f-mono);font-size:.74rem;padding:5px 8px;border-radius:5px;overflow-wrap:anywhere}
+.cond.ok{background:var(--ok-soft)} .cond.ok b{color:var(--ok)}
+.cond.no{background:var(--sunk)} .cond.no b{color:var(--bad)}
+/* tx flow */
+.flow{display:flex;flex-direction:column;gap:6px}
+.flow div{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;font-size:.92rem;padding:6px 8px;border-radius:6px;background:var(--bg)}
+.flow b{width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.76rem}
+.traps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:760px){.traps{grid-template-columns:1fr}}
+.trap-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:0 12px;min-width:0}
+.trap-card summary{cursor:pointer;padding:10px 0;font-weight:600;list-style:none;display:flex;gap:10px;align-items:center}
+.trap-card summary::-webkit-details-marker{display:none}
+.trap-card .tn{font-family:var(--f-mono);font-size:.74rem;width:22px;height:22px;border-radius:50%;background:var(--bad-soft);color:var(--bad);display:flex;align-items:center;justify-content:center;flex:none}
+.trap-card[open]{padding-bottom:12px}
+.trap-card p{font-size:.9rem;margin-top:6px}
+/* propagation */
+.pp-presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pp-presets .btn{font-size:.8rem;padding:5px 10px}
+.pp-ctrl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
+@media (max-width:860px){.pp-ctrl{grid-template-columns:1fr 1fr}}
+@media (max-width:480px){.pp-ctrl{grid-template-columns:1fr}}
+.pp-ctrl .sel{width:100%}
+.pp-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px}
+@media (max-width:860px){.pp-main{grid-template-columns:1fr}}
+.pp-tx #pp-verdict{flex-direction:column;gap:4px}
+.pp-tx{display:flex;flex-direction:column;gap:10px;min-width:0}
+.txcard{border:2px dashed var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;transition:all .3s;background:var(--surface)}
+.txcard h4{font-size:.78rem;color:var(--muted)}
+.txcard b{font-family:var(--f-mono);font-size:.9rem}
+.txcard small{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.txcard.act{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
+.txcard.sus{border-style:solid;border-color:var(--muted);background:var(--sunk)}
+.txcard.rbo{border-style:solid;border-color:var(--warn);background:var(--warn-soft)}
+.txcard.com{border-style:solid;border-color:var(--ok);background:var(--ok-soft)}
+.txcard.rb{border-style:solid;border-color:var(--bad);background:var(--bad-soft)}
+.pp-db{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dbt{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);min-width:0}
+.dbt h4{font-family:var(--f-mono);font-size:.74rem;color:var(--muted);margin-bottom:6px}
+.dbrow{display:block;font-family:var(--f-mono);font-size:.74rem;padding:5px 8px;border-radius:5px;transition:all .3s}
+.dbrow.pend{border:1px dashed var(--accent);background:var(--accent-soft)}
+.dbrow.saved{border:1px solid var(--ok);background:var(--ok-soft);color:var(--ok);font-weight:600}
+.dbrow.lost{border:1px solid var(--bad);background:var(--bad-soft);color:var(--bad);text-decoration:line-through}
+.pp-timeline{list-style:none;margin:0;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--code-bg);border-radius:8px;max-height:430px;overflow:auto;counter-reset:ev}
+.pp-timeline li{font-family:var(--f-mono);font-size:.76rem;color:var(--code-ink);counter-increment:ev;display:grid;grid-template-columns:22px minmax(0,1fr);gap:6px}
+.pp-timeline li::before{content:counter(ev);color:var(--code-dim)}
+.pp-timeline li.w{color:var(--code-warn)} .pp-timeline li.ok{color:var(--code-str)} .pp-timeline li.h{color:var(--code-hl)}
+.pp-timeline li.cap{display:block;color:var(--code-dim);font-family:var(--f-ui)}
+.pp-timeline li.cap::before{content:none}
+/* request pipeline */
+.rq-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px}
+@media (max-width:860px){.rq-grid{grid-template-columns:1fr}}
+.pipe{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.pipe li{display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px;align-items:center;font-size:.86rem;padding:7px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);transition:all .3s}
+.pipe .pi{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.pipe li.pass{border-color:var(--accent);background:var(--accent-soft)}
+.pipe li.back{border-color:var(--ok);background:var(--ok-soft)}
+.pipe li.err{border-color:var(--bad);background:var(--bad-soft);font-weight:600}
+.pipe li.skip{opacity:.4;border-style:dashed}
+.pipe li.cur{box-shadow:0 0 0 3px var(--accent);transform:translateX(6px)}
+.rq-side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.resp{border:2px dashed var(--line);border-radius:8px;padding:12px;font-family:var(--f-mono);font-weight:600;text-align:center}
+.resp.ok{border-style:solid;border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.resp.warn{border-style:solid;border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+.resp.bad{border-style:solid;border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+/* property precedence */
+.pr-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.pr-grid{grid-template-columns:1fr}}
+.srcs{display:flex;flex-direction:column;gap:6px}
+.src{display:grid;grid-template-columns:24px 20px minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);cursor:pointer;transition:all .3s}
+.src .rank{font-family:var(--f-mono);font-size:.74rem;color:var(--muted)}
+.src span b{display:block;font-size:.88rem}
+.src code{font-size:.74rem}
+.src small{display:block;color:var(--warn);font-size:.74rem}
+.src em{font-style:normal;font-family:var(--f-mono);font-size:.72rem;font-weight:700;color:var(--accent-ink);background:var(--accent);padding:2px 8px;border-radius:999px}
+.src.win{border-color:var(--accent);background:var(--accent-soft)}
+.src.off{opacity:.5}
+.chk.prof{padding:6px 2px}
+.pr-result{border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--bg);display:flex;flex-direction:column;gap:6px}
+.bignum{font-family:var(--f-mono);font-size:2.6rem;font-weight:600;color:var(--accent);line-height:1}
+
+/* ===== thêm cho sổ tay Database ===== */
+.mysql{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--s2);font-weight:600;letter-spacing:.03em}
+.mysql::before{content:"";width:7px;height:7px;transform:rotate(45deg);background:var(--s2)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad)}
+.numin{font:inherit;font-family:var(--f-mono);font-size:.86rem;width:64px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 6px}
+/* storage */
+.store-diag{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+@media (max-width:560px){.store-diag{grid-template-columns:1fr}}
+.store-diag>div{display:flex;flex-direction:column;gap:8px;min-width:0}
+.sd-box{display:block;border:2px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.84rem;line-height:1.4;background:var(--surface)}
+.sd-box small{color:var(--muted)}
+.sd-box.pk{border-color:var(--accent);background:var(--accent-soft)}
+.sd-box.heap{border-color:var(--s2);border-style:dashed}
+.sd-box.sec{border-color:var(--s3)}
+/* B+Tree */
+.bt-node{fill:var(--surface);stroke:var(--line);stroke-width:1.5;transition:fill .3s,stroke .3s}
+.bt-node.hot{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5}
+.bt-node.leaf{fill:var(--bg)}
+.bt-node.leaf.hot{fill:var(--accent-soft)}
+.bt-edge{stroke:var(--line);stroke-width:1.5;fill:none;transition:stroke .3s}
+.bt-edge.hot{stroke:var(--accent);stroke-width:3}
+.bt-link{stroke:var(--s2);stroke-width:1.5;fill:none;stroke-dasharray:4 3}
+.bt-link.hot{stroke-width:3;stroke-dasharray:none}
+.anim text.bt-k{font-family:var(--f-mono);font-size:13px}
+.anim text.bt-k.hit{fill:var(--ok);font-weight:700}
+.anim text.bt-k.in{fill:var(--accent);font-weight:700}
+.anim text.bt-cap{font-size:12px;fill:var(--muted)}
+.anim text.bt-cmp{font-family:var(--f-mono);font-size:12px;fill:var(--accent);font-weight:600}
+.bt-key-bg.in{fill:var(--accent-soft)}
+.bt-key-bg{fill:transparent;transition:fill .3s}
+/* composite */
+.ci-ctrl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
+@media (max-width:760px){.ci-ctrl{grid-template-columns:1fr 1fr}}
+.ci-main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px}
+@media (max-width:860px){.ci-main{grid-template-columns:1fr}}
+.ci-idx{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface);min-width:0}
+.ci-head,.ci-row{display:grid;grid-template-columns:.7fr 1.3fr 1.2fr .8fr;gap:6px;padding:4px 10px;font-family:var(--f-mono);font-size:.76rem}
+.ci-head{background:var(--sunk);color:var(--muted);font-weight:600;padding-block:7px}
+.ci-row{border-top:1px solid var(--line);transition:background-color .3s,opacity .3s;position:relative}
+.ci-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ci-row.blk{background:var(--sunk)}
+.ci-row.seek{background:var(--accent-soft)}
+.ci-row.match{background:var(--ok-soft);font-weight:700}
+.ci-row.match::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--ok)}
+.ci-row.skip{opacity:.35}
+.ci-res{display:flex;flex-direction:column;gap:8px;min-width:0}
+.ci-res .bigline{font-family:var(--f-mono);font-size:.8rem;background:var(--code-bg);color:var(--code-ink);border-radius:8px;padding:10px 12px;overflow-wrap:anywhere}
+.ci-res .bigline b{color:var(--code-hl)}
+.ci-res .bigline .w{color:var(--code-warn)}
+.ci-cols{display:flex;gap:6px;flex-wrap:wrap}
+.ci-cols span{font-family:var(--f-mono);font-size:.74rem;padding:3px 8px;border-radius:6px;border:1px solid var(--line)}
+.ci-cols span.use{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ci-cols span.flt{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.ci-cols span.no{background:var(--sunk);color:var(--muted);text-decoration:line-through}
+/* tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:8px;padding:7px 12px;font-size:.86rem;display:flex;flex-direction:column;align-items:flex-start;gap:0;line-height:1.3;text-align:left}
+.tabs button b{font-family:var(--f-mono);font-size:.78rem;color:var(--ink)}
+.tabs button small{font-family:var(--f-mono);font-size:.72rem}
+.tabs button[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);box-shadow:inset 0 -3px 0 var(--accent)}
+#ex-panel{display:flex;flex-direction:column;gap:10px}
+.ex-badges{display:flex;gap:8px;flex-wrap:wrap}
+.ex-badges span{font-family:var(--f-mono);font-size:.76rem;border-radius:999px;padding:3px 10px;background:var(--sunk)}
+.ex-badges span.good{background:var(--ok-soft);color:var(--ok);font-weight:700}
+.ex-badges span.bad{background:var(--bad-soft);color:var(--bad);font-weight:700}
+.ex-notes{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:.92rem}
+/* no-index cards */
+.noidx{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.noidx{grid-template-columns:1fr}}
+.ni{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.ni h4{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ni h4 .n{font-family:var(--f-mono);font-size:.74rem;width:24px;height:24px;border-radius:50%;background:var(--bad-soft);color:var(--bad);display:flex;align-items:center;justify-content:center;flex:none}
+.ni pre.code{margin:0;font-size:.74rem}
+.ni-vs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ni-vs div{border-radius:7px;padding:6px 10px;font-size:.82rem;min-width:0}
+.ni-vs div b{display:block;font-family:var(--f-mono);font-size:1rem}
+.ni-vs .bad{background:var(--bad-soft);color:var(--bad)}
+.ni-vs .good{background:var(--ok-soft);color:var(--ok)}
+.ni-vs div small{color:var(--ink);opacity:.8;font-size:.74rem}
+.ni-bar{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden;margin-top:4px}
+.ni-bar i{display:block;height:100%;background:currentColor;border-radius:4px;width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.ni p{font-size:.9rem}
+/* ACID */
+.acid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.acid{grid-template-columns:1fr}}
+.acid .card{position:relative;padding-left:66px}
+.acid-l{position:absolute;left:14px;top:14px;width:40px;height:40px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:1.3rem;display:flex;align-items:center;justify-content:center}
+/* isolation */
+.is-lanes{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.is-head,.is-step{display:grid;grid-template-columns:minmax(0,1fr) 120px minmax(0,1fr);gap:8px;padding:6px 10px;align-items:center}
+@media (max-width:560px){.is-head,.is-step{grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr)}}
+.is-head{background:var(--sunk);font-size:.78rem;font-weight:700;color:var(--muted)}
+.is-head span:nth-child(2){text-align:center}
+.is-step{border-top:1px solid var(--line);font-family:var(--f-mono);font-size:.76rem;min-height:38px}
+.is-step>div{min-width:0;overflow-wrap:anywhere}
+.is-step .op{padding:5px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg)}
+.is-step .op.a{border-color:var(--s1)} .is-step .op.b{border-color:var(--s2)}
+.is-step .op .r{display:block;font-weight:700;margin-top:2px}
+.is-step .op.err{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.is-step .op.blk{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.is-step .op.anom .r{color:var(--bad)}
+.is-step .op.okv .r{color:var(--ok)}
+.is-step .db{text-align:center;font-weight:700;color:var(--muted);font-size:.72rem}
+.is-step.new{animation:isin .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes isin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+td.y{color:var(--bad);font-weight:700}
+td.nn{color:var(--ok);font-weight:700}
+td.mid{color:var(--warn);font-weight:700}
+#is-matrix tr.cur td{background:var(--accent-soft)}
+/* MVCC */
+.mv-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.mv-grid{grid-template-columns:1fr}}
+.mv-t{font-size:.8rem;color:var(--muted);margin-bottom:8px}
+.mv-heap,.mv-txs{display:flex;flex-direction:column;gap:8px;min-height:90px}
+.tup{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:6px;align-items:center;border:2px solid var(--line);border-radius:8px;padding:8px 10px;font-family:var(--f-mono);font-size:.76rem;background:var(--surface);transition:border-color .3s,background-color .3s,opacity .3s}
+.tup .v{font-weight:800;font-size:.9rem}
+.tup span small{display:block;color:var(--muted);font-size:.66rem}
+.tup.live{border-color:var(--ok)}
+.tup.dead{border-style:dashed;opacity:.7}
+.tup.pend{border-color:var(--accent);border-style:dashed}
+.txc{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);font-size:.84rem}
+.txc b{font-family:var(--f-mono)}
+.txc .sees{font-family:var(--f-mono);font-size:.76rem}
+.txc.act{border-color:var(--accent);background:var(--accent-soft)}
+.txc.done{opacity:.55}
+.see{display:inline-block;padding:0 6px;border-radius:4px;background:var(--ok-soft);color:var(--ok);font-weight:700}
+/* gap lock */
+.gl-rec{fill:var(--surface);stroke:var(--ink);stroke-width:2}
+.gl-rec.lk{fill:var(--bad-soft);stroke:var(--bad)}
+.gl-gap{fill:transparent;stroke:none}
+.gl-gap.lk{fill:var(--bad-soft);opacity:.75}
+.anim text.gl-v{font-family:var(--f-mono);font-weight:700;font-size:14px}
+.anim text.gl-c{font-size:11px;fill:var(--muted)}
+.gl-ins{transition:transform .5s}
+/* N+1 */
+.np-grid{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:12px}
+@media (max-width:640px){.np-grid{grid-template-columns:1fr}}
+.np-stat{display:flex;flex-direction:column;gap:8px}
+@media (max-width:640px){.np-stat{flex-direction:row}}
+.np-stat .stat b{font-size:1.6rem}
+.simlog .s{color:var(--code-str)}
+.simlog .d{color:var(--code-dim)}
+/* hikari */
+.hp-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:640px){.hp-grid{grid-template-columns:1fr}}
+.hp-slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.slot{height:42px;border-radius:7px;border:2px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.68rem;color:var(--muted);position:relative;overflow:hidden;transition:background-color .2s,border-color .2s}
+.slot.busy{border-style:solid;border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.slot i{position:absolute;left:0;bottom:0;height:4px;background:var(--accent);transition:width .05s linear}
+.hp-queue{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;min-height:96px;max-height:150px;overflow:hidden}
+.qd{width:16px;height:16px;border-radius:4px;background:var(--warn-soft);border:1px solid var(--warn);position:relative;overflow:hidden}
+.qd i{position:absolute;left:0;bottom:0;width:100%;background:var(--warn)}
+.qd.to{background:var(--bad);border-color:var(--bad)}
+.ci-ctrl .field{min-width:0}
+.ci-ctrl .sel{width:100%;min-width:0}
+.sim-ctrl label{flex-wrap:wrap;max-width:100%;min-width:0}
+.sim-ctrl .sel{max-width:100%;min-width:0}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="toc" aria-label="Mục lục">
+  <div class="brand">Sổ tay Database</div>
+  <ol id="toc">
+    <li><a href="#map"><span>00</span>Bản đồ và cách học</a></li>
+    <li><a href="#storage"><span>01</span>Dữ liệu nằm trên đĩa thế nào</a></li>
+    <li><a href="#btree"><span>02</span>B+Tree</a></li>
+    <li><a href="#composite"><span>03</span>Composite index</a></li>
+    <li><a href="#explain"><span>04</span>Đọc EXPLAIN</a></li>
+    <li><a href="#noindex"><span>05</span>Khi index bị bỏ qua</a></li>
+    <li><a href="#cost"><span>06</span>Cái giá của index</a></li>
+    <li><a href="#acid"><span>07</span>Transaction và ACID</a></li>
+    <li><a href="#iso"><span>08</span>Isolation level</a></li>
+    <li><a href="#mvcc"><span>09</span>MVCC</a></li>
+    <li><a href="#locks"><span>10</span>Lock và gap lock</a></li>
+    <li><a href="#deadlock"><span>11</span>Deadlock trong DB</a></li>
+    <li><a href="#paging"><span>12</span>Phân trang</a></li>
+    <li><a href="#jpa"><span>13</span>JPA, N+1 và batch</a></li>
+    <li><a href="#pool"><span>14</span>Connection pool</a></li>
+    <li><a href="#design"><span>15</span>Thiết kế schema</a></li>
+    <li><a href="#interview"><span>16</span>Câu hỏi phỏng vấn</a></li>
+    <li><a href="#lab"><span>17</span>Lab và câu chuyện 13 s</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero" id="top">
+  <div class="eyebrow">PostgreSQL 16 · MySQL InnoDB · JPA</div>
+  <h1>Sổ tay Database chuyên sâu</h1>
+  <p class="lede">Index, EXPLAIN, transaction, isolation, MVCC, lock, deadlock, phân trang, N+1 và connection pool. Mọi kết quả có nhãn <span class="real">ĐO THẬT</span> chạy trên PostgreSQL 16 với bảng <code>orders</code> 2 triệu dòng mình tự dựng. Hành vi riêng của MySQL InnoDB (gap lock, mức isolation mặc định…) gắn nhãn <span class="mysql">MYSQL</span>, viết theo tài liệu chính thức.</p>
+  <div class="facts"><span>2 000 000 dòng thật</span><span>9 hình động và mô phỏng</span><span>3 biểu đồ số đo</span><span>18 chương</span><span>40 câu hỏi phỏng vấn</span></div>
+</header>
+
+<!-- 00 -->
+<section class="ch" id="map">
+  <div class="ch-head"><div class="eyebrow">Chương 00</div><h2>Bản đồ và cách học</h2>
+    <p>Hai câu hỏi lớn của database trong phỏng vấn backend: <b>làm sao đọc nhanh</b> (index, query plan) và <b>làm sao ghi đúng khi nhiều người cùng ghi</b> (transaction, isolation, lock).</p></div>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Tầng</th><th>Họ kiểm tra</th><th>Chương</th></tr></thead>
+    <tbody>
+      <tr><td><b>1. Index</b></td><td>B+Tree, composite, covering, EXPLAIN, khi nào index vô dụng</td><td>01 – 06</td></tr>
+      <tr><td><b>2. Đúng đắn</b></td><td>ACID, isolation, MVCC, lock, deadlock</td><td>07 – 11</td></tr>
+      <tr><td><b>3. Thực chiến với Spring</b></td><td>Phân trang, N+1, batch insert, connection pool, thiết kế schema</td><td>12 – 15</td></tr>
+      <tr><td><b>4. Câu chuyện của bạn</b></td><td>"Bạn đã tối ưu query nào? Đo thế nào?"</td><td>17</td></tr>
+    </tbody></table></div>
+  <div class="callout warn"><b class="t">Câu chuyện 13 s → 100 ms trong CV sẽ được hỏi tới tận đáy</b>Interviewer sẽ đi: vì sao chậm → bạn đọc EXPLAIN thấy gì → vì sao chọn thứ tự cột đó → index có làm chậm ghi không → nếu vẫn chậm thì làm gì tiếp (covering index, phân trang keyset, cache). Sổ tay này trả lời từng tầng bằng số đo thật; chương 17 gói lại thành câu trả lời hoàn chỉnh.</div>
+</section>
+
+<!-- 01 -->
+<section class="ch" id="storage">
+  <div class="ch-head"><div class="eyebrow">Chương 01</div><h2>Dữ liệu nằm trên đĩa thế nào</h2>
+    <p>Mọi thứ về hiệu năng database quy về một câu: <b>đọc ít trang (page) nhất có thể</b>. Đĩa và bộ nhớ trao đổi theo trang, không theo dòng.</p></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Page: đơn vị nhỏ nhất</h4>
+      <ul><li>PostgreSQL: trang <b>8 KB</b>. MySQL InnoDB: trang <b>16 KB</b>.</li><li>Muốn đọc 1 dòng, database phải nạp cả trang chứa nó vào bộ nhớ (buffer pool / shared buffers).</li><li>Bảng <code>orders</code> 2 triệu dòng của mình nặng <b>146 MB</b> ≈ 18 700 trang. Quét toàn bảng = đọc hết số trang đó.</li><li>Trong EXPLAIN của PostgreSQL, dòng <code>Buffers: shared hit=2343 read=16388</code> chính là số trang: <i>hit</i> có sẵn trong RAM, <i>read</i> phải đọc từ đĩa. Cộng lại 18 731 trang, đúng bằng cả bảng. Với covering index, cùng câu query chỉ đọc <b>4 trang</b>.</li></ul></div>
+    <div class="card prose"><h4>Clustered index (InnoDB) và heap (PostgreSQL)</h4>
+      <div class="store-diag">
+        <div><b>MySQL InnoDB</b><span class="sd-box pk">Cây B+Tree của PRIMARY KEY<br><small>lá chứa <b>cả dòng dữ liệu</b></small></span><span class="sd-box sec">Secondary index (user_id)<br><small>lá chứa user_id + <b>giá trị PK</b></small></span><small class="cap">Tìm qua secondary index: lấy PK rồi đi cây PK lần nữa (lookup lần 2)</small></div>
+        <div><b>PostgreSQL</b><span class="sd-box heap">Heap: các dòng nằm rời, không theo thứ tự<br><small>mỗi dòng có địa chỉ ctid (trang, vị trí)</small></span><span class="sd-box sec">Mọi index (kể cả PK)<br><small>lá chứa khoá + <b>ctid</b></small></span><small class="cap">Mọi index đều trỏ thẳng vào heap</small></div>
+      </div></div>
+  </div>
+  <div class="callout"><b class="t">Hệ quả thực tế của clustered index trong MySQL</b>(1) Khoá chính nên <b>ngắn và tăng dần</b>: mọi secondary index đều chứa bản sao PK, PK dài làm mọi index phình theo. (2) PK ngẫu nhiên như UUIDv4 khiến dòng mới chèn vào giữa cây, gây <b>tách trang</b> liên tục và phân mảnh; dùng <code>BIGINT AUTO_INCREMENT</code> hoặc UUID có thứ tự thời gian (UUIDv7, ULID). (3) Index chứa đủ cột cần đọc thì không phải "lookup lần 2": đó là <b>covering index</b> (chương 04).</div>
+</section>
+
+<!-- 02 -->
+<section class="ch" id="btree">
+  <div class="ch-head"><div class="eyebrow">Chương 02</div><h2>B+Tree: cấu trúc của gần như mọi index</h2>
+    <p>Nhập một giá trị để xem database đi từ gốc xuống lá, hoặc nhập một khoảng để xem nó chạy dọc theo chuỗi lá.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Vì sao index dùng B+Tree mà không dùng cây nhị phân hay hash?</li><li>B+Tree khác B-Tree thế nào?</li><li>Bảng vài triệu dòng thì tìm một dòng qua index mất mấy lần đọc?</li></ul></div>
+  <div class="card sim" id="bt">
+    <div class="sim-ctrl">
+      <label for="bt-key">Tìm giá trị <input type="number" id="bt-key" class="numin" value="44" min="1" max="99"></label>
+      <button class="btn primary" type="button" id="bt-find">Tìm</button>
+      <span class="cap">hoặc</span>
+      <label for="bt-from">Khoảng <input type="number" id="bt-from" class="numin" value="24" min="1" max="99"></label>
+      <label for="bt-to">đến <input type="number" id="bt-to" class="numin" value="52" min="1" max="99"></label>
+      <button class="btn" type="button" id="bt-range">Quét khoảng</button>
+    </div>
+    <div class="anim"><svg id="bt-svg" viewBox="0 0 960 300" role="img" aria-label="Cây B+Tree ba tầng"></svg></div>
+    <div class="verdict" id="bt-verdict" style="display:none"></div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Vì sao là B+Tree</h4>
+      <ul><li><b>Rất "béo", rất "thấp":</b> mỗi nút là một trang chứa hàng trăm khoá, nên cây chỉ cao 3–4 tầng cho hàng trăm triệu dòng. Cây nhị phân cân bằng với 2 triệu dòng cao khoảng 21 tầng, tức 21 lần đọc trang.</li><li><b>Dữ liệu chỉ ở lá, các lá nối thành chuỗi:</b> tìm khoảng (<code>BETWEEN</code>, <code>&gt;</code>, <code>ORDER BY</code>) chỉ cần tìm điểm đầu rồi chạy dọc chuỗi lá. B-Tree thường để dữ liệu cả ở nút trong nên quét khoảng phải đi lên đi xuống.</li><li><b>Hash index</b> tìm bằng đúng O(1) nhưng không hỗ trợ khoảng, không sắp xếp được, không dùng được tiền tố của composite index.</li></ul></div>
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Index thật trên bảng 2 triệu dòng</h4>
+      <div class="tblwrap"><table><thead><tr><th>Index</th><th>Số tầng</th><th>Kích thước</th></tr></thead><tbody>
+        <tr><td><code>orders_pkey (id)</code></td><td class="n">3</td><td class="n">43 MB</td></tr>
+        <tr><td><code>(status)</code></td><td class="n">3</td><td class="n">13 MB</td></tr>
+        <tr><td><code>(created_at)</code></td><td class="n">3</td><td class="n">43 MB</td></tr>
+        <tr><td><code>(user_id, status, created_at)</code></td><td class="n">3</td><td class="n">77 MB</td></tr>
+        <tr><td><code>… INCLUDE (id, restaurant_id, total_amount)</code></td><td class="n">3</td><td class="n">112 MB</td></tr>
+      </tbody></table></div>
+      <p class="cap" style="margin-top:8px">Đọc bằng <code>bt_metap()</code> của extension pageinspect. Mọi index đều chỉ 3 tầng: tìm một dòng trong 2 triệu dòng chỉ đọc 3 trang index. Bảng thì nặng 146 MB; các index cộng lại còn nặng hơn bảng.</p></div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section class="ch" id="composite">
+  <div class="ch-head"><div class="eyebrow">Chương 03</div><h2>Composite index và quy tắc leftmost prefix</h2>
+    <p>Index nhiều cột được sắp theo cột 1, rồi cột 2 trong cùng giá trị cột 1, rồi cột 3… giống danh bạ sắp theo họ rồi tên. Chọn điều kiện bên dưới để xem index tìm được khúc nào.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Index (a, b, c): query lọc theo b có dùng được không? Lọc a và c thì sao?</li><li>Chọn thứ tự cột trong composite index thế nào?</li><li>Vì sao cột so sánh khoảng nên để cuối?</li></ul></div>
+  <div class="card sim" id="ci">
+    <div class="ci-ctrl">
+      <div class="field"><label for="ci-u">user_id</label><select id="ci-u" class="sel"><option value="102">= 102</option><option value="">không lọc</option></select></div>
+      <div class="field"><label for="ci-s">status</label><select id="ci-s" class="sel"><option value="COMPLETED">= 'COMPLETED'</option><option value="">không lọc</option></select></div>
+      <div class="field"><label for="ci-c">created_at</label><select id="ci-c" class="sel"><option value="">không lọc</option><option value="2026-03-01">&gt;= '2026-03-01'</option></select></div>
+      <div class="field"><label class="chk"><input type="checkbox" id="ci-o" checked> ORDER BY created_at DESC</label></div>
+    </div>
+    <div class="ci-main">
+      <div class="ci-idx"><div class="ci-head"><span>user_id</span><span>status</span><span>created_at</span><span>→ dòng</span></div><div id="ci-rows"></div></div>
+      <div class="ci-res" id="ci-res"></div>
+    </div>
+  </div>
+  <div class="prose">
+    <h3>Ba quy tắc chọn thứ tự cột</h3>
+    <ol>
+      <li><b>Cột lọc bằng (<code>=</code>, <code>IN</code>) đứng trước, cột lọc khoảng (<code>&gt;</code>, <code>BETWEEN</code>, <code>LIKE 'x%'</code>) đứng sau.</b> Sau một cột khoảng, các cột phía sau không còn dùng để thu hẹp tìm kiếm.</li>
+      <li><b>Cột dùng để sắp xếp đặt ngay sau các cột lọc bằng</b>, để index trả dữ liệu đúng thứ tự, không cần sort (MySQL: hết <code>Using filesort</code>).</li>
+      <li><b>Giữa các cột lọc bằng, ưu tiên theo câu hỏi nào hay dùng nhất</b> để một index phục vụ được nhiều query qua tiền tố. Lời khuyên "cột chọn lọc cao đứng trước" chỉ đúng khi các yếu tố khác ngang nhau.</li>
+    </ol>
+    <p>Index <code>(user_id, status, created_at)</code> phục vụ được: <code>user_id</code>; <code>user_id + status</code>; <code>user_id + status + created_at</code>; và <code>user_id</code> kèm <code>ORDER BY status</code>. Không phục vụ được: chỉ <code>status</code>; chỉ <code>created_at</code>; <code>status + created_at</code>.</p>
+  </div>
+  <div class="callout"><b class="t">MySQL 8 có skip scan</b><span class="mysql">MYSQL</span> Từ 8.0.13, khi cột đầu có rất ít giá trị khác nhau, MySQL có thể "nhảy" qua từng giá trị cột đầu để dùng cột thứ hai (EXPLAIN ghi <code>Using index for skip scan</code>). Không nên dựa vào nó khi thiết kế; coi như điểm cộng khi được hỏi.</div>
+</section>
+
+<!-- 04 -->
+<section class="ch" id="explain">
+  <div class="ch-head"><div class="eyebrow">Chương 04</div><h2>Đọc EXPLAIN</h2>
+    <p>Cùng một câu query lấy 20 đơn mới nhất của một khách, chạy trên 2 triệu dòng với bốn cách đánh index khác nhau.</p></div>
+<pre class="code"><span class="h">SELECT</span> id, restaurant_id, total_amount, created_at
+<span class="h">FROM</span> orders
+<span class="h">WHERE</span> user_id = 16308 <span class="h">AND</span> status = <span class="s">'COMPLETED'</span>
+<span class="h">ORDER BY</span> created_at <span class="h">DESC</span>
+<span class="h">LIMIT</span> 20;</pre>
+  <div class="card"><span class="real">ĐO THẬT</span><div class="chart-title" style="margin-top:6px">Thời gian thực thi theo từng cách đánh index</div><p class="cap">mili giây, thang log, PostgreSQL 16, dữ liệu đã nằm trong RAM</p><div class="chart" id="ch-explain"></div></div>
+  <div class="tabs" id="ex-tabs" role="tablist"></div>
+  <div class="card" id="ex-panel"></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Các nút hay gặp trong plan của PostgreSQL</h4>
+      <ul><li><b>Seq Scan</b>: đọc cả bảng. <b>Parallel Seq Scan</b>: chia cho nhiều worker.</li><li><b>Index Scan</b>: đi cây index rồi lấy dòng trong heap.</li><li><b>Index Only Scan</b>: đủ dữ liệu trong index, <code>Heap Fetches: 0</code> là không đụng tới bảng.</li><li><b>Bitmap Index/Heap Scan</b>: gom địa chỉ từ index rồi đọc heap theo thứ tự trang, dùng khi nhiều dòng khớp.</li><li><b>Sort</b> (<code>top-N heapsort</code>, <code>external merge</code> khi tràn ra đĩa).</li><li>Join: <b>Nested Loop</b> (ít dòng, có index), <b>Hash Join</b> (nhiều dòng), <b>Merge Join</b> (cả hai đã sắp xếp).</li></ul></div>
+    <div class="card prose"><h4>EXPLAIN của MySQL <span class="mysql">MYSQL</span></h4>
+      <div class="tblwrap"><table><thead><tr><th>Cột</th><th>Giá trị cần nhớ</th></tr></thead><tbody>
+        <tr><td><code>type</code></td><td>Tốt → xấu: <code>const</code>, <code>eq_ref</code>, <code>ref</code>, <code>range</code>, <code>index</code> (quét cả index), <code>ALL</code> (quét cả bảng)</td></tr>
+        <tr><td><code>key</code></td><td>Index thực sự được dùng; <code>NULL</code> là không dùng</td></tr>
+        <tr><td><code>rows</code></td><td>Ước lượng số dòng phải đọc</td></tr>
+        <tr><td><code>Extra</code></td><td><code>Using index</code> (covering), <code>Using where</code>, <code>Using filesort</code>, <code>Using temporary</code>, <code>Using index condition</code> (ICP)</td></tr>
+      </tbody></table></div>
+      <p><code>EXPLAIN ANALYZE</code> (MySQL 8.0.18+) chạy thật và in thời gian từng bước giống PostgreSQL.</p></div>
+  </div>
+  <div class="callout warn"><b class="t">EXPLAIN và EXPLAIN ANALYZE khác nhau</b><code>EXPLAIN</code> chỉ in kế hoạch và <b>ước lượng</b>. <code>EXPLAIN ANALYZE</code> <b>chạy thật</b> câu lệnh và in số liệu thật, nên đừng chạy nó với <code>UPDATE</code>/<code>DELETE</code> trên production ngoài một transaction rồi rollback. Khi ước lượng (<code>rows</code>) lệch xa số thật, thống kê đã cũ: chạy <code>ANALYZE</code> (PostgreSQL) hoặc <code>ANALYZE TABLE</code> (MySQL).</div>
+</section>
+
+<!-- 05 -->
+<section class="ch" id="noindex">
+  <div class="ch-head"><div class="eyebrow">Chương 05</div><h2>Khi index tồn tại mà không được dùng</h2>
+    <p>Phần hay bị hỏi xoáy nhất. Mỗi thẻ có câu query thật, kết quả đo và cách sửa.</p></div>
+  <div class="noidx" id="noidx"></div>
+</section>
+
+<!-- 06 -->
+<section class="ch" id="cost">
+  <div class="ch-head"><div class="eyebrow">Chương 06</div><h2>Cái giá của index</h2>
+    <p>Index làm đọc nhanh, nhưng mỗi lần ghi phải cập nhật mọi index của bảng.</p></div>
+  <div class="card"><span class="real">ĐO THẬT</span><div class="chart-title" style="margin-top:6px">INSERT 300 000 dòng vào bảng 7 cột</div><p class="cap">mili giây, theo số index phụ (ngoài khoá chính)</p><div class="chart" id="ch-cost"></div>
+    <p class="cap" style="margin-top:6px">Mỗi index thêm vào làm thời gian ghi tăng gần tuyến tính: 6 index phụ chậm hơn 7 lần so với không có index nào. Thêm vào đó dung lượng: các index của bảng <code>orders</code> nặng hơn chính bảng.</p></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Dọn index thừa</h4>
+<pre class="code"><span class="c">-- PostgreSQL: index chưa từng được dùng kể từ lần reset thống kê</span>
+<span class="h">SELECT</span> indexrelname, idx_scan, pg_size_pretty(pg_relation_size(indexrelid))
+<span class="h">FROM</span> pg_stat_user_indexes <span class="h">WHERE</span> idx_scan = 0;
+
+<span class="c">-- MySQL (sys schema)</span>
+<span class="h">SELECT</span> * <span class="h">FROM</span> sys.schema_unused_indexes;
+<span class="h">SELECT</span> * <span class="h">FROM</span> sys.schema_redundant_indexes;</pre>
+      <p>Index <code>(user_id)</code> là thừa khi đã có <code>(user_id, status, created_at)</code>: mọi query dùng được cái trước đều dùng được cái sau.</p></div>
+    <div class="card prose"><h4>Khi nào đánh index</h4>
+      <ul><li>Cột trong <code>WHERE</code>, <code>JOIN</code>, <code>ORDER BY</code> của các query chạy nhiều hoặc chậm.</li><li>Khoá ngoại: PostgreSQL <b>không tự</b> tạo index cho cột khoá ngoại (MySQL InnoDB thì có). Thiếu index này làm <code>DELETE</code> bảng cha và join chậm.</li><li>Không đánh: bảng rất nhỏ, cột ít giá trị khác nhau đứng một mình, bảng ghi rất nhiều mà hiếm khi đọc theo cột đó.</li><li>Tạo index trên bảng đang chạy: PostgreSQL dùng <code>CREATE INDEX CONCURRENTLY</code> để không khoá ghi; MySQL 8 tạo index online (<code>ALGORITHM=INPLACE, LOCK=NONE</code>).</li></ul></div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section class="ch" id="acid">
+  <div class="ch-head"><div class="eyebrow">Chương 07</div><h2>Transaction và ACID</h2>
+    <p>Bốn cam kết của một transaction, và cơ chế thật đứng sau từng cam kết.</p></div>
+  <div class="acid">
+    <div class="card prose"><div class="acid-l">A</div><h4>Atomicity: tất cả hoặc không</h4><p>Hoặc mọi câu lệnh trong transaction có hiệu lực, hoặc không câu nào. Cơ chế: InnoDB dùng <b>undo log</b> để hoàn tác; PostgreSQL đơn giản là phiên bản mới của transaction bị huỷ sẽ không bao giờ được coi là "đã commit" (MVCC).</p></div>
+    <div class="card prose"><div class="acid-l">C</div><h4>Consistency: luôn đúng ràng buộc</h4><p>Dữ liệu đi từ trạng thái hợp lệ này sang trạng thái hợp lệ khác: khoá chính, khoá ngoại, <code>CHECK</code>, <code>UNIQUE</code>. Phần lớn là trách nhiệm của <b>bạn</b> khi thiết kế ràng buộc; database chỉ bảo vệ những gì bạn khai báo.</p></div>
+    <div class="card prose"><div class="acid-l">I</div><h4>Isolation: chạy cùng lúc như chạy lần lượt</h4><p>Mức độ các transaction đồng thời thấy nhau. Có 4 mức, đổi tính đúng đắn lấy hiệu năng (chương 08). Cơ chế: MVCC và lock.</p></div>
+    <div class="card prose"><div class="acid-l">D</div><h4>Durability: đã commit là không mất</h4><p>Ghi vào <b>log ghi trước</b> (WAL của PostgreSQL, redo log của InnoDB) và <code>fsync</code> xuống đĩa trước khi báo commit thành công. Trang dữ liệu thật được ghi sau. Mất điện thì phát lại log.</p></div>
+  </div>
+  <div class="callout"><b class="t">Cấu hình đổi độ bền lấy tốc độ</b><span class="mysql">MYSQL</span> <code>innodb_flush_log_at_trx_commit = 1</code> (mặc định, an toàn nhất), <code>2</code> hoặc <code>0</code> nhanh hơn nhưng có thể mất khoảng 1 giây giao dịch khi sập. PostgreSQL: <code>synchronous_commit = off</code> tương tự. Trên AWS RDS/Aurora nên giữ mặc định cho dữ liệu tiền và điểm thưởng.</div>
+</section>
+
+<!-- 08 -->
+<section class="ch" id="iso">
+  <div class="ch-head"><div class="eyebrow">Chương 08</div><h2>Isolation level và các hiện tượng</h2>
+    <p>Chọn hiện tượng, mức isolation và loại database, rồi xem hai transaction A và B chạy xen kẽ từng bước. Kết quả của PostgreSQL là <b>đo thật</b>; MySQL theo tài liệu InnoDB.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Có mấy mức isolation? Mỗi mức chặn hiện tượng nào?</li><li>Mức mặc định của MySQL và PostgreSQL là gì?</li><li>Lost update là gì? Chặn bằng cách nào?</li><li>Write skew là gì?</li></ul></div>
+  <div class="card sim" id="is">
+    <div class="ci-ctrl">
+      <div class="field"><label for="is-sc">Hiện tượng</label><select id="is-sc" class="sel"><option value="dirty">Dirty read</option><option value="nonrep" selected>Non-repeatable read</option><option value="phantom">Phantom read</option><option value="lost">Lost update (đọc rồi ghi)</option><option value="skew">Write skew</option></select></div>
+      <div class="field"><label for="is-lv">Isolation level</label><select id="is-lv" class="sel"><option value="RU">READ UNCOMMITTED</option><option value="RC" selected>READ COMMITTED</option><option value="RR">REPEATABLE READ</option><option value="SER">SERIALIZABLE</option></select></div>
+      <div class="field"><label for="is-db">Database</label><select id="is-db" class="sel"><option value="pg">PostgreSQL 16 (đo thật)</option><option value="my">MySQL InnoDB</option></select></div>
+      <div class="field"><button class="btn primary" type="button" id="is-run">Chạy</button></div>
+    </div>
+    <div class="is-lanes"><div class="is-head"><span>Transaction A</span><span>Dữ liệu</span><span>Transaction B</span></div><div id="is-steps"></div></div>
+    <div class="verdict" id="is-verdict" style="display:none"></div>
+  </div>
+  <div class="tblwrap"><table><thead><tr><th>Mức</th><th>Dirty read</th><th>Non-repeatable</th><th>Phantom</th><th>Lost update (đọc rồi ghi)</th><th>Write skew</th></tr></thead><tbody id="is-matrix"></tbody></table></div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Rút 100 và 200 cùng lúc từ tài khoản 1 000 (đúng: 700)</h4>
+<pre class="code">[READ COMMITTED]  balance = <span class="w">800</span>   A commit, B commit
+[REPEATABLE READ] balance = 900   B LỖI: <span class="w">could not serialize access
+                                   due to concurrent update</span>
+[SELECT ... FOR UPDATE]   = <span class="h">700</span>   A commit, B commit
+[UPDATE balance = balance - x] = <span class="h">700</span></pre>
+      <p class="cap" style="margin-top:8px">Đọc số dư ra ứng dụng, tính, rồi ghi lại là mẫu gây lost update. Ở READ COMMITTED mất lặng lẽ 200; ở REPEATABLE READ của PostgreSQL bị chặn bằng lỗi và ứng dụng phải thử lại. Hai cách sửa luôn đúng: khoá dòng trước khi đọc, hoặc cập nhật nguyên tử trong một câu.</p></div>
+    <div class="card prose"><h4>Mặc định và khác biệt quan trọng</h4>
+      <ul><li><b>PostgreSQL:</b> mặc định READ COMMITTED (đo thật: <code>show transaction_isolation</code> → <code>read committed</code>). READ UNCOMMITTED được chấp nhận nhưng chạy như READ COMMITTED: không bao giờ có dirty read.</li><li><span class="mysql">MYSQL</span> <b>InnoDB:</b> mặc định <b>REPEATABLE READ</b>. Ở mức này, SELECT thường đọc snapshot, nhưng UPDATE/DELETE và <code>SELECT … FOR UPDATE</code> đọc <b>bản mới nhất</b> (current read), nên mẫu đọc rồi ghi vẫn bị lost update mà không có lỗi nào.</li><li>Spring: <code>@Transactional(isolation = …)</code>; mặc định <code>DEFAULT</code> là theo database.</li></ul></div>
+  </div>
+</section>
+
+<!-- 09 -->
+<section class="ch" id="mvcc">
+  <div class="ch-head"><div class="eyebrow">Chương 09</div><h2>MVCC: đọc không chặn ghi</h2>
+    <p>Thay vì khoá dòng khi đọc, database giữ <b>nhiều phiên bản</b> của dòng. Mỗi transaction nhìn thấy phiên bản phù hợp với "ảnh chụp" (snapshot) của nó.</p></div>
+  <div class="card sim" id="mv">
+    <div class="mv-grid">
+      <div><h4 class="mv-t">Các phiên bản vật lý của dòng id = 1</h4><div id="mv-heap" class="mv-heap"></div></div>
+      <div><h4 class="mv-t">Các transaction</h4><div id="mv-tx" class="mv-txs"></div></div>
+    </div>
+    <div class="lc-detail" id="mv-note"></div>
+    <div class="sim-ctrl"><button class="btn" type="button" id="mv-prev">Bước trước</button><button class="btn primary" type="button" id="mv-next">Bước tiếp</button><button class="btn" type="button" id="mv-auto">Tự chạy</button></div>
+  </div>
+  <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Nhìn tận mắt hai phiên bản trong trang dữ liệu</h4>
+<pre class="code"><span class="c">-- trước UPDATE</span>
+SELECT xmin, xmax, ctid, * FROM mv;   → ('783', '0', '(0,1)', 1, 100)
+
+<span class="c">-- A (REPEATABLE READ) đọc 100; B UPDATE balance = 200 và COMMIT; A đọc lại:</span>
+A đọc lại → <span class="h">100</span>                        <span class="c">-- vẫn thấy bản cũ</span>
+SELECT xmin, xmax, ctid, * FROM mv;   → ('784', '0', '(0,2)', 1, 200)
+
+<span class="c">-- pageinspect: trang 0 đang chứa CẢ HAI bản</span>
+heap_page_items → [(1, xmin=783, xmax=<span class="w">784</span>, ctid=(0,2)),   <span class="c">-- bản cũ, bị transaction 784 "xoá"</span>
+                   (2, xmin=<span class="h">784</span>, xmax=0,   ctid=(0,2))]   <span class="c">-- bản mới</span></pre></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Cái giá của MVCC</h4>
+      <ul><li><b>PostgreSQL:</b> UPDATE = tạo dòng mới + đánh dấu dòng cũ. Dòng cũ thành "dead tuple", <b>VACUUM</b> (autovacuum) dọn sau. Bảng update liên tục mà vacuum không theo kịp sẽ <b>phình (bloat)</b>.</li><li><span class="mysql">MYSQL</span> <b>InnoDB:</b> cập nhật tại chỗ, bản cũ nằm trong <b>undo log</b>; thread purge dọn sau.</li><li>Ở cả hai: <b>transaction để mở rất lâu</b> giữ snapshot cũ, khiến không dọn được phiên bản nào mới hơn nó. Một job batch mở transaction 2 tiếng có thể làm cả database chậm dần.</li></ul></div>
+    <div class="card prose"><h4>Snapshot được chụp khi nào</h4>
+      <ul><li><b>READ COMMITTED:</b> mỗi <b>câu lệnh</b> một snapshot mới, nên thấy dữ liệu người khác vừa commit (non-repeatable read).</li><li><b>REPEATABLE READ:</b> một snapshot cho <b>cả transaction</b>, chụp ở câu lệnh đầu tiên (không phải lúc <code>BEGIN</code>).</li><li>MySQL gọi snapshot là <b>read view</b>; câu <code>START TRANSACTION WITH CONSISTENT SNAPSHOT</code> chụp ngay lập tức.</li></ul></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="ch" id="locks">
+  <div class="ch-head"><div class="eyebrow">Chương 10</div><h2>Lock: row lock, gap lock và next-key lock</h2>
+    <p>MVCC lo phần đọc; khi hai transaction cùng <b>ghi</b> một dòng thì vẫn phải dùng khoá.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>SELECT … FOR UPDATE khác FOR SHARE thế nào?</li><li>Gap lock là gì? Vì sao MySQL REPEATABLE READ cần nó?</li><li>Optimistic và pessimistic lock ở tầng DB?</li></ul></div>
+  <div class="tblwrap"><table><thead><tr><th>Câu lệnh</th><th>Khoá</th><th>Người khác đọc thường (MVCC)</th><th>Người khác FOR UPDATE / UPDATE</th></tr></thead><tbody>
+    <tr><td><code>SELECT …</code></td><td>Không khoá</td><td>Được</td><td>Được</td></tr>
+    <tr><td><code>SELECT … FOR SHARE</code></td><td>Khoá chia sẻ</td><td>Được</td><td>Phải chờ</td></tr>
+    <tr><td><code>SELECT … FOR UPDATE</code>, <code>UPDATE</code>, <code>DELETE</code></td><td>Khoá độc quyền trên dòng</td><td><b>Được</b> (đọc bản snapshot)</td><td>Phải chờ</td></tr>
+  </tbody></table></div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Không muốn chờ mãi</h4>
+<pre class="code"><span class="c">-- A giữ khoá dòng id = 1. B:</span>
+SET LOCAL lock_timeout = '1s';
+SELECT * FROM accounts WHERE id = 1 FOR UPDATE;
+→ sau 1.00s: <span class="w">canceling statement due to lock timeout</span>
+
+SELECT * FROM accounts WHERE id = 1 FOR UPDATE NOWAIT;
+→ sau 0.00s: <span class="w">could not obtain lock on row in relation "accounts"</span></pre>
+      <p class="cap" style="margin-top:8px">MySQL: <code>innodb_lock_wait_timeout</code> (mặc định 50 giây), cũng có <code>NOWAIT</code> từ 8.0.</p></div>
+    <div class="card prose"><h4>SKIP LOCKED: hàng đợi job ngay trong database</h4>
+<pre class="code"><span class="c">-- nhiều worker cùng lấy việc, không ai lấy trùng, không ai phải chờ</span>
+<span class="h">SELECT</span> id <span class="h">FROM</span> mail_jobs
+<span class="h">WHERE</span> status = <span class="s">'NOT_SENT'</span>
+<span class="h">ORDER BY</span> id <span class="h">LIMIT</span> 100
+<span class="h">FOR UPDATE SKIP LOCKED</span>;</pre>
+      <p>Dòng đang bị worker khác khoá thì bị bỏ qua. Có ở PostgreSQL 9.5+ và MySQL 8.0+. Hợp với job gửi mail điểm của bạn nếu sau này cần chạy nhiều worker song song.</p></div>
+  </div>
+  <div class="card sim" id="gl">
+    <h3 style="margin:0">Hình động: gap lock và next-key lock <span class="mysql">MYSQL</span></h3>
+    <p class="cap">Bảng có index trên cột <code>age</code> với các giá trị 10, 20, 30, 40. Transaction T1 ở REPEATABLE READ chạy <code>SELECT * FROM t WHERE age BETWEEN 15 AND 25 FOR UPDATE</code>. Thử chèn các giá trị khác từ T2.</p>
+    <div class="sim-ctrl" id="gl-btns"></div>
+    <div class="anim"><svg id="gl-svg" viewBox="0 0 760 200" role="img" aria-label="Trục giá trị với record và khoảng trống bị khoá"></svg></div>
+    <div class="simlog" id="gl-log" aria-live="polite" style="height:110px"></div>
+    <p class="cap">Vì sao khoá cả khoảng trống: nếu T2 chèn được age = 18 rồi commit, lần đọc <code>FOR UPDATE</code> thứ hai của T1 sẽ thấy thêm một dòng (phantom). Next-key lock = khoá record + khoảng trống ngay trước nó. Ở READ COMMITTED, InnoDB gần như không dùng gap lock: nhiều đồng thời hơn nhưng có phantom. PostgreSQL không có gap lock; nó chặn phantom ở SERIALIZABLE bằng SSI (phát hiện xung đột rồi huỷ một bên).</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="ch" id="deadlock">
+  <div class="ch-head"><div class="eyebrow">Chương 11</div><h2>Deadlock trong database</h2>
+    <p>Database tự phát hiện và huỷ một transaction để phá vòng. Việc của bạn là giảm khả năng xảy ra và cho phép thử lại.</p></div>
+  <div class="card sim" id="dd">
+    <div class="sim-ctrl">
+      <span class="seg-ctl" role="radiogroup" aria-label="Thứ tự cập nhật" id="dd-mode"><button type="button" data-m="bad" aria-pressed="true">T1: id 1 rồi 2 · T2: id 2 rồi 1</button><button type="button" data-m="good" aria-pressed="false">Cả hai cập nhật theo id tăng dần</button></span>
+      <button class="btn primary" type="button" id="dd-run">Chạy</button>
+    </div>
+    <div class="anim"><svg id="dd-svg" viewBox="0 0 640 230" role="img" aria-label="Hai transaction và hai dòng"></svg></div>
+    <div class="simlog" id="dd-log" aria-live="polite" style="height:120px"></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">PostgreSQL phát hiện sau 1,5 giây</h4>
+<pre class="code">T1: <span class="w">deadlock detected</span>
+DETAIL:  Process 795 waits for ShareLock on transaction 1812; blocked by process 796.
+Process 796 waits for ShareLock on transaction 1813; blocked by process 795.
+HINT:  See server log for query details.
+CONTEXT:  while updating tuple (0,37) in relation "accounts"
+T2 commit</pre>
+      <p class="cap" style="margin-top:8px">PostgreSQL chỉ kiểm tra deadlock sau khi đã chờ <code>deadlock_timeout</code> (đo thật: <code>1s</code>), nên mất khoảng 1,5 giây. InnoDB kiểm tra ngay khi phải chờ.</p></div>
+    <div class="card prose"><h4><span class="mysql">MYSQL</span> và cách xử lý</h4>
+<pre class="code">ERROR 1213 (40001): Deadlock found when trying to get lock;
+try restarting transaction</pre>
+      <ul><li>Xem chi tiết lần deadlock gần nhất: <code>SHOW ENGINE INNODB STATUS</code>, mục LATEST DETECTED DEADLOCK.</li><li>Cập nhật nhiều dòng <b>theo thứ tự cố định</b> (id tăng dần).</li><li>Giữ transaction ngắn, có index cho điều kiện <code>WHERE</code> của UPDATE (thiếu index thì khoá rất nhiều dòng).</li><li><b>Thử lại</b> khi gặp lỗi deadlock hoặc serialization: Spring Retry <code>@Retryable(retryFor = CannotAcquireLockException.class)</code> đặt <b>ngoài</b> method <code>@Transactional</code>.</li></ul></div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="ch" id="paging">
+  <div class="ch-head"><div class="eyebrow">Chương 12</div><h2>Phân trang: OFFSET và keyset</h2>
+    <p>Trang càng sâu, <code>OFFSET</code> càng chậm. Keyset giữ nguyên tốc độ ở mọi trang.</p></div>
+  <div class="card"><span class="real">ĐO THẬT</span><div class="chart-title" style="margin-top:6px">Lấy 20 dòng ở trang thứ N, sắp theo id</div><p class="cap">mili giây, bảng 2 triệu dòng, cả hai cách đều dùng index khoá chính</p><div class="chart-legend" id="lg-page"></div><div class="chart" id="ch-page"></div></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Vì sao OFFSET chậm</h4>
+<pre class="code">SELECT id, total_amount FROM orders
+ORDER BY id LIMIT 20 OFFSET 1999960;
+
+Limit (actual rows=20)
+  -&gt; Index Scan using orders_pkey
+     (actual rows=<span class="w">1999980</span>)
+Execution Time: <span class="w">206.521 ms</span></pre>
+      <p>Để trả 20 dòng, database phải đọc và vứt bỏ 1 999 960 dòng đứng trước. Không có cách nào "nhảy" thẳng tới vị trí thứ N trong B+Tree.</p></div>
+    <div class="card prose"><h4>Keyset (seek) pagination</h4>
+<pre class="code"><span class="c">-- client gửi lại id cuối của trang trước</span>
+SELECT id, total_amount FROM orders
+WHERE id &gt; :lastId ORDER BY id LIMIT 20;   <span class="c">-- 0.02–0.05 ms ở mọi trang</span>
+
+<span class="c">-- sắp theo cột không duy nhất: thêm id để phá hoà</span>
+WHERE (created_at, id) &lt; (:lastCreatedAt, :lastId)
+ORDER BY created_at DESC, id DESC LIMIT 20;</pre>
+      <p>Đổi lại: không nhảy được tới "trang 500", chỉ có "trang sau". Hợp với cuộn vô hạn, API mobile, job batch. Spring Data 3.1+ có sẵn <code>ScrollPosition.keyset()</code> và <code>Window&lt;T&gt;</code>.</p></div>
+  </div>
+  <div class="callout"><b class="t">COUNT(*) cũng tốn</b><code>Page&lt;T&gt;</code> của Spring Data chạy thêm một câu <code>COUNT(*)</code> mỗi lần để tính tổng số trang, trên bảng lớn cũng là quét nhiều. Dùng <code>Slice&lt;T&gt;</code> (chỉ biết còn trang sau hay không) khi giao diện không cần tổng số trang.</div>
+</section>
+
+<!-- 13 -->
+<section class="ch" id="jpa">
+  <div class="ch-head"><div class="eyebrow">Chương 13</div><h2>JPA: N+1, fetch và batch insert</h2>
+    <p>Phần lớn query chậm trong ứng dụng Spring không do một câu SQL chậm, mà do <b>quá nhiều câu SQL</b>.</p></div>
+  <div class="card sim" id="np">
+    <h3 style="margin:0">Hình động: tải trang lịch sử 10 đơn kèm tên nhà hàng</h3>
+    <div class="sim-ctrl">
+      <span class="seg-ctl" role="radiogroup" aria-label="Cách tải" id="np-mode"><button type="button" data-m="lazy" aria-pressed="true">Lazy (mặc định)</button><button type="button" data-m="batch" aria-pressed="false">@BatchSize(size = 5)</button><button type="button" data-m="join" aria-pressed="false">JOIN FETCH</button></span>
+      <label for="np-rtt">Độ trễ mạng tới DB <input type="range" id="np-rtt" min="1" max="20" value="2"><output id="np-rtt-v" class="mono">2 ms</output></label>
+      <button class="btn primary" type="button" id="np-run">Tải trang</button>
+    </div>
+    <div class="np-grid"><div class="simlog" id="np-log" style="height:230px"></div><div class="np-stat"><div class="stat"><b id="np-q">0</b><span>Câu SQL</span></div><div class="stat"><b id="np-t">0 ms</b><span>Chờ mạng (ước tính)</span></div></div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">50 đơn, cùng máy với database (độ trễ gần 0)</h4>
+<pre class="code">N+1 (lazy loading từng restaurant): <span class="w">51 câu SQL, 4.4 ms</span>
+JOIN FETCH (1 câu)                 : 1 câu SQL, 0.3 ms
+Batch fetch (IN …)                 : 2 câu SQL, 0.3 ms</pre>
+      <p class="cap" style="margin-top:8px">Ngay cả khi database nằm cùng máy, N+1 đã chậm hơn 15 lần. Trên AWS, ứng dụng và RDS cách nhau khoảng 0,5–2 ms mỗi lượt, 51 câu là thêm 25–100 ms chỉ để chờ mạng.</p></div>
+    <div class="card prose"><h4>Bốn cách sửa N+1</h4>
+<pre class="code"><span class="c">// 1. JOIN FETCH trong JPQL</span>
+@Query(<span class="s">"select o from Order o join fetch o.restaurant where o.userId = :uid"</span>)
+<span class="c">// 2. EntityGraph</span>
+@EntityGraph(attributePaths = <span class="s">"restaurant"</span>)
+List&lt;Order&gt; findByUserId(Long uid);
+<span class="c">// 3. Batch: gom lazy load thành IN (...)</span>
+spring.jpa.properties.hibernate.default_batch_fetch_size=50
+<span class="c">// 4. DTO projection: chỉ lấy cột cần, không có entity, không lazy</span>
+@Query(<span class="s">"select new com.x.OrderRow(o.id, o.total, r.name) from Order o join o.restaurant r where ..."</span>)</pre></div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Bẫy: JOIN FETCH collection + phân trang</h4>
+      <p><span class="spring">LOG HIBERNATE</span></p>
+<pre class="code">WARN HHH90003004: firstResult/maxResults specified with
+collection fetch; applying in memory</pre>
+      <p>Fetch một collection (<code>@OneToMany</code>) kèm <code>Pageable</code>: Hibernate không cắt trang bằng SQL được (mỗi đơn có nhiều dòng item), nên tải <b>toàn bộ</b> rồi cắt trong bộ nhớ. Sửa: phân trang id trước, rồi fetch theo danh sách id; hoặc dùng batch fetch.</p></div>
+    <div class="card prose"><h4>Bẫy: batch insert không hề batch</h4>
+<pre class="code">@Id @GeneratedValue(strategy = <span class="w">GenerationType.IDENTITY</span>)
+<span class="c">// Hibernate phải INSERT ngay từng dòng để lấy id sinh tự động
+// → hibernate.jdbc.batch_size bị bỏ qua cho entity này</span></pre>
+      <ul><li>Dùng <code>SEQUENCE</code> với <code>allocationSize</code> (PostgreSQL) để batch được.</li><li>Bật <code>hibernate.jdbc.batch_size=500</code>, <code>order_inserts=true</code>.</li><li>MySQL: thêm <code>rewriteBatchedStatements=true</code> vào URL JDBC để gộp thành một câu INSERT nhiều giá trị.</li><li>Rất nhiều dòng: dùng <code>JdbcTemplate.batchUpdate</code> hoặc <code>COPY</code> (PostgreSQL), và nhớ <code>flush()</code> + <code>clear()</code> theo lô.</li></ul></div>
+  </div>
+</section>
+
+<!-- 14 -->
+<section class="ch" id="pool">
+  <div class="ch-head"><div class="eyebrow">Chương 14</div><h2>Connection pool (HikariCP)</h2>
+    <p>Mở connection tới database tốn hàng chục mili giây, nên ứng dụng giữ sẵn một số connection và cho mượn. Kéo thanh để thấy điều gì xảy ra khi request giữ connection quá lâu.</p></div>
+  <div class="card sim" id="hp">
+    <div class="sim-ctrl">
+      <label for="hp-size">maximum-pool-size <input type="range" id="hp-size" min="2" max="20" value="10"><output id="hp-size-v" class="mono">10</output></label>
+      <label for="hp-hold">Mỗi request giữ connection
+        <select id="hp-hold" class="sel"><option value="1">50 ms (query nhanh)</option><option value="4">200 ms</option><option value="40" selected>2 s (gọi API ngoài trong @Transactional)</option></select></label>
+      <label for="hp-rate">Request mỗi giây <input type="range" id="hp-rate" min="20" max="200" step="20" value="60"><output id="hp-rate-v" class="mono">60</output></label>
+      <button class="btn" type="button" id="hp-pause" aria-pressed="false">Tạm dừng</button>
+    </div>
+    <div class="hp-grid">
+      <div class="gen"><h4>Pool <small id="hp-busy"></small></h4><div class="hp-slots" id="hp-slots"></div></div>
+      <div class="gen"><h4>Request đang chờ connection <small id="hp-qn"></small></h4><div class="hp-queue" id="hp-queue"></div></div>
+    </div>
+    <div class="sim-stats">
+      <div class="stat"><b id="hp-ok">0</b><span>Xong</span></div>
+      <div class="stat"><b id="hp-to">0</b><span>Timeout (connectionTimeout)</span></div>
+      <div class="stat"><b id="hp-wait">0 ms</b><span>Chờ trung bình</span></div>
+    </div>
+    <p class="cap">Mô phỏng theo nhịp 50 ms; connectionTimeout thu nhỏ còn 3 giây để thấy nhanh (mặc định HikariCP là 30 giây). Lỗi thật có dạng: <code>HikariPool-1 - Connection is not available, request timed out after 30000ms.</code></p>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Chọn kích thước pool</h4>
+      <ul><li>Mặc định <code>maximum-pool-size = 10</code>. Pool lớn hơn <b>không</b> làm nhanh hơn khi database chỉ có vài CPU: các connection tranh nhau CPU và khoá của chính database.</li><li>Công thức gợi ý trong tài liệu của HikariCP (từ PostgreSQL): <code>connections = (số core × 2) + số ổ đĩa</code>. Database 4 core: khoảng 10.</li><li>Nhân số instance: 5 task ECS × pool 20 = 100 connection; RDS cỡ nhỏ có <code>max_connections</code> giới hạn.</li><li>Cách tăng sức chịu tải đúng: <b>giữ connection ngắn</b> (chương 07 sổ tay Spring Boot), không phải tăng pool.</li></ul></div>
+    <div class="card prose"><h4>Cấu hình nên có</h4>
+<pre class="code">spring.datasource.hikari:
+  maximum-pool-size: 10
+  connection-timeout: 3000       <span class="c"># fail nhanh thay vì treo 30 s</span>
+  max-lifetime: 1500000          <span class="c"># nhỏ hơn wait_timeout của MySQL</span>
+  leak-detection-threshold: 20000 <span class="c"># cảnh báo connection mượn &gt; 20 s</span></pre>
+      <p>Theo dõi <code>hikaricp.connections.active</code>, <code>.pending</code>, <code>.usage</code> qua Actuator. <code>pending &gt; 0</code> kéo dài là dấu hiệu pool cạn.</p></div>
+  </div>
+</section>
+
+<!-- 15 -->
+<section class="ch" id="design">
+  <div class="ch-head"><div class="eyebrow">Chương 15</div><h2>Thiết kế schema: những quyết định nhỏ có hậu quả lớn</h2></div>
+  <div class="tblwrap"><table><thead><tr><th>Quyết định</th><th>Nên</th><th>Tránh, và vì sao</th></tr></thead><tbody>
+    <tr><td>Tiền, điểm</td><td><code>DECIMAL(12,2)</code> / <code>NUMERIC</code>, hoặc số nguyên đơn vị nhỏ nhất (yên)</td><td><code>FLOAT</code>/<code>DOUBLE</code>: 0.1 + 0.2 ≠ 0.3</td></tr>
+    <tr><td>Thời gian</td><td>Lưu UTC; PostgreSQL <code>timestamptz</code>; MySQL <code>DATETIME</code> + quy ước UTC, hoặc <code>TIMESTAMP</code></td><td>Lưu giờ địa phương không kèm múi giờ: hệ thống ở Nhật, server UTC, job "ngày hôm qua" lệch 9 tiếng. MySQL <code>TIMESTAMP</code> chỉ tới năm 2038</td></tr>
+    <tr><td>Khoá chính</td><td><code>BIGINT</code> tăng dần, hoặc UUIDv7/ULID nếu cần sinh id phân tán</td><td>UUIDv4 làm PK trong InnoDB: chèn ngẫu nhiên, tách trang, index phình</td></tr>
+    <tr><td>Trạng thái</td><td><code>VARCHAR</code> + <code>CHECK</code>, hoặc bảng tra cứu</td><td>MySQL <code>ENUM</code>: thêm giá trị phải <code>ALTER TABLE</code></td></tr>
+    <tr><td>Xoá mềm</td><td><code>deleted_at</code> + partial index <code>WHERE deleted_at IS NULL</code> (PostgreSQL)</td><td>Quên điều kiện xoá mềm ở một query là lộ dữ liệu đã xoá; unique constraint phải tính tới bản đã xoá</td></tr>
+    <tr><td>Bảng log rất lớn (<code>log_mileage</code>)</td><td>Partition theo tháng; xoá dữ liệu cũ bằng <code>DROP PARTITION</code></td><td><code>DELETE … WHERE created_at &lt; …</code> trên hàng trăm triệu dòng: khoá lâu, bloat, replica trễ</td></tr>
+    <tr><td>Chuẩn hoá</td><td>Chuẩn hoá tới 3NF làm mặc định</td><td>Phi chuẩn hoá (lưu sẵn tổng, tên nhà hàng trong đơn) chỉ khi đo được lợi ích, và phải có cách giữ đồng bộ</td></tr>
+    <tr><td>Đọc nhiều</td><td>Read replica cho báo cáo, lịch sử</td><td>Đọc từ replica ngay sau khi ghi: replica có thể trễ vài trăm ms tới vài giây</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- 16 -->
+<section class="ch" id="interview">
+  <div class="ch-head"><div class="eyebrow">Chương 16</div><h2>40 câu hỏi phỏng vấn và cách trả lời</h2>
+    <p>Tự trả lời thành tiếng trước, rồi mới mở đáp án. Nhãn "bẫy" là câu hay bị trả lời sai.</p></div>
+  <div class="qa" id="qa"></div>
+</section>
+
+<!-- 17 -->
+<section class="ch" id="lab">
+  <div class="ch-head"><div class="eyebrow">Chương 17</div><h2>Lab tự làm và câu chuyện 13 s → 100 ms</h2></div>
+  <div class="card prose">
+    <h3 style="margin:0">Câu trả lời hoàn chỉnh cho câu chuyện trong CV</h3>
+    <p><b>S:</b> "Màn hình lịch sử thanh toán load mất khoảng 13 giây khi bảng đơn đã lên vài triệu dòng."</p>
+    <p><b>T:</b> "Em được giao tìm nguyên nhân và tối ưu."</p>
+    <p><b>A:</b> "Em lấy câu query của API, chạy EXPLAIN thấy quét toàn bảng (MySQL <code>type = ALL</code>, <code>key = NULL</code>, Extra có <code>Using filesort</code>), tức đọc hết hàng triệu dòng chỉ để trả 20. Em tạo composite index <code>(user_id, status, created_at)</code>: hai cột lọc bằng đứng trước, cột sắp xếp đứng cuối, nên database vừa tìm thẳng tới đúng khúc dữ liệu vừa đọc sẵn theo thứ tự, không phải sort. Em kiểm tra lại EXPLAIN chuyển sang <code>ref</code>, số dòng đọc còn vài chục, và đo chi phí ghi vì index làm INSERT chậm hơn."</p>
+    <p><b>R:</b> "API giảm còn khoảng 100 ms. Kiểm chứng trên staging bằng K6 trước khi lên production."</p>
+    <p><b>Khi bị hỏi tiếp, bạn đã có số đo thật để dẫn:</b> trên 2 triệu dòng, cùng query giảm từ 59 ms (đọc 18 731 trang) xuống 0,054 ms với composite index (23 trang), 0,034 ms với covering index (4 trang, Index Only Scan, <code>Heap Fetches: 0</code>); index chỉ 3 tầng; mỗi index phụ làm INSERT chậm thêm khoảng 1 giây cho 300 000 dòng; nếu muốn đi xa hơn thì dùng covering index và keyset pagination cho trang sâu.</p>
+  </div>
+  <div class="grid3">
+    <div class="card pb"><h4>Lab 1: Index</h4><ol class="steps"><li><div>Docker chạy MySQL 8, tạo bảng 2 triệu dòng bằng script ở dưới.</div></li><li><div>EXPLAIN và EXPLAIN ANALYZE trước/sau từng loại index.</div></li><li><div>Thử từng bẫy ở chương 05 trên MySQL, ghi lại khác biệt so với PostgreSQL.</div></li></ol></div>
+    <div class="card pb"><h4>Lab 2: Isolation và lock</h4><ol class="steps"><li><div>Mở hai cửa sổ mysql client, chạy tay từng kịch bản ở chương 08.</div></li><li><div>Kiểm chứng MySQL REPEATABLE READ vẫn lost update với mẫu đọc rồi ghi.</div></li><li><div>Tạo deadlock, đọc <code>SHOW ENGINE INNODB STATUS</code>.</div></li><li><div>Thử gap lock: chèn giá trị trong và ngoài khoảng.</div></li></ol></div>
+    <div class="card pb"><h4>Lab 3: Spring</h4><ol class="steps"><li><div>Bật <code>spring.jpa.show-sql</code> và đếm câu SQL của một API có quan hệ lazy.</div></li><li><div>Sửa bằng EntityGraph, đo lại bằng K6.</div></li><li><div>Giả lập gọi API 2 s trong @Transactional, xem <code>hikaricp.connections.pending</code>.</div></li></ol></div>
+  </div>
+<pre class="code"><span class="c">-- MySQL 8: tạo 2 triệu dòng nhanh bằng CTE đệ quy</span>
+<span class="h">SET SESSION</span> cte_max_recursion_depth = 2000000;
+<span class="h">INSERT INTO</span> orders(user_id, restaurant_id, status, total_amount, created_at)
+<span class="h">WITH RECURSIVE</span> seq(n) <span class="h">AS</span> (<span class="h">SELECT</span> 1 <span class="h">UNION ALL SELECT</span> n + 1 <span class="h">FROM</span> seq <span class="h">WHERE</span> n &lt; 2000000)
+<span class="h">SELECT</span> 1 + FLOOR(RAND() * 50000), 1 + FLOOR(RAND() * 200),
+       ELT(1 + (RAND() &gt; 0.85) + (RAND() &gt; 0.95), <span class="s">'COMPLETED'</span>, <span class="s">'CANCELLED'</span>, <span class="s">'PENDING'</span>),
+       ROUND(1000 + RAND() * 20000, 2), <span class="s">'2025-01-01'</span> + INTERVAL FLOOR(RAND() * 600 * 86400) SECOND
+<span class="h">FROM</span> seq;</pre>
+  <p class="foot">Nhãn ĐO THẬT: PostgreSQL 16, bảng <code>orders</code> 2 000 000 dòng (146 MB), máy 2 vCPU, dữ liệu phần lớn đã nằm trong bộ nhớ, mỗi số đo chạy một lần. Nhãn MYSQL: hành vi InnoDB theo tài liệu MySQL 8, không chạy được trong môi trường này; hãy kiểm chứng bằng lab.</p>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NS='http://www.w3.org/2000/svg';
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function S(tag,a,p){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function T(txt,a,p){const e=S('text',a,p);e.textContent=txt;return e;}
+function logTo(id,msg,cls){const d=document.createElement('div');if(cls)d.className=cls;d.textContent=msg;const l=$(id);l.appendChild(d);while(l.children.length>80)l.firstChild.remove();l.scrollTop=l.scrollHeight;}
+const wait=ms=>new Promise(r=>setTimeout(r,RM?Math.min(ms,60):ms));
+function flip(container,render){const before={};if(!RM)container.querySelectorAll('[data-id]').forEach(e=>before[e.dataset.id]=e.getBoundingClientRect());render();
+  if(!RM)container.querySelectorAll('[data-id]').forEach(e=>{const b=before[e.dataset.id];if(!b){e.animate([{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'none'}],{duration:350});return;}const a=e.getBoundingClientRect();const dx=b.left-a.left,dy=b.top-a.top;if(Math.abs(dx)+Math.abs(dy)>2)e.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:500,easing:'cubic-bezier(.2,.8,.2,1)'});});}
+function seg(id,cb){const box=$(id);box.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;box.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));cb(b.dataset.m);});}
+function onVisible(el,cb){const o=new IntersectionObserver(es=>es.forEach(e=>cb(e.isIntersecting)),{threshold:0.05});o.observe(el);}
+
+/* ===== mục lục ===== */
+const links=$$('#toc a');const secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));const on=links.find(l=>l.classList.contains('on'));if(on&&innerWidth<980)on.scrollIntoView({block:'nearest',inline:'center'});}});},{rootMargin:'-30% 0px -60% 0px'});
+secs.forEach(s=>s&&io.observe(s));
+
+/* ===== biểu đồ ===== */
+function tipShow(box,html,x,y){let t=box.querySelector('.tip');if(!t){t=document.createElement('div');t.className='tip';box.appendChild(t);}t.innerHTML=html;t.style.display='block';const bw=box.clientWidth;const tw=t.offsetWidth;let left=x+14;if(left+tw>bw)left=x-tw-14;if(left<0)left=0;t.style.left=left+'px';t.style.top=Math.max(0,y-10)+'px';}
+function tipHide(box){const t=box.querySelector('.tip');if(t)t.style.display='none';}
+function fmtN(v){return v>=100?Math.round(v).toLocaleString('vi-VN'):(v>=1?(+v.toFixed(2)).toLocaleString('vi-VN'):(+v.toFixed(3)).toLocaleString('vi-VN'));}
+function hbar(id,rows,opt){
+  const box=$(id);box.innerHTML='';const W=480,rowH=34,padL=opt.padL||74,padR=64,top=6;const H=top+rows.length*rowH+24;
+  const svg=S('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':opt.aria},box);
+  const iw=W-padL-padR;let sx;
+  if(opt.log){const lo=Math.log10(opt.min),hi=Math.log10(opt.max);sx=v=>padL+(Math.log10(Math.max(v,opt.min))-lo)/(hi-lo)*iw;}
+  else sx=v=>padL+v/opt.max*iw;
+  const g=S('g',{class:'grid'},svg);const ax=S('g',{class:'ax'},svg);
+  for(const t of opt.ticks){const x=sx(t);S('line',{x1:x,x2:x,y1:top,y2:H-22},g);T(t.toLocaleString('vi-VN'),{x,y:H-6,'text-anchor':'middle'},ax);}
+  rows.forEach((r,i)=>{const y=top+i*rowH+8,h=rowH-16;
+    const lb=T(r.name,{x:padL-8,y:y+h/2+4,'text-anchor':'end',class:'lbl'},svg);lb.setAttribute('fill',css('--ink'));
+    const x0=opt.log?sx(opt.min):padL,x1=sx(r.v);const w=Math.max(2,x1-x0);
+    const rr=Math.min(4,w/2);S('path',{d:`M${x0},${y} H${x0+w-rr} Q${x0+w},${y} ${x0+w},${y+rr} V${y+h-rr} Q${x0+w},${y+h} ${x0+w-rr},${y+h} H${x0} Z`,fill:css(r.color||'--s1')},svg);
+    T(fmtN(r.v)+(opt.unit||''),{x:x0+w+6,y:y+h/2+4,class:'val'},svg);
+    const hit=S('rect',{x:0,y:top+i*rowH,width:W,height:rowH,class:'hit'},svg);
+    hit.addEventListener('mousemove',ev=>{const b=box.getBoundingClientRect();tipShow(box,`<div class="tt">${esc(r.name)}</div>${r.tip}`,ev.clientX-b.left,ev.clientY-b.top);});
+    hit.addEventListener('mouseleave',()=>tipHide(box));});
+}
+function lineChart(id,series,opt){
+  const box=$(id);box.innerHTML='';const W=720,H=opt.h||280,padL=50,padR=16,top=10,bot=30;
+  const svg=S('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':opt.aria},box);
+  const iw=W-padL-padR,ih=H-top-bot;
+  const sx=v=>padL+(v-opt.xmin)/(opt.xmax-opt.xmin)*iw;
+  let sy;if(opt.log){const lo=Math.log10(opt.ymin),hi=Math.log10(opt.ymax);sy=v=>top+ih-(Math.log10(Math.max(v,opt.ymin))-lo)/(hi-lo)*ih;}else sy=v=>top+ih-(v-opt.ymin)/(opt.ymax-opt.ymin)*ih;
+  const g=S('g',{class:'grid'},svg),ax=S('g',{class:'ax'},svg);
+  for(const t of opt.yt){const y=sy(t);S('line',{x1:padL,x2:W-padR,y1:y,y2:y},g);T(t.toLocaleString('vi-VN'),{x:padL-6,y:y+4,'text-anchor':'end'},ax);}
+  for(const t of opt.xt){T(opt.xf?opt.xf(t):t,{x:sx(t),y:H-10,'text-anchor':'middle'},ax);}
+  for(const s of series){const d=s.pts.map((p,i)=>(i?'L':'M')+sx(p[0]).toFixed(1)+','+sy(p[1]).toFixed(1)).join(' ');
+    S('path',{d,fill:'none',stroke:css(s.color),'stroke-width':2.5,'stroke-linejoin':'round','stroke-linecap':'round'},svg);
+    for(const p of s.pts)S('circle',{cx:sx(p[0]),cy:sy(p[1]),r:3.5,fill:css(s.color),stroke:css('--surface'),'stroke-width':1.5},svg);}
+  const xh=S('line',{class:'xh',y1:top,y2:top+ih,x1:0,x2:0,visibility:'hidden'},svg);
+  const dots=series.map(s=>S('circle',{r:5,fill:css(s.color),stroke:css('--surface'),'stroke-width':2,cx:0,cy:0,visibility:'hidden'},svg));
+  const hit=S('rect',{x:padL,y:top,width:iw,height:ih,class:'hit'},svg);
+  hit.addEventListener('mousemove',ev=>{const b=svg.getBoundingClientRect();const px=(ev.clientX-b.left)/b.width*W;const xv=opt.xmin+(px-padL)/iw*(opt.xmax-opt.xmin);
+    let rows='',bx0=null;series.forEach((s,k)=>{let best=s.pts[0];for(const p of s.pts)if(Math.abs(p[0]-xv)<Math.abs(best[0]-xv))best=p;bx0=best[0];
+      dots[k].setAttribute('visibility','visible');dots[k].setAttribute('cx',sx(best[0]));dots[k].setAttribute('cy',sy(best[1]));rows+=`<div class="tr"><span><i class="sw" style="background:${css(s.color)}"></i>${esc(s.name)}</span><b>${fmtN(best[1])} ${opt.unit}</b></div>`;});
+    xh.setAttribute('x1',sx(bx0));xh.setAttribute('x2',sx(bx0));xh.setAttribute('visibility','visible');
+    const bx=box.getBoundingClientRect();tipShow(box,`<div class="tt">${opt.xf?opt.xf(bx0):bx0}</div>${rows}`,ev.clientX-bx.left,ev.clientY-bx.top);});
+  hit.addEventListener('mouseleave',()=>{tipHide(box);xh.setAttribute('visibility','hidden');dots.forEach(d=>d.setAttribute('visibility','hidden'));});
+}
+function legend(id,series){$(id).innerHTML=series.map(s=>`<span><i style="background:${css(s.color)}"></i>${esc(s.name)}</span>`).join('');}
+
+/* ===== 02. B+Tree ===== */
+(function(){
+  const svg=$('#bt-svg');let run=0;
+  const LEAVES=[[1,5,8],[10,13,17],[20,24,27],[30,33,37],[40,44,47],[50,55,58],[60,64,67],[70,73,77],[80,85,90]];
+  const INT=[[10,20],[40,50],[70,80]],ROOT=[30,60];
+  const LW=96,LH=30,LY=200,IY=110,RY=22,IW=96;
+  const lx=i=>12+i*105;
+  const ix=i=>(lx(3*i)+lx(3*i+2)+LW)/2-IW/2;
+  const rx=480-IW/2;
+  let E={};
+  function node(x,y,w,keys,cls,id){const g=S('g',{},svg);const r=S('rect',{x,y,width:w,height:LH,rx:5,class:'bt-node '+cls},g);
+    const cw=w/keys.length;const ks=keys.map((k,j)=>{const bg=S('rect',{x:x+j*cw+2,y:y+3,width:cw-4,height:LH-6,rx:3,class:'bt-key-bg'},g);const t=T(k,{x:x+j*cw+cw/2,y:y+LH/2+5,'text-anchor':'middle',class:'bt-k'},g);return {t,bg,k};});
+    if(cls!=='leaf')for(let j=1;j<keys.length;j++)S('line',{x1:x+j*cw,x2:x+j*cw,y1:y+4,y2:y+LH-4,stroke:css('--line')},g);
+    E[id]={r,ks,x,y,w};}
+  function edge(x1,y1,x2,y2,id){E[id]=S('path',{d:`M${x1},${y1} C${x1},${(y1+y2)/2} ${x2},${(y1+y2)/2} ${x2},${y2}`,class:'bt-edge'},svg);}
+  function draw(){svg.innerHTML='';E={};
+    T('Gốc (root)',{x:rx-10,y:RY+20,'text-anchor':'end',class:'bt-cap'},svg);
+    T('Nút trong',{x:ix(0)-10,y:IY+20,'text-anchor':'end',class:'bt-cap'},svg);
+    T('Lá: khoá + địa chỉ dòng',{x:12,y:LY+LH+20,class:'bt-cap'},svg);
+    for(let i=0;i<3;i++)edge(rx+IW*(i+.5)/3,RY+LH,ix(i)+IW/2,IY,'e-r-'+i);
+    for(let i=0;i<9;i++){const p=Math.floor(i/3),j=i%3;edge(ix(p)+IW*(j+.5)/3,IY+LH,lx(i)+LW/2,LY,'e-i-'+i);}
+    for(let i=0;i<8;i++)E['l-'+i]=S('path',{d:`M${lx(i)+LW},${LY+LH/2} H${lx(i+1)}`,class:'bt-link','marker-end':''},svg);
+    node(rx,RY,IW,ROOT,'','root');INT.forEach((k,i)=>node(ix(i),IY,IW,k,'','i'+i));LEAVES.forEach((k,i)=>node(lx(i),LY,LW,k,'leaf','L'+i));
+    E.cmp=T('',{x:480,y:IY-14,'text-anchor':'middle',class:'bt-cmp'},svg);
+    E.cnt=T('Trang đã đọc: 0',{x:948,y:RY+20,'text-anchor':'end',class:'bt-cmp'},svg);
+  }
+  const child=(keys,k)=>{let i=0;while(i<keys.length&&k>=keys[i])i++;return i;};
+  function why(keys,k,i){return i===0?`${k} < ${keys[0]}`:i===keys.length?`${k} ≥ ${keys[keys.length-1]}`:`${keys[i-1]} ≤ ${k} < ${keys[i]}`;}
+  function verdict(cls,html){const v=$('#bt-verdict');v.className='verdict '+cls;v.innerHTML='<span>'+html+'</span>';v.style.display='flex';}
+  async function descend(k,my){let pages=0;const cnt=()=>E.cnt.textContent='Trang đã đọc: '+(++pages);
+    E.root.r.classList.add('hot');cnt();const a=child(ROOT,k);E.cmp.textContent='gốc: '+why(ROOT,k,a)+' → nhánh '+(a+1);E.cmp.setAttribute('y',RY+LH+28);E.cmp.setAttribute('x',480);
+    await wait(900);if(my!==run)return null;E['e-r-'+a].classList.add('hot');await wait(450);if(my!==run)return null;
+    E['i'+a].r.classList.add('hot');cnt();const b=child(INT[a],k);E.cmp.textContent='nút trong: '+why(INT[a],k,b)+' → lá '+(3*a+b+1);E.cmp.setAttribute('y',IY+LH+28);E.cmp.setAttribute('x',Math.min(820,Math.max(140,ix(a)+IW/2)));
+    await wait(900);if(my!==run)return null;const li=3*a+b;E['e-i-'+li].classList.add('hot');await wait(450);if(my!==run)return null;
+    E['L'+li].r.classList.add('hot');cnt();return {li,pages};}
+  async function find(){const my=++run;draw();$('#bt-verdict').style.display='none';
+    let k=Math.round(+$('#bt-key').value);if(!(k>=1&&k<=99)){k=44;$('#bt-key').value=44;}
+    const r=await descend(k,my);if(!r)return;await wait(400);if(my!==run)return;
+    const hit=E['L'+r.li].ks.find(x=>x.k===k);E.cmp.textContent='';
+    if(hit){hit.t.classList.add('hit');hit.bg.classList.add('in');verdict('ok',`Tìm thấy ${k} sau <b>${r.pages} lần đọc trang</b> (gốc → nút trong → lá). Lá chứa địa chỉ dòng (PostgreSQL: ctid; InnoDB: cả dòng hoặc khoá chính).`);}
+    else verdict('warn',`Lá không chứa ${k}: database biết chắc giá trị này không tồn tại, vẫn chỉ sau ${r.pages} lần đọc trang, không cần quét bảng.`);}
+  async function range(){const my=++run;draw();$('#bt-verdict').style.display='none';
+    let a=Math.round(+$('#bt-from').value),b=Math.round(+$('#bt-to').value);if(!(a>=1&&a<=99))a=24;if(!(b>=1&&b<=99))b=52;if(a>b)[a,b]=[b,a];$('#bt-from').value=a;$('#bt-to').value=b;
+    const r=await descend(a,my);if(!r)return;let li=r.li,pages=r.pages,found=[];E.cmp.textContent='';
+    while(li<9){const L=E['L'+li];L.r.classList.add('hot');let stop=false;
+      for(const x of L.ks){if(my!==run)return;if(x.k>b){stop=true;break;}if(x.k>=a){x.t.classList.add('in');x.bg.classList.add('in');found.push(x.k);await wait(260);}}
+      if(stop||li===8)break;E['l-'+li].classList.add('hot');await wait(380);if(my!==run)return;li++;pages++;E.cnt.textContent='Trang đã đọc: '+pages;}
+    verdict('ok',`Khoảng [${a}, ${b}] → ${found.length} khoá (${found.join(', ')||'không có'}). Đi xuống 1 lần, sau đó chỉ chạy ngang theo chuỗi lá: tổng ${pages} trang. Đây là lý do <code>BETWEEN</code>, <code>ORDER BY</code> và <code>LIMIT</code> tận dụng được index.`);}
+  $('#bt-find').addEventListener('click',find);$('#bt-range').addEventListener('click',range);
+  $('#bt-key').addEventListener('keydown',e=>{if(e.key==='Enter')find();});
+  draw();
+})();
+
+/* ===== 03. composite index ===== */
+(function(){
+  const RAW=[[101,'COMPLETED','2026-01-12'],[101,'COMPLETED','2026-04-02'],[101,'PENDING','2026-05-01'],
+    [102,'CANCELLED','2026-02-10'],[102,'COMPLETED','2026-01-05'],[102,'COMPLETED','2026-02-20'],[102,'COMPLETED','2026-03-08'],[102,'COMPLETED','2026-04-15'],[102,'COMPLETED','2026-05-30'],[102,'PENDING','2026-03-11'],
+    [103,'CANCELLED','2026-03-02'],[103,'COMPLETED','2026-02-14'],[103,'COMPLETED','2026-03-21'],[103,'PENDING','2026-01-30'],
+    [104,'COMPLETED','2026-03-15'],[104,'COMPLETED','2026-06-01']];
+  const ROWS=RAW.map((r,i)=>({u:r[0],s:r[1],c:r[2],id:'#'+(5000+((i*7919)%997))}));
+  let run=0;
+  async function go(){const my=++run;const u=$('#ci-u').value,s=$('#ci-s').value,c=$('#ci-c').value,ord=$('#ci-o').checked;
+    const F={u:u?+u:null,s:s||null,c:c||null};
+    const cols=[['u','user_id','eq'],['s','status','eq'],['c','created_at','range']];
+    let seek=[],stopped=false;const st={};
+    for(const [k,n,t] of cols){if(stopped){st[k]=F[k]!==null?'flt':'no';continue;}
+      if(F[k]===null){stopped=true;st[k]='no';continue;}seek.push(k);st[k]='use';if(t==='range')stopped=true;}
+    const okSeek=r=>seek.every(k=>k==='c'?r.c>=F.c:r[k]===F[k]);
+    const okAll=r=>(F.u===null||r.u===F.u)&&(F.s===null||r.s===F.s)&&(F.c===null||r.c>=F.c);
+    const box=$('#ci-rows');box.innerHTML=ROWS.map((r,i)=>`<div class="ci-row" data-i="${i}"><span>${r.u}</span><span>${r.s}</span><span>${r.c}</span><span>${r.id}</span></div>`).join('');
+    const els=[...box.children];
+    const block=seek.length?ROWS.map((r,i)=>okSeek(r)?i:-1).filter(i=>i>=0):ROWS.map((_,i)=>i);
+    const match=block.filter(i=>okAll(ROWS[i]));
+    const needSort=ord&&!(F.u!==null&&F.s!==null);
+    // kết quả
+    const chips=cols.map(([k,n])=>`<span class="${st[k]}">${n}${st[k]==='use'?' · seek':st[k]==='flt'?' · lọc sau':''}</span>`).join('');
+    let plan;
+    if(!seek.length)plan=`<span class="w">Không seek được:</span> cột đầu <b>user_id</b> không có điều kiện → phải quét <b>toàn bộ</b> index (hoặc cả bảng), kiểm tra từng mục.`;
+    else{const cond=seek.map(k=>k==='u'?`user_id = ${F.u}`:k==='s'?`status = '${F.s}'`:`created_at >= '${F.c}'`).join(' AND ');
+      plan=`Index Scan${ord&&!needSort?' Backward':''} using idx_usc<br>Index Cond: <b>(${cond})</b>`;
+      const fl=cols.filter(([k])=>st[k]==='flt').map(([k])=>k==='s'?`status = '${F.s}'`:`created_at >= '${F.c}'`);
+      if(fl.length)plan+=`<br><span class="w">Filter: ${fl.join(' AND ')}</span> <i>(đọc rồi mới loại)</i>`;}
+    if(needSort)plan=`<span class="w">Sort</span> (created_at DESC)<br>-&gt; `+plan;
+    const res=$('#ci-res');
+    res.innerHTML=`<div class="ci-cols">${chips}</div><div class="bigline">${plan}</div><div class="sim-stats"><div class="stat"><b id="ci-read">0</b><span>Mục index phải đọc</span></div><div class="stat"><b id="ci-ret">0</b><span>Dòng trả về</span></div></div><div class="verdict ${!seek.length?'bad':needSort?'warn':'ok'}" id="ci-v" style="display:none"></div>`;
+    els.forEach(e=>e.classList.add('skip'));
+    for(const i of block){if(my!==run)return;els[i].classList.remove('skip');els[i].classList.add(seek.length?'seek':'blk');$('#ci-read').textContent=+$('#ci-read').textContent+1;await wait(seek.length?170:90);}
+    await wait(250);
+    const shown=ord?[...match].reverse():match;
+    for(const i of shown){if(my!==run)return;els[i].classList.add('match');$('#ci-ret').textContent=+$('#ci-ret').textContent+1;await wait(150);}
+    if(my!==run)return;
+    const v=$('#ci-v');v.style.display='flex';
+    v.innerHTML='<span>'+(!seek.length?'Index (user_id, status, created_at) không dùng được để thu hẹp khi thiếu cột đầu. Với bảng thật, PostgreSQL chọn Seq Scan (đo thật: 83,981 ms cho status + created_at).'
+      :needSort&&ord?`Đọc ${block.length} mục, trả ${match.length} dòng, nhưng phải <b>sort lại</b>: trong khúc user_id = ${F.u}, dữ liệu xếp theo status trước rồi mới tới created_at.`
+      :`Đọc ${block.length} mục, trả ${match.length} dòng. Khúc tìm được nằm liền nhau${ord?' và đã đúng thứ tự created_at, chỉ việc đọc ngược, không cần sort':''}.`)+'</span>';
+  }
+  ['#ci-u','#ci-s','#ci-c','#ci-o'].forEach(id=>$(id).addEventListener('change',go));
+  let started=false;onVisible($('#ci'),v=>{if(v&&!started){started=true;go();}});
+  $('#ci-rows').innerHTML=ROWS.map(r=>`<div class="ci-row"><span>${r.u}</span><span>${r.s}</span><span>${r.c}</span><span>${r.id}</span></div>`).join('');
+})();
+
+/* ===== 04. EXPLAIN ===== */
+const PLANS={"none": "Limit  (cost=32159.29..32161.62 rows=20 width=28) (actual time=56.797..59.241 rows=20 loops=1)\n  Buffers: shared hit=2343 read=16388\n  ->  Gather Merge  (cost=32159.29..32162.56 rows=28 width=28) (actual time=56.794..59.236 rows=20 loops=1)\n        Workers Planned: 2\n        Workers Launched: 2\n        Buffers: shared hit=2343 read=16388\n        ->  Sort  (cost=31159.27..31159.30 rows=14 width=28) (actual time=53.196..53.198 rows=16 loops=3)\n              Sort Key: created_at DESC\n              Sort Method: quicksort  Memory: 26kB\n              Buffers: shared hit=2343 read=16388\n              Worker 0:  Sort Method: quicksort  Memory: 26kB\n              Worker 1:  Sort Method: quicksort  Memory: 26kB\n              ->  Parallel Seq Scan on orders  (cost=0.00..31159.00 rows=14 width=28) (actual time=0.989..53.130 rows=20 loops=3)\n                    Filter: ((user_id = 16308) AND ((status)::text = 'COMPLETED'::text))\n                    Rows Removed by Filter: 666647\n                    Buffers: shared hit=2271 read=16388\nPlanning Time: 0.152 ms\nExecution Time: 59.264 ms", "u": "Limit  (cost=160.64..160.69 rows=20 width=28) (actual time=0.209..0.211 rows=20 loops=1)\n  Buffers: shared hit=74\n  ->  Sort  (cost=160.64..160.73 rows=34 width=28) (actual time=0.208..0.209 rows=20 loops=1)\n        Sort Key: created_at DESC\n        Sort Method: top-N heapsort  Memory: 27kB\n        Buffers: shared hit=74\n        ->  Bitmap Heap Scan on orders  (cost=4.74..159.78 rows=34 width=28) (actual time=0.035..0.190 rows=59 loops=1)\n              Recheck Cond: (user_id = 16308)\n              Filter: ((status)::text = 'COMPLETED'::text)\n              Rows Removed by Filter: 12\n              Heap Blocks: exact=71\n              Buffers: shared hit=74\n              ->  Bitmap Index Scan on idx_u  (cost=0.00..4.73 rows=40 width=0) (actual time=0.021..0.021 rows=71 loops=1)\n                    Index Cond: (user_id = 16308)\n                    Buffers: shared hit=3\nPlanning Time: 0.096 ms\nExecution Time: 0.231 ms", "usc": "Limit  (cost=0.43..83.18 rows=20 width=28) (actual time=0.009..0.045 rows=20 loops=1)\n  Buffers: shared hit=23\n  ->  Index Scan Backward using idx_usc on orders  (cost=0.43..141.10 rows=34 width=28) (actual time=0.008..0.043 rows=20 loops=1)\n        Index Cond: ((user_id = 16308) AND ((status)::text = 'COMPLETED'::text))\n        Buffers: shared hit=23\nPlanning Time: 0.059 ms\nExecution Time: 0.054 ms", "cov": "Limit  (cost=0.43..3.18 rows=20 width=28) (actual time=0.016..0.022 rows=20 loops=1)\n  Buffers: shared hit=4\n  ->  Index Only Scan Backward using idx_cov on orders  (cost=0.43..5.11 rows=34 width=28) (actual time=0.015..0.019 rows=20 loops=1)\n        Index Cond: ((user_id = 16308) AND (status = 'COMPLETED'::text))\n        Heap Fetches: 0\n        Buffers: shared hit=4\nPlanning Time: 0.072 ms\nExecution Time: 0.034 ms"};
+(function(){
+  const EX=[
+    {k:'none',name:'Không index',t:59.264,buf:'18 731 trang',node:'Parallel Seq Scan',cls:'bad',notes:['<b>Parallel Seq Scan</b>: 3 tiến trình (1 chính + 2 worker) cùng quét cả bảng; <code>loops=3</code> nên mỗi số "rows" phải nhân 3.','<code>Rows Removed by Filter: 666647</code> × 3 ≈ <b>2 triệu dòng đọc rồi vứt</b> để giữ lại 59.','<code>Buffers: shared hit=2343 read=16388</code>: đọc 18 731 trang = cả bảng, phần lớn phải lấy từ đĩa.','Sau đó còn phải <b>Sort</b> theo created_at.']},
+    {k:'u',name:'(user_id)',t:0.231,buf:'74 trang',node:'Bitmap Heap Scan + Sort',cls:'',notes:['<b>Bitmap Index Scan</b> trên <code>idx_u</code> tìm 71 đơn của khách (chỉ 3 trang index).','<b>Bitmap Heap Scan</b> đọc 71 trang heap (<code>Heap Blocks: exact=71</code>): mỗi đơn nằm ở một trang khác nhau.','<code>Rows Removed by Filter: 12</code>: lọc status sau khi đã đọc dòng.','Vẫn phải <b>Sort</b> (<code>top-N heapsort</code>) vì index không có created_at.']},
+    {k:'usc',name:'(user_id, status, created_at)',t:0.054,buf:'23 trang',node:'Index Scan Backward',cls:'good',notes:['<code>Index Cond</code> chứa <b>cả hai</b> điều kiện: không còn dòng "Filter", không đọc dòng thừa.','<b>Backward</b>: đọc index từ cuối lên vì <code>ORDER BY created_at DESC</code>; <b>không còn nút Sort</b>.','<code>LIMIT 20</code> dừng ngay sau 20 dòng (<code>rows=20</code> dù khách có 59 đơn COMPLETED).','Vẫn phải vào heap lấy restaurant_id, total_amount: 20 trang heap.']},
+    {k:'cov',name:'covering INCLUDE (…)',t:0.034,buf:'4 trang',node:'Index Only Scan Backward',cls:'good',notes:['Index <code>(user_id, status, created_at) INCLUDE (id, restaurant_id, total_amount)</code> chứa đủ mọi cột câu query cần.','<b>Index Only Scan</b>, <code>Heap Fetches: 0</code>: không chạm vào bảng.','Chỉ <b>4 trang</b>: 3 tầng cây + 1 trang lá. So với 18 731 trang lúc đầu.','Đổi lại: index nặng 112 MB thay vì 77 MB. MySQL không có INCLUDE; thêm cột vào cuối index để được <code>Using index</code>.']}
+  ];
+  hbar('#ch-explain',EX.map(e=>({name:e.k==='usc'?'composite':e.k==='cov'?'covering':e.name,v:e.t,color:e.cls==='bad'?'--s2':'--s1',tip:`<div class="tr"><span>Thời gian</span><b>${fmtN(e.t)} ms</b></div><div class="tr"><span>Trang đọc</span><b>${e.buf}</b></div><div class="tr"><span>Nút chính</span><b>${e.node}</b></div>`})),{log:true,min:0.01,max:100,ticks:[0.01,0.1,1,10,100],padL:90,unit:' ms',aria:'Thời gian query với bốn cách đánh index, thang log'});
+  const tabs=$('#ex-tabs');
+  tabs.innerHTML=EX.map((e,i)=>`<button type="button" role="tab" aria-selected="${i===0}" data-i="${i}"><b>${esc(e.name)}</b><small>${fmtN(e.t)} ms · ${e.buf}</small></button>`).join('');
+  function hl(txt){return esc(txt).replace(/(Parallel Seq Scan|Seq Scan|Index Only Scan Backward|Index Scan Backward|Bitmap Heap Scan|Bitmap Index Scan|Gather Merge|Sort(?= )|Limit)/g,'<span class="h">$1</span>').replace(/(Rows Removed by Filter: \d+|read=\d+|Sort Method: [\w-]+)/g,'<span class="w">$1</span>').replace(/(Heap Fetches: 0|Execution Time: [\d.]+ ms)/g,'<span class="s">$1</span>');}
+  function show(i){const e=EX[i];tabs.querySelectorAll('button').forEach((b,j)=>b.setAttribute('aria-selected',j===i?'true':'false'));
+    $('#ex-panel').innerHTML=`<span class="real">ĐO THẬT · EXPLAIN (ANALYZE, BUFFERS)</span><div class="ex-badges"><span class="${e.cls}">${fmtN(e.t)} ms</span><span class="${e.cls}">${e.buf}</span><span>${e.node}</span></div><pre class="code">${hl(PLANS[e.k])}</pre><ul class="ex-notes">${e.notes.map(n=>`<li>${n}</li>`).join('')}</ul>`;}
+  tabs.addEventListener('click',ev=>{const b=ev.target.closest('button');if(b)show(+b.dataset.i);});
+  show(0);
+})();
+
+/* ===== 05. index bị bỏ qua ===== */
+(function(){
+  const C=[
+    {t:'Bọc cột trong hàm',sql:`<span class="h">WHERE</span> date(created_at) = <span class="s">'2025-05-01'</span>`,bad:[78.602,'Seq Scan'],good:[0.291,'Index Only Scan'],fix:`<span class="h">WHERE</span> created_at &gt;= <span class="s">'2025-05-01'</span>\n  <span class="h">AND</span> created_at &lt;  <span class="s">'2025-05-02'</span>`,p:'Index lưu giá trị <code>created_at</code>, không lưu <code>date(created_at)</code>. Viết lại thành khoảng (3 471 dòng, nhanh hơn 270 lần), hoặc tạo index trên biểu thức. Tương tự: <code>LOWER(email)</code>, <code>created_at + interval</code>, <code>amount * 1.1 &gt; x</code>.',real:1},
+    {t:'Thiếu cột đầu (leftmost prefix)',sql:`<span class="c">-- chỉ có index (user_id, status, created_at)</span>\n<span class="h">WHERE</span> status = <span class="s">'PENDING'</span> <span class="h">AND</span> created_at &gt; <span class="s">'2026-06-01'</span>`,bad:[83.981,'Parallel Seq Scan'],good:[0.062,'chỉ user_id: Index Only Scan'],p:'Không có user_id thì không biết bắt đầu ở khúc nào của index. Cần index riêng bắt đầu bằng <code>status</code> nếu query này quan trọng.',real:1},
+    {t:'Điều kiện khớp quá nhiều dòng',sql:`<span class="h">SELECT</span> id <span class="h">FROM</span> orders <span class="h">WHERE</span> status = <span class="s">'COMPLETED'</span>  <span class="c">-- 85%</span>`,bad:[146.797,'Seq Scan · 1 700 641 dòng'],good:[109.434,'PENDING 5%: Bitmap Heap Scan'],p:'Khi phần lớn bảng khớp, đọc tuần tự cả bảng rẻ hơn nhảy qua index rồi đọc ngẫu nhiên từng trang. Planner tự chọn Seq Scan, và nó <b>đúng</b>. Index đơn trên cột ít giá trị (status, giới tính, cờ boolean) gần như vô dụng; ghép nó vào composite index.',real:1},
+    {t:'LIKE bắt đầu bằng %',sql:`<span class="h">WHERE</span> name <span class="h">LIKE</span> <span class="s">'%sushi%'</span>   <span class="c">-- không dùng B+Tree</span>\n<span class="h">WHERE</span> name <span class="h">LIKE</span> <span class="s">'sushi%'</span>    <span class="c">-- dùng được (range)</span>`,p:'B+Tree sắp theo ký tự đầu; không biết ký tự đầu thì không tìm được. Tìm kiếm chứa chuỗi: PostgreSQL <code>pg_trgm</code> + GIN, MySQL FULLTEXT, hoặc Elasticsearch/OpenSearch.'},
+    {t:'Ép kiểu ngầm',my:1,sql:`<span class="c">-- phone là VARCHAR, so với số</span>\n<span class="h">WHERE</span> phone = 0901234567`,p:'MySQL phải đổi từng giá trị <code>phone</code> sang số để so sánh, tương đương bọc cột trong hàm → <code>type = ALL</code>. Truyền đúng kiểu: <code>\'0901234567\'</code>. Lỗi hay gặp khi JPA/MyBatis truyền Long vào cột VARCHAR. Cột join khác collation/charset cũng gây ra chuyện tương tự.'},
+    {t:'OR trên hai cột khác nhau',sql:`<span class="h">WHERE</span> user_id = 7 <span class="h">OR</span> restaurant_id = 3`,p:'Một index không phục vụ được cả hai nhánh. PostgreSQL có thể dùng BitmapOr nếu <b>mỗi</b> cột có index; MySQL có index_merge nhưng thường kém. Cách chắc ăn: tách thành <code>UNION ALL</code> hai query, mỗi query dùng index riêng.'},
+    {t:'Phủ định: !=, NOT IN, IS NOT NULL',sql:`<span class="h">WHERE</span> status &lt;&gt; <span class="s">'CANCELLED'</span>`,p:'Phủ định thường khớp phần lớn bảng nên planner bỏ index (như thẻ số 3). Viết dương tính nếu được: <code>status IN (\'COMPLETED\', \'PENDING\')</code>. PostgreSQL còn có partial index: <code>CREATE INDEX … WHERE status &lt;&gt; \'CANCELLED\'</code>.'},
+    {t:'ORDER BY ngược chiều nhau',sql:`<span class="h">ORDER BY</span> status <span class="h">ASC</span>, created_at <span class="h">DESC</span>`,p:'Index (status, created_at) đọc xuôi cho ASC, ASC hoặc ngược cho DESC, DESC, nhưng không cho trộn chiều → phải sort. Tạo index đúng chiều: <code>(status ASC, created_at DESC)</code> (MySQL 8 có descending index thật).'},
+    {t:'Bảng quá nhỏ',sql:`<span class="h">SELECT</span> * <span class="h">FROM</span> restaurants <span class="h">WHERE</span> area = <span class="s">'Tokyo'</span>  <span class="c">-- 200 dòng</span>`,p:'Cả bảng nằm trong vài trang: đọc hết còn nhanh hơn đi cây index. Thấy Seq Scan trên bảng nhỏ trong EXPLAIN là bình thường, không phải lỗi.'},
+    {t:'Thống kê cũ',sql:`<span class="c">-- vừa import 1 triệu dòng</span>\n<span class="h">ANALYZE</span> orders;              <span class="c">-- PostgreSQL</span>\n<span class="h">ANALYZE TABLE</span> orders;        <span class="c">-- MySQL</span>`,p:'Planner chọn plan dựa trên <b>ước lượng</b> số dòng. Sau khi dữ liệu đổi nhiều mà thống kê chưa cập nhật, nó có thể chọn sai hoàn toàn. Dấu hiệu: <code>rows=</code> ước lượng lệch hàng trăm lần so với <code>actual rows=</code>.'}
+  ];
+  $('#noidx').innerHTML=C.map((c,i)=>{let vs='';
+    if(c.bad){const pct=Math.max(1.5,c.good[0]/c.bad[0]*100);vs=`<div class="ni-vs"><div class="bad"><small>${c.bad[1]}</small><b>${fmtN(c.bad[0])} ms</b><div class="ni-bar"><i data-w="100"></i></div></div><div class="good"><small>${c.good[1]}</small><b>${fmtN(c.good[0])} ms</b><div class="ni-bar"><i data-w="${pct.toFixed(1)}"></i></div></div></div>`;}
+    return `<div class="ni"><h4><span class="n">${i+1}</span>${c.t}${c.real?' <span class="real">ĐO THẬT</span>':''}${c.my?' <span class="mysql">MYSQL</span>':''}</h4><pre class="code">${c.sql}</pre>${vs}${c.fix?`<pre class="code"><span class="c">-- sửa</span>\n${c.fix}</pre>`:''}<p>${c.p}</p></div>`;}).join('');
+  onVisible($('#noidx'),v=>{if(v)$$('#noidx .ni-bar i').forEach(b=>b.style.width=b.dataset.w+'%');});
+})();
+
+/* ===== 06. chi phí ghi ===== */
+hbar('#ch-cost',[[0,984],[1,2023],[3,4687],[6,7092]].map(([n,v])=>({name:n+' index phụ',v,color:n>=3?'--s2':'--s1',tip:`<div class="tr"><span>INSERT 300 000 dòng</span><b>${fmtN(v)} ms</b></div><div class="tr"><span>So với không index</span><b>×${(v/984).toFixed(1)}</b></div>`})),{max:8000,ticks:[0,2000,4000,6000,8000],padL:90,unit:' ms',aria:'Thời gian insert theo số index phụ'});
+
+/* ===== 08. isolation ===== */
+(function(){
+  const LV={RU:'READ UNCOMMITTED',RC:'READ COMMITTED',RR:'REPEATABLE READ',SER:'SERIALIZABLE'};
+  const A=(t,r,c)=>({a:{t,r,c}}),B=(t,r,c)=>({b:{t,r,c}}),AB=(t,u)=>({a:{t},b:{t:u||t}});
+  function sim(sc,lv,db){const pg=db==='pg';const L=pg&&lv==='RU'?'RC':lv;const st=[];let v,m,cls,note='';
+    const push=(o,d)=>{o.d=d;st.push(o);};
+    if(pg&&lv==='RU')note=' PostgreSQL nhận READ UNCOMMITTED nhưng chạy như READ COMMITTED.';
+    if(sc==='dirty'){push(AB('BEGIN'),'1000');
+      push(B('UPDATE accounts SET balance = 0 WHERE id = 1','chưa commit'),'1000 → 0?');
+      const dirty=!pg&&lv==='RU';
+      push(A('SELECT balance … id = 1','→ '+(dirty?'0':'1000'),dirty?'anom':'okv'),dirty?'0 (bẩn)':'1000');
+      push(B('ROLLBACK'),'1000');
+      if(dirty){v=['bad',`A đã đọc 0, một giá trị <b>chưa từng được commit</b> (B rollback). Dirty read.`];m=['Có','y'];}
+      else{v=['ok',`A đọc 1000: chỉ thấy dữ liệu đã commit.${note}${pg?' Kết quả đo thật.':''}`];m=['Không','nn'];}
+    }
+    if(sc==='nonrep'){push(AB('BEGIN'),'1000');push(A('SELECT balance … id = 1','→ 1000'),'1000');
+      if(!pg&&lv==='SER'){push(B('UPDATE … SET balance = 900','⏳ chờ khoá S của A','blk'),'1000');push(A('SELECT balance … id = 1','→ 1000','okv'),'1000');push(A('COMMIT'),'1000');push(B('(được khoá) UPDATE xong; COMMIT'),'900');
+        v=['ok','InnoDB SERIALIZABLE biến SELECT thường thành <code>FOR SHARE</code>: B phải chờ A xong. Đúng nhưng giảm đồng thời.'];m=['Không','nn'];}
+      else{push(B('UPDATE … SET balance = 900; COMMIT'),'900');const anom=L==='RC'||L==='RU';
+        push(A('SELECT balance … id = 1','→ '+(anom?'900':'1000'),anom?'anom':'okv'),'900');push(A('COMMIT'),'900');
+        if(anom){v=['bad',`Trong cùng một transaction, A đọc 1000 rồi 900: non-repeatable read. Mỗi câu lệnh có snapshot mới.${note}`];m=['Có','y'];}
+        else{v=['ok',`A vẫn thấy 1000: cả transaction dùng một snapshot chụp ở lần đọc đầu.${pg?' Đo thật.':' (read view của InnoDB)'}`];m=['Không','nn'];}}
+    }
+    if(sc==='phantom'){push(AB('BEGIN'),'2 dòng');push(A('SELECT count(*) … WHERE balance >= 500','→ 2'),'2 dòng');
+      if(!pg&&lv==='SER'){push(B("INSERT INTO accounts VALUES (3,'C',800)",'⏳ chờ next-key lock của A','blk'),'2 dòng');push(A('SELECT count(*) …','→ 2','okv'),'2 dòng');push(A('COMMIT'),'2 dòng');push(B('(được khoá) INSERT xong; COMMIT'),'3 dòng');
+        v=['ok','A khoá luôn khoảng trống (next-key lock) nên B không chèn được vào giữa.'];m=['Không','nn'];}
+      else{push(B("INSERT INTO accounts VALUES (3,'C',800); COMMIT"),'3 dòng');const anom=L==='RC'||L==='RU';
+        push(A('SELECT count(*) … WHERE balance >= 500','→ '+(anom?'3':'2'),anom?'anom':'okv'),'3 dòng');push(A('COMMIT'),'3 dòng');
+        if(anom){v=['bad',`Lần đếm thứ hai xuất hiện thêm một dòng "ma": phantom read.${note}`];m=['Có','y'];}
+        else{v=['ok',pg?'PostgreSQL REPEATABLE READ chặn cả phantom (mạnh hơn chuẩn SQL yêu cầu). Đo thật.':'SELECT thường đọc snapshot nên vẫn 2. Lưu ý: <code>SELECT … FOR UPDATE</code> là current read; InnoDB dùng gap lock để chặn phantom cho trường hợp đó (chương 10).'];m=['Không','nn'];}}
+    }
+    if(sc==='lost'){push(AB('BEGIN'),'1000');push(A('SELECT balance','→ 1000'),'1000');push(B('SELECT balance','→ 1000'),'1000');
+      if(!pg&&lv==='SER'){push(A('UPDATE … SET balance = 900','⏳ chờ khoá S của B','blk'),'1000');push(B('UPDATE … SET balance = 800','ERROR 1213 Deadlock found → rollback','err'),'1000');push(A('(được khoá) UPDATE xong; COMMIT','→ 900','okv'),'900');
+        v=['warn','Cả hai giữ khoá S rồi cùng xin khoá X: deadlock, InnoDB huỷ B. Không mất dữ liệu nhưng B phải <b>thử lại</b> để ra 700.'];m=['Lỗi, thử lại','mid'];}
+      else{push(A('UPDATE … SET balance = 900 (1000 − 100); COMMIT'),'900');
+        if(pg&&(lv==='RR'||lv==='SER')){push(B('UPDATE … SET balance = 800','ERROR: could not serialize access due to concurrent update','err'),'900');push(B('ROLLBACK'),'900');
+          v=['warn','PostgreSQL phát hiện dòng đã bị transaction khác sửa sau snapshot của B: báo lỗi. Số dư 900, B phải <b>thử lại</b>. Đo thật.'];m=['Lỗi, thử lại','mid'];}
+        else{push(B('UPDATE … SET balance = 800 (1000 − 200); COMMIT','→ ghi đè!','anom'),'800');
+          v=['bad',`Kết quả 800 thay vì 700: lần rút 100 của A <b>biến mất không một lỗi nào</b>.${pg?' Đo thật.':(lv==='RR'?' InnoDB REPEATABLE READ không chặn được: UPDATE là current read.':'')} Sửa: <code>FOR UPDATE</code> hoặc <code>SET balance = balance − x</code>.`];m=['Có (lặng lẽ)','y'];}}
+    }
+    if(sc==='skew'){push(AB('BEGIN'),'An ✓ Binh ✓');push(A('SELECT count(*) WHERE on_duty','→ 2: mình nghỉ được'),'2 trực');push(B('SELECT count(*) WHERE on_duty','→ 2: mình nghỉ được'),'2 trực');
+      if(!pg&&lv==='SER'){push(A("UPDATE … on_duty = false WHERE name = 'An'",'⏳ chờ khoá S của B','blk'),'2 trực');push(B("UPDATE … WHERE name = 'Binh'",'ERROR 1213 Deadlock → rollback','err'),'2 trực');push(A('(được khoá) UPDATE xong; COMMIT','→ còn 1 người trực','okv'),'1 trực');
+        v=['ok','Khoá S của hai lần đọc chặn nhau, InnoDB huỷ B. Ràng buộc được giữ, B phải thử lại (và sẽ thấy chỉ còn 1 người).'];m=['Lỗi, thử lại','mid'];}
+      else{push(A("UPDATE … on_duty = false WHERE name = 'An'"),'An ✗ (A)');push(B("UPDATE … on_duty = false WHERE name = 'Binh'"),'Binh ✗ (B)');push(A('COMMIT'),'1 trực');
+        if(pg&&lv==='SER'){push(B('COMMIT','ERROR: could not serialize access due to read/write dependencies among transactions','err'),'1 trực');
+          v=['ok','SSI của PostgreSQL thấy hai transaction đọc dữ liệu mà bên kia sửa: huỷ Binh lúc commit. Còn 1 người trực. Đo thật.'];m=['Lỗi, thử lại','mid'];}
+        else{push(B('COMMIT','→ thành công','anom'),'0 trực');
+          v=['bad',`Hai transaction sửa <b>hai dòng khác nhau</b> nên không xung đột khoá, nhưng cùng dựa trên một điều kiện đã cũ: không còn ai trực. Write skew.${pg&&lv==='RR'?' Đo thật.':''} Sửa: SERIALIZABLE, <code>SELECT … FOR UPDATE</code> các dòng liên quan, hoặc khoá một dòng "cha" chung.`];m=['Có','y'];}}
+    }
+    return {st,v,m};}
+  function opHtml(o,side){if(!o)return '<div></div>';return `<div class="op ${side} ${o.c||''}">${esc(o.t)}${o.r?`<span class="r">${esc(o.r)}</span>`:''}</div>`;}
+  let run=0;
+  async function go(){const my=++run;const sc=$('#is-sc').value,lv=$('#is-lv').value,db=$('#is-db').value;const r=sim(sc,lv,db);
+    const box=$('#is-steps');box.innerHTML='';$('#is-verdict').style.display='none';matrix();
+    for(const s of r.st){if(my!==run)return;const d=document.createElement('div');d.className='is-step new';d.innerHTML=opHtml(s.a,'a')+`<div class="db">${esc(s.d)}</div>`+opHtml(s.b,'b');box.appendChild(d);await wait(650);}
+    if(my!==run)return;const v=$('#is-verdict');v.className='verdict '+r.v[0];v.innerHTML=`<span>${r.v[1]}</span>`;v.style.display='flex';}
+  function matrix(){const db=$('#is-db').value,cur=$('#is-lv').value;
+    $('#is-matrix').innerHTML=Object.keys(LV).map(l=>`<tr class="${l===cur?'cur':''}"><td><b>${LV[l]}</b>${(db==='pg'&&l==='RC')||(db==='my'&&l==='RR')?' <span class="cap">(mặc định)</span>':''}</td>${['dirty','nonrep','phantom','lost','skew'].map(s=>{const m=sim(s,l,db).m;return `<td class="${m[1]}">${m[0]}</td>`;}).join('')}</tr>`).join('');}
+  $('#is-run').addEventListener('click',go);['#is-sc','#is-lv','#is-db'].forEach(id=>$(id).addEventListener('change',go));
+  matrix();let started=false;onVisible($('#is'),v=>{if(v&&!started){started=true;go();}});
+})();
+
+/* ===== 09. MVCC ===== */
+(function(){
+  const V1={id:'v1',xmin:'100',bal:100},V2={id:'v2',xmin:'201',bal:200};
+  const ST=[
+    {heap:[[V1,'0','live']],tx:[],n:'Dòng <code>id = 1</code> do transaction 100 tạo, đã commit. Mỗi phiên bản mang <b>xmin</b> (ai tạo) và <b>xmax</b> (ai xoá/sửa; 0 = chưa ai).'},
+    {heap:[[V1,'0','live']],tx:[['T200','REPEATABLE READ: chụp snapshot','v1',1]],n:'T200 bắt đầu và đọc lần đầu: <b>snapshot được chụp ngay lúc này</b> (không phải lúc BEGIN). Snapshot ghi nhớ: mọi transaction ≤ 200 đã commit thì thấy được, còn lại thì không.'},
+    {heap:[[V1,'201','live'],[V2,'0','pend']],tx:[['T200','đang mở','v1',1],['T201','UPDATE balance = 200 (chưa commit)','v2',1]],n:'T201 UPDATE: <b>không ghi đè</b>. Nó tạo phiên bản mới v2 (xmin = 201) và đánh dấu v1 có xmax = 201. T201 thấy bản của chính nó; T200 vẫn thấy v1. Người đọc không bị chặn.'},
+    {heap:[[V1,'201','dead'],[V2,'0','live']],tx:[['T200','đang mở','v1',1],['T201','COMMIT','v2',0]],n:'T201 commit. Với thế giới bên ngoài, v1 đã "chết". Nhưng snapshot của T200 chụp trước khi 201 commit, nên với T200, <b>201 coi như chưa xảy ra</b>: nó vẫn đọc v1 = 100.'},
+    {heap:[[V1,'201','dead'],[V2,'0','live']],tx:[['T200','SELECT lần 2','v1',1],['T202','BEGIN, SELECT','v2',1]],n:'Cùng một thời điểm, cùng một dòng: <b>T200 thấy 100, T202 thấy 200</b>. Đây là repeatable read. Ở READ COMMITTED, câu SELECT lần 2 của T200 sẽ chụp snapshot mới và thấy 200.'},
+    {heap:[[V1,'201','dead'],[V2,'0','live']],tx:[['T200','COMMIT','—',0],['T202','đang mở','v2',1]],n:'T200 kết thúc. Không còn snapshot nào cần đến v1 nữa: nó trở thành <b>dead tuple</b> thật sự, vẫn chiếm chỗ trong trang.'},
+    {heap:[[V2,'0','live']],tx:[['T202','đang mở','v2',1]],n:'<b>VACUUM</b> (autovacuum) dọn v1, chỗ trống được tái sử dụng. Nếu T200 mở hàng giờ (job batch quên commit), v1 và mọi bản cũ khác không dọn được: bảng phình, query chậm dần. InnoDB tương tự với undo log và purge.'}
+  ];
+  let i=0,auto=null;
+  function render(){const s=ST[i];
+    flip($('#mv'),()=>{
+      $('#mv-heap').innerHTML=s.heap.map(([v,xmax,cls])=>`<div class="tup ${cls}" data-id="${v.id}"><span class="v">${v.id}</span><span><small>xmin</small>${v.xmin}</span><span><small>xmax</small>${xmax==='0'?'0':`<b style="color:var(--bad)">${xmax}</b>`}</span><span><small>balance</small><b>${v.bal}</b></span></div>`).join('');
+      $('#mv-tx').innerHTML=s.tx.length?s.tx.map(([n,d,see,act])=>`<div class="txc ${act?'act':'done'}" data-id="${n}"><b>${n}</b><span>${d}</span><span class="sees">thấy: ${see==='—'?'—':`<span class="see">${see} = ${see==='v1'?100:200}</span>`}</span></div>`).join(''):'<span class="cap">chưa có transaction nào đang chạy</span>';});
+    $('#mv-note').innerHTML=`<h4>Bước ${i+1}/${ST.length}</h4><p>${s.n}</p>`;
+    $('#mv-prev').disabled=i===0;$('#mv-next').disabled=i===ST.length-1;}
+  function stop(){if(auto){clearInterval(auto);auto=null;$('#mv-auto').textContent='Tự chạy';}}
+  $('#mv-prev').addEventListener('click',()=>{stop();if(i>0){i--;render();}});
+  $('#mv-next').addEventListener('click',()=>{stop();if(i<ST.length-1){i++;render();}});
+  $('#mv-auto').addEventListener('click',()=>{if(auto){stop();return;}if(i===ST.length-1)i=0;render();$('#mv-auto').textContent='Dừng';auto=setInterval(()=>{if(i<ST.length-1){i++;render();}else stop();},2400);});
+  render();
+})();
+
+/* ===== 10. gap lock ===== */
+(function(){
+  const svg=$('#gl-svg');const X=v=>40+v*13.6,LY=120;let locked=true,pend=[],done=[];
+  const VALS=[5,12,18,22,28,35,45];
+  const inLock=v=>v>10&&v<30;
+  function draw(){svg.innerHTML='';
+    // khoảng bị khoá
+    const gaps=[[0,10],[10,20],[20,30],[30,40],[40,50]];
+    gaps.forEach(([a,b])=>{const lk=locked&&a>=10&&b<=30;S('rect',{x:X(a),y:LY-34,width:X(b)-X(a),height:68,class:'gl-gap'+(lk?' lk':'')},svg);
+      if(lk)T('gap ('+a+', '+b+')',{x:(X(a)+X(b))/2,y:LY+52,'text-anchor':'middle',class:'gl-c'},svg);});
+    S('line',{x1:X(0),x2:X(50),y1:LY,y2:LY,stroke:css('--muted'),'stroke-width':2},svg);
+    [10,20,30,40].forEach(v=>{const lk=locked&&v===20;S('rect',{x:X(v)-18,y:LY-16,width:36,height:32,rx:5,class:'gl-rec'+(lk?' lk':'')},svg);T(v,{x:X(v),y:LY+5,'text-anchor':'middle',class:'gl-v'},svg);
+      if(v===30&&locked)T('30: tuỳ phiên bản',{x:X(30),y:LY-42,'text-anchor':'middle',class:'gl-c'},svg);});
+    if(locked){T('T1 giữ: next-key (10, 20] + (20, 30)',{x:X(20),y:22,'text-anchor':'middle',class:'gl-c'},svg).setAttribute('fill',css('--bad'));}
+    else T('T1 đã COMMIT: không còn khoá',{x:X(25),y:22,'text-anchor':'middle',class:'gl-c'},svg).setAttribute('fill',css('--ok'));
+    done.forEach(v=>{S('circle',{cx:X(v),cy:LY,r:9,fill:css('--ok'),stroke:css('--surface'),'stroke-width':2},svg);T(v,{x:X(v),y:LY+28,'text-anchor':'middle',class:'gl-c'},svg);});
+    pend.forEach(v=>{S('circle',{cx:X(v),cy:LY-58,r:9,fill:css('--warn'),stroke:css('--surface'),'stroke-width':2},svg);T(v+' ⏳',{x:X(v),y:LY-74,'text-anchor':'middle',class:'gl-c'},svg);});
+  }
+  async function ins(v){if(done.includes(v)||pend.includes(v))return;
+    const c=S('circle',{cx:X(v),cy:10,r:9,fill:css('--accent')},svg);
+    const target=locked&&inLock(v)?LY-58:LY;
+    if(!RM)await c.animate([{transform:'translateY(0)'},{transform:`translateY(${target-10}px)`}],{duration:500,easing:'cubic-bezier(.3,.7,.4,1)'}).finished;
+    if(locked&&inLock(v)){pend.push(v);logTo('#gl-log',`T2: INSERT age = ${v} → chờ khoá (rơi vào khoảng trống bị khoá). Quá innodb_lock_wait_timeout (50 s): ERROR 1205 Lock wait timeout exceeded`,'w');}
+    else{done.push(v);logTo('#gl-log',`T2: INSERT age = ${v} → OK (ngoài vùng khoá của T1)`,'');}
+    draw();}
+  $('#gl-btns').innerHTML=VALS.map(v=>`<button class="btn" type="button" data-v="${v}">INSERT ${v}</button>`).join('')+'<button class="btn primary" type="button" data-c="1">T1 COMMIT</button><button class="btn" type="button" data-r="1">Đặt lại</button>';
+  $('#gl-btns').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.v)ins(+b.dataset.v);
+    else if(b.dataset.c){if(!locked)return;locked=false;logTo('#gl-log','T1: COMMIT → nhả mọi khoá','h');pend.forEach(v=>{done.push(v);logTo('#gl-log',`T2: INSERT age = ${v} được thực hiện`,'');});pend=[];draw();}
+    else{locked=true;pend=[];done=[];$('#gl-log').innerHTML='';logTo('#gl-log','T1: BEGIN; SELECT * FROM t WHERE age BETWEEN 15 AND 25 FOR UPDATE; → 1 dòng (age = 20)','h');draw();}});
+  logTo('#gl-log','T1: BEGIN; SELECT * FROM t WHERE age BETWEEN 15 AND 25 FOR UPDATE; → 1 dòng (age = 20)','h');
+  draw();
+})();
+
+/* ===== 11. deadlock ===== */
+(function(){
+  const svg=$('#dd-svg');let mode='bad',run=0;
+  const P={T1:[90,115],T2:[550,115],R1:[320,60],R2:[320,170]};
+  function draw(s){svg.innerHTML='';
+    const defs=S('defs',{},svg);[['ah',css('--accent')],['aw',css('--bad')]].forEach(([id,c])=>{const m=S('marker',{id,viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto-start-reverse'},defs);S('path',{d:'M0,0 L10,5 L0,10 z',fill:c},m);});
+    const arrow=(a,b,kind)=>{const [x1,y1]=P[a],[x2,y2]=P[b];const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);const sx=x1+dx/L*(a[0]==='T'?62:58),sy=y1+dy/L*30,ex=x2-dx/L*(b[0]==='T'?62:58),ey=y2-dy/L*30;
+      S('line',{x1:sx,y1:sy,x2:ex,y2:ey,stroke:kind==='h'?css('--accent'):css('--bad'),'stroke-width':kind==='h'?3:2.5,'stroke-dasharray':kind==='h'?'':'6 4','marker-end':`url(#${kind==='h'?'ah':'aw'})`},svg);};
+    for(const r in s.hold)if(s.hold[r])arrow(r,s.hold[r],'h');
+    for(const t in s.wait)if(s.wait[t])arrow(t,s.wait[t],'w');
+    ['R1','R2'].forEach(r=>{const [x,y]=P[r];S('rect',{x:x-58,y:y-24,width:116,height:48,rx:6,class:'bx'+(s.hold[r]?' hot':'')},svg);T(r==='R1'?'accounts id = 1':'accounts id = 2',{x,y:y+5,'text-anchor':'middle'},svg);});
+    ['T1','T2'].forEach(t=>{const [x,y]=P[t];const st=s.st[t]||'';S('rect',{x:x-62,y:y-30,width:124,height:60,rx:8,class:'bx'+(st==='dead'?' bad':st==='ok'?' ok':' hot')},svg);T(t,{x,y:y-4,'text-anchor':'middle','font-weight':700},svg);T(st==='dead'?'bị huỷ (rollback)':st==='ok'?'COMMIT':st==='wait'?'đang chờ…':'đang chạy',{x,y:y+16,'text-anchor':'middle',class:'bt-cap'},svg);});
+    if(s.cycle)T('Vòng chờ: T1 → id 2 → T2 → id 1 → T1',{x:320,y:222,'text-anchor':'middle',class:'bt-cmp'},svg).setAttribute('fill',css('--bad'));
+    T('mũi tên liền: đang giữ khoá · đứt: đang chờ',{x:320,y:16,'text-anchor':'middle',class:'bt-cap'},svg);
+  }
+  const SC={
+    bad:[[{hold:{R1:'T1'},wait:{},st:{}},'T1: UPDATE accounts SET balance = balance − 100 WHERE id = 1 → giữ khoá id 1',''],
+         [{hold:{R1:'T1',R2:'T2'},wait:{},st:{}},'T2: UPDATE … WHERE id = 2 → giữ khoá id 2',''],
+         [{hold:{R1:'T1',R2:'T2'},wait:{T1:'R2'},st:{T1:'wait'}},'T1: UPDATE … WHERE id = 2 → chờ T2','w'],
+         [{hold:{R1:'T1',R2:'T2'},wait:{T1:'R2',T2:'R1'},st:{T1:'wait',T2:'wait'},cycle:1},'T2: UPDATE … WHERE id = 1 → chờ T1. Không ai nhả được: DEADLOCK','w'],
+         [{hold:{R1:'T1',R2:'T2'},wait:{T1:'R2',T2:'R1'},st:{T1:'wait',T2:'wait'},cycle:1},'… chờ deadlock_timeout = 1s rồi PostgreSQL mới kiểm tra đồ thị chờ','d',1100],
+         [{hold:{R2:'T2'},wait:{T2:'R1'},st:{T1:'dead',T2:'wait'}},'T1: ERROR: deadlock detected (Process 795 waits for ShareLock on transaction 1812; blocked by process 796 …)','w'],
+         [{hold:{R1:'T2',R2:'T2'},wait:{},st:{T1:'dead',T2:'wait'}},'T2 lấy được khoá id 1, cập nhật xong',''],
+         [{hold:{},wait:{},st:{T1:'dead',T2:'ok'}},'T2: COMMIT. Đo thật: tổng cộng 1,51 s. Ứng dụng phải bắt lỗi và chạy lại T1.','h']],
+    good:[[{hold:{R1:'T1'},wait:{},st:{}},'T1: UPDATE … WHERE id = 1 → giữ khoá id 1',''],
+         [{hold:{R1:'T1'},wait:{T2:'R1'},st:{T2:'wait'}},'T2: UPDATE … WHERE id = 1 (cũng bắt đầu từ id nhỏ) → chờ T1','w'],
+         [{hold:{R1:'T1',R2:'T1'},wait:{T2:'R1'},st:{T2:'wait'}},'T1: UPDATE … WHERE id = 2 → giữ luôn id 2, không ai tranh',''],
+         [{hold:{},wait:{T2:'R1'},st:{T1:'ok',T2:'wait'}},'T1: COMMIT → nhả cả hai khoá','h'],
+         [{hold:{R1:'T2'},wait:{},st:{T1:'ok'}},'T2 lấy khoá id 1',''],
+         [{hold:{R1:'T2',R2:'T2'},wait:{},st:{T1:'ok'}},'T2 lấy khoá id 2',''],
+         [{hold:{},wait:{},st:{T1:'ok',T2:'ok'}},'T2: COMMIT. Chỉ chờ, không bao giờ thành vòng tròn → không deadlock.','h']]};
+  async function go(){const my=++run;$('#dd-log').innerHTML='';$('#dd-run').disabled=true;draw({hold:{},wait:{},st:{}});
+    for(const [s,msg,cls,ms] of SC[mode]){await wait(ms||850);if(my!==run)return;draw(s);logTo('#dd-log',msg,cls);}
+    $('#dd-run').disabled=false;}
+  seg('#dd-mode',m=>{mode=m;run++;$('#dd-run').disabled=false;$('#dd-log').innerHTML='';draw({hold:{},wait:{},st:{}});logTo('#dd-log',m==='bad'?'Chuyển tiền: T1 chuyển 1 → 2, T2 chuyển 2 → 1, cùng lúc.':'Mọi transaction khoá các dòng theo id tăng dần.','d');});
+  $('#dd-run').addEventListener('click',go);
+  draw({hold:{},wait:{},st:{}});logTo('#dd-log','Chuyển tiền: T1 chuyển 1 → 2, T2 chuyển 2 → 1, cùng lúc. Bấm Chạy.','d');
+})();
+
+/* ===== 12. phân trang ===== */
+(function(){
+  const LAB=['1','100','1 000','10 000','50 000','99 999'];
+  const OFF=[0.057,0.329,4.179,28.344,117.067,189.588],KEY=[0.019,0.022,0.029,0.036,0.051,0.024];
+  const ser=[{name:'OFFSET',color:'--s2',pts:OFF.map((v,i)=>[i,v])},{name:'Keyset (WHERE id > :lastId)',color:'--s1',pts:KEY.map((v,i)=>[i,v])}];
+  legend('#lg-page',ser);
+  lineChart('#ch-page',ser,{xmin:0,xmax:5,ymin:0.01,ymax:300,log:true,yt:[0.01,0.1,1,10,100],xt:[0,1,2,3,4,5],xf:v=>'trang '+LAB[Math.round(v)],unit:'ms',aria:'Thời gian lấy trang N: OFFSET tăng theo trang, keyset gần như không đổi'});
+})();
+
+/* ===== 13. N+1 ===== */
+(function(){
+  let mode='lazy',run=0;
+  const R=[[17,'Huge Sushi Ginza'],[42,'Huge Grill Shibuya'],[8,'Huge Ramen Ueno'],[93,'Huge Bistro Osaka'],[61,'Huge Yakiniku Shinjuku'],[25,'Huge Cafe Kyoto'],[77,'Huge Tempura Asakusa'],[3,'Huge Pasta Roppongi'],[150,'Huge Steak Nagoya'],[110,'Huge Izakaya Fukuoka']];
+  $('#np-rtt').addEventListener('input',()=>$('#np-rtt-v').textContent=$('#np-rtt').value+' ms');
+  seg('#np-mode',m=>{mode=m;run++;reset();});
+  function reset(){$('#np-log').innerHTML='';$('#np-q').textContent='0';$('#np-t').textContent='0 ms';$('#np-run').disabled=false;
+    logTo('#np-log',{lazy:'Order có @ManyToOne(fetch = LAZY) Restaurant. Template gọi order.getRestaurant().getName() trong vòng lặp.',batch:'Giống lazy, thêm @BatchSize(size = 5) trên Restaurant (hoặc default_batch_fetch_size).',join:'@Query("select o from Order o join fetch o.restaurant where o.userId = :uid")'}[mode],'d');}
+  async function go(){const my=++run;$('#np-log').innerHTML='';$('#np-run').disabled=true;const rtt=+$('#np-rtt').value;let q=0;
+    const sql=async(txt,res)=>{if(my!==run)return false;q++;$('#np-q').textContent=q;$('#np-t').textContent=(q*rtt)+' ms';logTo('#np-log',txt,'h');if(res)logTo('#np-log','  '+res,'s');await wait(Math.max(160,rtt*45));return my===run;};
+    if(mode==='join'){if(!await sql('select o.*, r.* from orders o join restaurants r on r.id = o.restaurant_id where o.user_id = ? order by o.created_at desc limit 10','← 10 dòng, mỗi dòng đã có tên nhà hàng'))return;}
+    else{if(!await sql('select o.* from orders o where o.user_id = ? order by o.created_at desc limit 10','← 10 Order, restaurant chỉ là proxy chưa nạp'))return;
+      if(mode==='lazy'){for(const [id,n] of R)if(!await sql(`select r.* from restaurants r where r.id = ${id}`,'← '+n))return;}
+      else{for(let k=0;k<R.length;k+=5){const ch=R.slice(k,k+5);if(!await sql(`select r.* from restaurants r where r.id in (${ch.map(x=>x[0]).join(', ')})`,'← '+ch.length+' nhà hàng'))return;}}}
+    if(my!==run)return;
+    logTo('#np-log',`Xong: ${q} câu SQL, khoảng ${q*rtt} ms chỉ để chờ mạng.${mode==='lazy'?' Trang 50 đơn sẽ là 51 câu.':''}`,q>3?'w':'s');$('#np-run').disabled=false;}
+  $('#np-run').addEventListener('click',go);reset();
+})();
+
+/* ===== 14. HikariCP ===== */
+(function(){
+  let slots=[],queue=[],acc=0,ok=0,to=0,waitSum=0,served=0,paused=false,vis=false,seq=0;
+  const TIMEOUT=60;
+  function cfg(){return {size:+$('#hp-size').value,hold:+$('#hp-hold').value,rate:+$('#hp-rate').value};}
+  function reset(){const c=cfg();slots=Array(c.size).fill(null);queue=[];acc=0;ok=0;to=0;waitSum=0;served=0;build();paint();}
+  function build(){$('#hp-slots').innerHTML=slots.map((_,i)=>`<div class="slot" data-i="${i}">conn ${i+1}<i></i></div>`).join('');}
+  function tick(){const c=cfg();acc+=c.rate*0.05;while(acc>=1){acc-=1;queue.push({age:0,id:++seq});}
+    slots.forEach((s,i)=>{if(s){s.rem--;if(s.rem<=0){slots[i]=null;ok++;}}});
+    for(let i=0;i<slots.length&&queue.length;i++)if(!slots[i]){const r=queue.shift();slots[i]={rem:c.hold,hold:c.hold};waitSum+=r.age*50;served++;}
+    queue.forEach(r=>r.age++);const before=queue.length;queue=queue.filter(r=>r.age<TIMEOUT);to+=before-queue.length;
+    paint();}
+  function paint(){const c=cfg();const els=$('#hp-slots').children;let busy=0;
+    slots.forEach((s,i)=>{const e=els[i];if(!e)return;e.classList.toggle('busy',!!s);if(s)busy++;e.querySelector('i').style.width=s?(s.rem/s.hold*100)+'%':'0';});
+    const cap=Math.round(c.size/(c.hold*0.05));
+    $('#hp-busy').textContent=`${busy}/${c.size} đang dùng · phục vụ tối đa ≈ ${cap} req/s`;
+    $('#hp-qn').textContent=queue.length+' đang chờ';
+    const show=queue.slice(0,90);$('#hp-queue').innerHTML=show.map(r=>`<span class="qd${r.age>TIMEOUT*0.85?' to':''}"><i style="height:${Math.min(100,r.age/TIMEOUT*100)}%"></i></span>`).join('')+(queue.length>90?`<span class="cap">+${queue.length-90}</span>`:'');
+    $('#hp-ok').textContent=ok;$('#hp-to').textContent=to;$('#hp-wait').textContent=(served?Math.round(waitSum/served):0)+' ms';}
+  setInterval(()=>{if(!paused&&vis)tick();},50);
+  onVisible($('#hp'),v=>vis=v);
+  $('#hp-size').addEventListener('input',()=>{$('#hp-size-v').textContent=$('#hp-size').value;reset();});
+  $('#hp-rate').addEventListener('input',()=>{$('#hp-rate-v').textContent=$('#hp-rate').value;});
+  $('#hp-hold').addEventListener('change',reset);
+  $('#hp-pause').addEventListener('click',()=>{paused=!paused;$('#hp-pause').setAttribute('aria-pressed',paused);$('#hp-pause').textContent=paused?'Chạy tiếp':'Tạm dừng';});
+  reset();
+})();
+
+/* ===== 16. câu hỏi ===== */
+const QA=[
+ {l:'Tầng 1 · Index và query'},
+ {q:'Index là gì? Vì sao làm query nhanh hơn?',a:'<p>Cấu trúc dữ liệu phụ (thường là B+Tree) lưu giá trị cột đã sắp xếp kèm địa chỉ dòng. Thay vì đọc mọi trang của bảng, database đi từ gốc xuống lá trong 3–4 lần đọc trang rồi lấy đúng dòng cần. Đo thật trên 2 triệu dòng: 18 731 trang xuống còn 4 trang.</p>'},
+ {q:'Vì sao index dùng B+Tree mà không dùng cây nhị phân hay hash?',a:'<p>Mỗi nút B+Tree là một trang chứa hàng trăm khoá nên cây rất thấp (3 tầng cho 2 triệu dòng, cây nhị phân cần ~21 tầng = 21 lần đọc đĩa). Dữ liệu chỉ ở lá và lá nối thành chuỗi nên quét khoảng, ORDER BY rất rẻ. Hash chỉ tìm bằng được, không hỗ trợ khoảng, sắp xếp hay tiền tố.</p>'},
+ {q:'Clustered index và secondary index khác nhau thế nào?',a:'<p>InnoDB: bảng chính là cây B+Tree của khoá chính, lá chứa cả dòng (clustered). Secondary index có lá chứa giá trị cột + khoá chính, nên tìm qua secondary phải đi cây PK lần nữa. PostgreSQL không có clustered index theo nghĩa đó: bảng là heap, mọi index trỏ vào ctid.</p>'},
+ {q:'Composite index (a, b, c): query lọc theo b có dùng được không?',trap:1,a:'<p>Không dùng được để seek, vì index sắp theo a trước; không biết a thì không biết bắt đầu từ đâu (leftmost prefix). Lọc a, c: chỉ seek được theo a, c là điều kiện lọc sau (ICP trong MySQL giúp lọc ngay trong index). MySQL 8 có skip scan khi a ít giá trị, nhưng đừng dựa vào.</p>'},
+ {q:'Chọn thứ tự cột trong composite index thế nào?',a:'<p>Cột lọc bằng trước, cột sắp xếp tiếp theo, cột lọc khoảng sau cùng. Ví dụ <code>WHERE user_id = ? AND status = ? ORDER BY created_at DESC</code> → <code>(user_id, status, created_at)</code>: seek thẳng tới khúc cần, đọc ngược, không sort. Sau một cột khoảng, các cột phía sau không thu hẹp tìm kiếm được.</p>'},
+ {q:'Covering index là gì?',a:'<p>Index chứa đủ mọi cột câu query cần, database trả kết quả từ index mà không phải đọc bảng. PostgreSQL: Index Only Scan, <code>Heap Fetches: 0</code> (cần visibility map mới, tức VACUUM chạy đều); có <code>INCLUDE</code> để thêm cột không dùng tìm kiếm. MySQL: Extra = <code>Using index</code>. Đo thật: 0,054 ms → 0,034 ms, 23 trang → 4 trang.</p>'},
+ {q:'Đọc EXPLAIN của MySQL: các giá trị type và Extra cần nhớ?',a:'<p>type từ tốt đến xấu: const, eq_ref, ref, range, index, ALL. key = index dùng thật. rows = ước lượng số dòng đọc. Extra: Using index (covering), Using where, Using index condition (ICP), Using filesort (phải sort), Using temporary (bảng tạm, hay gặp với GROUP BY/DISTINCT).</p>'},
+ {q:'EXPLAIN và EXPLAIN ANALYZE khác gì?',trap:1,a:'<p>EXPLAIN chỉ in kế hoạch với số ước lượng. EXPLAIN ANALYZE chạy thật câu lệnh và in thời gian, số dòng thật. Vì chạy thật nên với UPDATE/DELETE phải bọc trong transaction rồi ROLLBACK. So sánh rows ước lượng và actual rows để biết thống kê có cũ không.</p>'},
+ {q:'Có index mà query vẫn chậm, nguyên nhân có thể là gì?',a:'<p>Bọc cột trong hàm hoặc ép kiểu ngầm; thiếu cột đầu của composite index; điều kiện khớp quá nhiều dòng; LIKE \'%x\'; OR trên các cột khác nhau; ORDER BY không khớp index phải filesort; OFFSET sâu; thống kê cũ; hoặc thực ra không phải chậm ở SQL mà ở N+1, chờ khoá, cạn connection pool.</p>'},
+ {q:'Index có nhược điểm gì?',a:'<p>Mỗi INSERT/UPDATE/DELETE phải cập nhật mọi index liên quan (đo thật: 300 000 dòng từ 984 ms không index lên 7 092 ms với 6 index). Tốn dung lượng (các index của bảng orders nặng hơn bảng). Tốn bộ nhớ đệm. Planner phải cân nhắc nhiều lựa chọn hơn.</p>'},
+ {q:'Đánh index cho cột status (3 giá trị) có nên không?',trap:1,a:'<p>Đứng một mình thường không: 85% dòng là COMPLETED, đọc tuần tự rẻ hơn (đo thật: planner chọn Seq Scan 146 ms). Ngay cả PENDING 5% vẫn là ~100 000 dòng. Nên ghép vào composite index sau cột chọn lọc cao, hoặc dùng partial index <code>WHERE status = \'PENDING\'</code> trong PostgreSQL nếu thường xuyên truy vấn nhóm nhỏ đó.</p>'},
+ {q:'Phân trang OFFSET có vấn đề gì? Sửa thế nào?',a:'<p>OFFSET N phải đọc rồi bỏ N dòng; trang càng sâu càng chậm (đo thật: 0,057 ms ở trang 1, 189 ms ở trang 99 999). Keyset: <code>WHERE id &gt; :lastId ORDER BY id LIMIT 20</code>, 0,02–0,05 ms ở mọi trang, và không bị lặp/sót dòng khi dữ liệu thay đổi giữa hai lần tải. Đổi lại không nhảy tới trang bất kỳ.</p>'},
+ {q:'Sắp theo created_at (không duy nhất) thì keyset làm sao?',a:'<p>Thêm cột duy nhất để phá hoà: <code>WHERE (created_at, id) &lt; (:c, :id) ORDER BY created_at DESC, id DESC</code>, index <code>(created_at, id)</code>. Chỉ dùng created_at sẽ sót hoặc lặp dòng có cùng thời điểm.</p>'},
+ {q:'COUNT(*) trên bảng lớn chậm, xử lý thế nào?',a:'<p>Hỏi lại có cần số chính xác không. Spring Data: dùng Slice thay Page để bỏ câu count. Cần số gần đúng: <code>pg_class.reltuples</code> hoặc <code>information_schema.TABLES</code>. Cần chính xác theo điều kiện: bảng đếm cập nhật theo sự kiện, hoặc cache có hạn.</p>'},
+ {l:'Tầng 2 · Transaction, isolation, lock'},
+ {q:'ACID là gì? Database đảm bảo từng chữ bằng cơ chế nào?',a:'<p>Atomicity: undo log (InnoDB), MVCC (PostgreSQL). Consistency: ràng buộc do bạn khai báo. Isolation: MVCC + lock. Durability: ghi log trước (redo log / WAL) và fsync khi commit, phát lại log khi sập.</p>'},
+ {q:'Kể 4 mức isolation và hiện tượng mỗi mức chặn.',a:'<p>READ UNCOMMITTED: chặn không gì (dirty read). READ COMMITTED: chặn dirty read. REPEATABLE READ: chặn thêm non-repeatable read (chuẩn SQL cho phép phantom, nhưng PostgreSQL và InnoDB với snapshot read đều chặn). SERIALIZABLE: như chạy lần lượt, chặn cả write skew.</p>'},
+ {q:'Mức isolation mặc định của MySQL và PostgreSQL?',trap:1,a:'<p>MySQL InnoDB: REPEATABLE READ. PostgreSQL: READ COMMITTED (đo thật). Oracle, SQL Server: READ COMMITTED. Spring <code>Isolation.DEFAULT</code> nghĩa là dùng mặc định của database.</p>'},
+ {q:'Lost update là gì? Có bao nhiêu cách chặn?',a:'<p>Hai transaction đọc cùng giá trị, tính toán trong ứng dụng, rồi ghi đè lên nhau. Đo thật: rút 100 và 200 từ 1000 còn 800. Cách chặn: cập nhật nguyên tử <code>SET balance = balance - ?</code>; <code>SELECT … FOR UPDATE</code>; optimistic lock (<code>@Version</code>); REPEATABLE READ của PostgreSQL (báo lỗi để thử lại). MySQL REPEATABLE READ <b>không</b> chặn.</p>'},
+ {q:'MySQL đã là REPEATABLE READ, sao vẫn bị lost update?',trap:1,a:'<p>Snapshot chỉ áp dụng cho SELECT thường (consistent read). UPDATE, DELETE, SELECT … FOR UPDATE là current read: đọc bản mới nhất đã commit và ghi đè lên. InnoDB không kiểm tra "dòng đã bị sửa sau snapshot của tôi" như PostgreSQL, nên mẫu đọc rồi ghi mất dữ liệu lặng lẽ.</p>'},
+ {q:'Write skew là gì? Cho ví dụ.',a:'<p>Hai transaction cùng đọc một điều kiện, mỗi bên sửa một dòng khác nhau, kết quả chung vi phạm ràng buộc. Ví dụ: phải có ít nhất 1 bác sĩ trực; An và Binh cùng thấy 2 người trực và cùng xin nghỉ → 0 người (đo thật ở REPEATABLE READ). Chặn: SERIALIZABLE, FOR UPDATE các dòng được đọc, hoặc khoá một dòng chung.</p>'},
+ {q:'MVCC hoạt động thế nào?',a:'<p>Ghi tạo phiên bản mới thay vì ghi đè; mỗi phiên bản gắn transaction tạo/xoá (PostgreSQL xmin/xmax; InnoDB trx_id + con trỏ undo). Mỗi transaction có snapshot quyết định phiên bản nào nhìn thấy. Kết quả: đọc không chặn ghi, ghi không chặn đọc. Bản cũ được VACUUM/purge dọn khi không còn snapshot nào cần.</p>'},
+ {q:'Vì sao transaction mở quá lâu gây hại dù nó chỉ đọc?',trap:1,a:'<p>Nó giữ snapshot cũ, nên mọi phiên bản cũ hơn snapshot đó không được dọn: PostgreSQL bảng phình (bloat), InnoDB undo log dài ra (history list length tăng), query ngày càng chậm. Ngoài ra còn giữ connection và khoá (nếu đã ghi).</p>'},
+ {q:'SELECT … FOR UPDATE và FOR SHARE khác nhau gì?',a:'<p>FOR SHARE: khoá chia sẻ, người khác vẫn đọc và FOR SHARE được, nhưng không sửa được. FOR UPDATE: khoá độc quyền, người khác FOR SHARE/FOR UPDATE/UPDATE phải chờ. Cả hai không chặn SELECT thường (đọc snapshot). Khoá giữ tới khi commit/rollback.</p>'},
+ {q:'Gap lock và next-key lock là gì?',a:'<p>InnoDB REPEATABLE READ khi đọc khoá (FOR UPDATE, UPDATE theo khoảng) không chỉ khoá record mà khoá cả khoảng trống giữa các record trên index, để không ai chèn được dòng mới vào khoảng đó (chặn phantom). Next-key lock = record lock + gap lock ngay trước nó. READ COMMITTED gần như tắt gap lock.</p>'},
+ {q:'UPDATE … WHERE cột_không_có_index = ? trong MySQL nguy hiểm thế nào?',trap:1,a:'<p>InnoDB khoá theo index nó quét. Không có index phù hợp thì quét cả clustered index và khoá <b>mọi dòng</b> nó đi qua (ở REPEATABLE READ kèm cả gap), gần như khoá cả bảng cho tới khi commit. Luôn có index cho điều kiện của UPDATE/DELETE.</p>'},
+ {q:'Deadlock trong database xảy ra thế nào? Xử lý ra sao?',a:'<p>Hai transaction giữ khoá mà bên kia cần, chờ nhau vòng tròn. Database phát hiện bằng đồ thị chờ và huỷ một bên (đo thật PostgreSQL: sau deadlock_timeout 1 s; InnoDB phát hiện ngay). Phòng: khoá theo thứ tự cố định, transaction ngắn, có index cho WHERE. Chữa: bắt lỗi và thử lại cả transaction.</p>'},
+ {q:'Optimistic lock và pessimistic lock ở tầng DB, chọn khi nào?',a:'<p>Pessimistic (FOR UPDATE): khoá trước, hợp khi xung đột nhiều và thử lại tốn kém. Optimistic (<code>@Version</code>, <code>UPDATE … WHERE version = ?</code> rồi kiểm tra số dòng cập nhật): không khoá, hợp khi xung đột hiếm, phải thử lại khi thua. Với trừ số dư/tồn kho đơn giản, UPDATE nguyên tử có điều kiện (<code>WHERE stock &gt;= ?</code>) thường là tốt nhất.</p>'},
+ {q:'Spring @Transactional đặt isolation và timeout thế nào? Retry đặt ở đâu?',a:'<p><code>@Transactional(isolation = Isolation.REPEATABLE_READ, timeout = 5)</code>. Retry (Spring Retry <code>@Retryable</code>) phải nằm <b>ngoài</b> method @Transactional, để mỗi lần thử là một transaction mới; retry bên trong transaction đã hỏng là vô nghĩa.</p>'},
+ {q:'SKIP LOCKED dùng làm gì?',a:'<p><code>SELECT … FOR UPDATE SKIP LOCKED</code> bỏ qua các dòng đang bị khoá. Nhiều worker cùng lấy việc từ một bảng mà không trùng, không chờ nhau: hàng đợi job đơn giản ngay trong database (PostgreSQL 9.5+, MySQL 8+).</p>'},
+ {l:'Tầng 3 · Spring, vận hành, thiết kế'},
+ {q:'N+1 query là gì? Phát hiện và sửa thế nào?',a:'<p>1 câu lấy danh sách cha + N câu lấy quan hệ lazy của từng phần tử. Phát hiện: bật log SQL, Hibernate statistics, hoặc test đếm câu SQL. Sửa: JOIN FETCH, @EntityGraph, batch fetch (<code>default_batch_fetch_size</code>), DTO projection. Đo thật: 50 đơn 51 câu 4,4 ms → 1 câu 0,3 ms.</p>'},
+ {q:'JOIN FETCH collection kèm Pageable có vấn đề gì?',trap:1,a:'<p>Hibernate không cắt trang bằng SQL được (mỗi cha nhân thành nhiều dòng), cảnh báo HHH90003004 và tải toàn bộ rồi cắt trong bộ nhớ. Sửa: query trang id trước, rồi fetch theo danh sách id; hoặc dùng batch fetch thay vì join fetch cho collection.</p>'},
+ {q:'Vì sao batch insert với JPA không batch?',trap:1,a:'<p>Id dùng <code>GenerationType.IDENTITY</code>: Hibernate phải INSERT từng dòng ngay để lấy id, nên tắt JDBC batching cho entity đó. Dùng SEQUENCE với allocationSize, bật <code>hibernate.jdbc.batch_size</code>, <code>order_inserts</code>; MySQL thêm <code>rewriteBatchedStatements=true</code>. Dữ liệu rất lớn: JdbcTemplate.batchUpdate hoặc COPY.</p>'},
+ {q:'Connection pool là gì? Kích thước bao nhiêu là hợp lý?',a:'<p>Giữ sẵn các connection để cho mượn, tránh chi phí mở mới. Pool lớn hơn không nhanh hơn khi database chỉ có vài core; gợi ý ban đầu (core × 2) + số đĩa, rồi đo. Nhớ nhân với số instance ứng dụng so với <code>max_connections</code> của database.</p>'},
+ {q:'Gặp "Connection is not available, request timed out after 30000ms", bạn điều tra gì?',a:'<p>Pool cạn: xem metric active/pending của HikariCP; tìm chỗ giữ connection lâu (gọi API ngoài trong @Transactional, query chậm, transaction quá to); bật <code>leak-detection-threshold</code> để tìm connection không trả; kiểm tra database có bị khoá chờ không. Tăng pool là biện pháp cuối.</p>'},
+ {q:'Lưu tiền bằng kiểu gì?',a:'<p>DECIMAL/NUMERIC với độ chính xác cố định, hoặc số nguyên đơn vị nhỏ nhất. Không dùng FLOAT/DOUBLE (0,1 + 0,2 ≠ 0,3). Trong Java dùng BigDecimal (so sánh bằng compareTo, không phải equals).</p>'},
+ {q:'UUID làm khoá chính có vấn đề gì?',a:'<p>UUIDv4 ngẫu nhiên: với InnoDB, dòng mới chèn vào vị trí ngẫu nhiên trong clustered index, tách trang liên tục, cache kém; 16 byte làm mọi secondary index phình. Dùng BIGINT tăng dần, hoặc UUIDv7/ULID (có thứ tự thời gian) khi cần sinh id phân tán.</p>'},
+ {q:'Bảng log hàng trăm triệu dòng, xoá dữ liệu cũ thế nào?',a:'<p>Partition theo thời gian (tháng) và DROP/DETACH partition cũ: tức thì, không bloat. Nếu buộc phải DELETE: xoá theo lô nhỏ có index, ngoài giờ cao điểm, theo dõi độ trễ replica.</p>'},
+ {q:'Read replica có rủi ro gì?',a:'<p>Replication lag: ghi ở primary rồi đọc ngay ở replica có thể không thấy. Đọc lại sau khi ghi (read-your-writes) phải đi primary; Spring có thể định tuyến bằng <code>@Transactional(readOnly = true)</code> + routing DataSource, nhưng cần cẩn thận với luồng vừa ghi vừa đọc.</p>'},
+ {q:'Cách bạn xử lý một query chậm trên production, từng bước?',a:'<p>Xác định query (slow query log, pg_stat_statements, APM) → lấy tham số thật → EXPLAIN ANALYZE trên bản sao dữ liệu → đọc nút tốn nhất (Seq Scan trên bảng lớn, Rows Removed lớn, Sort ra đĩa, ước lượng lệch) → sửa (index, viết lại query, keyset, cache) → đo lại, kiểm tra chi phí ghi → tạo index bằng CONCURRENTLY/online → theo dõi sau khi triển khai.</p>'},
+ {q:'Kể lại việc tối ưu 13 s → 100 ms trong CV.',a:'<p>Dùng mẫu ở chương 17: triệu chứng (màn lịch sử thanh toán chậm) → EXPLAIN thấy full scan + filesort → composite index (user_id, status, created_at) với lý do thứ tự cột → kiểm chứng EXPLAIN và K6 → kết quả. Sẵn sàng số đo thật của lab: 18 731 trang xuống 4 trang, index 3 tầng, chi phí ghi.</p>'}
+];
+$('#qa').innerHTML=QA.map(x=>x.l?`<div class="lvl">${x.l}</div>`:`<details><summary><span>${x.q}</span>${x.trap?'<span class="trap">bẫy</span>':''}</summary><div class="ans">${x.a}</div></details>`).join('');
+
+})();
+</script>
+</body>
+</html>

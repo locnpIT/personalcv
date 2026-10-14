@@ -1,0 +1,1913 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sổ tay Java core</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sổ tay kỹ thuật hai cột (dùng chung với Sổ tay JVM) — mục lục dính bên trái, nội dung đọc bên phải; mỗi chương mở bằng khung "Phỏng vấn sẽ hỏi" */
+:root{
+  --bg:#F2F5F9; --surface:#FFFFFF; --sunk:#E7EDF5; --ink:#0E1A2C; --muted:#4F5F77; --line:#D2DBE7;
+  --accent:#1B5BD4; --accent-ink:#FFFFFF; --accent-soft:#DCE7FB;
+  --s1:#1D5FD6; --s2:#C2620A; --s3:#8A3FA8;
+  --eden:#2F6FE0; --surv:#0F8FB3; --old:#3A3F9E; --dead:#9AA7B8;
+  --ok:#17845A; --ok-soft:#D9F1E6; --warn:#A86A00; --warn-soft:#FBEBCB; --bad:#C23434; --bad-soft:#F9DDDD;
+  --code-bg:#0F1A2B; --code-ink:#D6E2F2; --code-dim:#7F93AE; --code-hl:#8EC1FF; --code-str:#9FD8B8; --code-warn:#FFB4A8;
+  --f-ui:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0A111D; --surface:#101A2A; --sunk:#0D1624; --ink:#E2E9F4; --muted:#93A3BB; --line:#223149;
+  --accent:#5B96F5; --accent-ink:#081120; --accent-soft:#15284A;
+  --s1:#4A86E8; --s2:#CC7222; --s3:#A963C4;
+  --eden:#4A86E8; --surv:#2AA8C9; --old:#7A7FE0; --dead:#4D5B70;
+  --ok:#3FBF8A; --ok-soft:#10301F; --warn:#E0A33A; --warn-soft:#33270E; --bad:#F06A6A; --bad-soft:#3A1717;
+  --code-bg:#060C16; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0A111D; --surface:#101A2A; --sunk:#0D1624; --ink:#E2E9F4; --muted:#93A3BB; --line:#223149;
+  --accent:#5B96F5; --accent-ink:#081120; --accent-soft:#15284A;
+  --s1:#4A86E8; --s2:#CC7222; --s3:#A963C4;
+  --eden:#4A86E8; --surv:#2AA8C9; --old:#7A7FE0; --dead:#4D5B70;
+  --ok:#3FBF8A; --ok-soft:#10301F; --warn:#E0A33A; --warn-soft:#33270E; --bad:#F06A6A; --bad-soft:#3A1717;
+  --code-bg:#060C16; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:16px;line-height:1.65}
+a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+:not(pre)>code{background:var(--sunk);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+h1,h2,h3,h4{margin:0;text-wrap:balance;line-height:1.25}
+p{margin:0}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.shell{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:24px 80px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px}
+@media (max-width:980px){.shell{grid-template-columns:1fr;gap:0}}
+
+/* mục lục */
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:4px}
+.toc .brand{font-weight:800;font-size:1rem;letter-spacing:-.01em;margin-bottom:12px}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.toc a{display:flex;gap:10px;text-decoration:none;color:var(--muted);font-size:.86rem;padding:5px 8px;border-radius:6px;line-height:1.35}
+.toc a span{font-family:var(--f-mono);font-size:.74rem;min-width:18px;color:var(--muted);padding-top:2px}
+.toc a:hover{background:var(--sunk);color:var(--ink)}
+.toc a.on{background:var(--accent-soft);color:var(--ink);font-weight:600}
+@media (max-width:980px){
+  .toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;max-height:none;background:var(--bg);margin-inline:-20px;padding:10px 20px;border-bottom:1px solid var(--line)}
+  .toc .brand{display:none}
+  .toc ol{flex-direction:row;overflow-x:auto;gap:4px;scrollbar-width:none}
+  .toc a{white-space:nowrap;font-size:.8rem}
+}
+
+main{min-width:0;display:flex;flex-direction:column;gap:64px}
+.hero{display:flex;flex-direction:column;gap:14px;padding-top:8px}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.hero h1{font-size:clamp(2rem,4.6vw,3.1rem);font-weight:800;letter-spacing:-.025em}
+.hero .lede{font-size:1.08rem;color:var(--muted);max-width:66ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.facts span{font-family:var(--f-mono);font-size:.76rem;background:var(--surface);border:1px solid var(--line);padding:4px 10px;border-radius:999px;color:var(--muted)}
+
+section.ch{display:flex;flex-direction:column;gap:20px;scroll-margin-top:72px}
+.ch-head{display:flex;flex-direction:column;gap:6px;border-top:2px solid var(--ink);padding-top:14px}
+.ch-head h2{font-size:clamp(1.45rem,2.6vw,1.9rem);font-weight:800;letter-spacing:-.015em}
+.ch-head p{color:var(--muted);max-width:68ch}
+h3{font-size:1.12rem;font-weight:700;margin-top:6px}
+h4{font-size:.98rem;font-weight:700}
+.prose{display:flex;flex-direction:column;gap:12px;max-width:72ch}
+.prose ul,.prose ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+
+.ask{background:var(--accent-soft);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.ask b{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.ask ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:3px}
+.callout{border-left:3px solid var(--accent);padding:10px 14px;background:var(--surface);border-radius:0 8px 8px 0;max-width:76ch}
+.callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-color:var(--ok);background:var(--ok-soft)}
+.callout b.t{display:block;margin-bottom:2px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+
+pre.code{background:var(--code-bg);color:var(--code-ink);border-radius:var(--r);padding:14px 16px;overflow-x:auto;font-family:var(--f-mono);font-size:.8rem;line-height:1.6;margin:0;max-width:100%}
+pre.code .c{color:var(--code-dim)} pre.code .h{color:var(--code-hl);font-weight:600} pre.code .s{color:var(--code-str)} pre.code .w{color:var(--code-warn);font-weight:600}
+.real{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--ok);font-weight:600;letter-spacing:.03em}
+.real::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.cap{font-size:.84rem;color:var(--muted);max-width:76ch}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--sunk)}
+td.n{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td code{white-space:nowrap}
+
+/* kiến trúc */
+.arch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.arch{grid-template-columns:1fr}}
+.arch .blk{border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.arch .blk h4{font-size:.9rem}
+.arch .blk p{font-size:.84rem;color:var(--muted)}
+.arch .lane{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--f-mono);font-size:.8rem}
+.arch .lane span{background:var(--sunk);padding:5px 10px;border-radius:6px}
+.arch .lane i{color:var(--muted);font-style:normal}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill.shared{background:var(--accent-soft);color:var(--accent)}
+
+/* vùng nhớ tương tác */
+.mem{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px}
+.mem>*{min-width:0}
+@media (max-width:860px){.mem{grid-template-columns:1fr}}
+@media (max-width:520px){.areas{grid-template-columns:1fr}}
+.area{min-width:0}
+.chip{overflow-wrap:anywhere}
+.codelines{background:var(--code-bg);border-radius:var(--r);padding:10px 0;font-family:var(--f-mono);font-size:.8rem;overflow-x:auto}
+.codelines button{display:block;width:100%;text-align:left;background:transparent;border:0;color:var(--code-ink);padding:4px 14px;white-space:pre;font-family:inherit;font-size:inherit;border-left:3px solid transparent}
+.codelines button:hover{background:#ffffff0d}
+.codelines button.on{background:#5b96f526;border-left-color:var(--code-hl)}
+.codelines .ln{color:var(--code-dim);margin-right:12px}
+.areas{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.area{border:1px dashed var(--line);border-radius:8px;padding:10px;min-height:96px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.area.heap{grid-column:1/-1}
+.area h4{font-size:.82rem;display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.area .items{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:.74rem;padding:3px 8px;border-radius:6px;background:var(--sunk);border:1px solid var(--line);transition:background-color .3s,border-color .3s}
+.chip.new{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.chip.gone{text-decoration:line-through;opacity:.5}
+.memnote{margin-top:10px;font-size:.9rem}
+
+/* object layout */
+.objrow{display:flex;flex-wrap:wrap;gap:3px;align-items:stretch;font-family:var(--f-mono);font-size:.72rem}
+.objrow div{padding:6px 8px;border-radius:4px;display:flex;flex-direction:column;justify-content:center;min-height:44px}
+.objrow .hdr{background:var(--accent);color:var(--accent-ink)}
+.objrow .kl{background:var(--s3);color:#fff}
+.objrow .fld{background:var(--sunk);border:1px solid var(--line)}
+.objrow .pad{background:repeating-linear-gradient(45deg,var(--sunk),var(--sunk) 4px,var(--surface) 4px,var(--surface) 8px);border:1px dashed var(--line);color:var(--muted)}
+.objrow small{opacity:.85}
+.objrow div{min-width:58px}
+
+/* GC simulator */
+.sim{display:flex;flex-direction:column;gap:14px}
+.sim-ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 13px;font-weight:500;font-size:.88rem}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.sim-ctrl label{font-size:.86rem;color:var(--muted);display:flex;gap:6px;align-items:center}
+.sim-ctrl input[type=range]{width:110px;accent-color:var(--accent)}
+.heapviz{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
+.heapviz .old{grid-column:1/-1}
+@media (max-width:640px){.heapviz{grid-template-columns:1fr 1fr}.heapviz .eden{grid-column:1/-1}}
+.gen{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);min-width:0}
+.gen h4{font-size:.8rem;display:flex;justify-content:space-between;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.gen h4 small{font-family:var(--f-mono);color:var(--muted);font-weight:400}
+.gen.to h4::after{content:"đích copy kế tiếp";font-size:.68rem;font-weight:500;color:var(--surv)}
+.cells{display:grid;gap:4px}
+.eden .cells{grid-template-columns:repeat(8,minmax(0,1fr))}
+.surv .cells{grid-template-columns:repeat(4,minmax(0,1fr))}
+.old .cells{grid-template-columns:repeat(16,minmax(0,1fr))}
+@media (max-width:640px){.old .cells{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.cell{aspect-ratio:1;border-radius:4px;background:var(--sunk);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.66rem;color:#fff;font-weight:600;transition:background-color .25s,transform .25s;max-width:100%}
+.cell.e{background:var(--eden)} .cell.s{background:var(--surv)} .cell.o{background:var(--old)}
+.cell.lt{box-shadow:inset 0 0 0 2px var(--warn)}
+.cell.dead{background:var(--dead);color:transparent}
+.cell.dying{background:var(--bad);transform:scale(.8)}
+.sim-stats{display:flex;flex-wrap:wrap;gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:110px}
+.stat b{display:block;font-family:var(--f-mono);font-size:1.15rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.74rem;color:var(--muted)}
+.simlog{background:var(--code-bg);color:var(--code-ink);font-family:var(--f-mono);font-size:.76rem;border-radius:8px;padding:10px 12px;height:150px;overflow:auto;display:flex;flex-direction:column;gap:3px}
+.simlog .w{color:var(--code-warn)} .simlog .h{color:var(--code-hl)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.oom{display:none;background:var(--bad-soft);border:1px solid var(--bad);border-radius:8px;padding:10px 12px;font-family:var(--f-mono);font-size:.82rem;color:var(--bad)}
+.oom.show{display:block}
+
+/* G1 regions */
+.regions{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px}
+@media (max-width:640px){.regions{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.rg{aspect-ratio:1;border-radius:3px;font-family:var(--f-mono);font-size:.6rem;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+.rg.E{background:var(--eden)} .rg.S{background:var(--surv)} .rg.O{background:var(--old)} .rg.H{background:var(--s2)} .rg.F{background:var(--sunk);color:var(--muted)}
+.rg.C{outline:2px solid var(--bad);outline-offset:-2px}
+
+/* charts */
+.chart{position:relative;min-width:0}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .grid line{stroke:var(--line);stroke-width:1}
+.chart .ax text,.chart text.ax{fill:var(--muted);font-family:var(--f-mono);font-size:10.5px}
+.chart text.lbl{font-family:var(--f-ui);font-size:11.5px;font-weight:600}
+.chart text.val{fill:var(--ink);font-family:var(--f-mono);font-size:11px}
+.chart .hit{fill:transparent}
+.chart .xh{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.78rem;box-shadow:0 6px 18px #0b16281f;min-width:150px;z-index:3;display:none}
+.tip .tt{font-weight:700;margin-bottom:3px}
+.tip .tr{display:flex;justify-content:space-between;gap:12px;font-family:var(--f-mono);font-size:.74rem}
+.tip .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.chart-legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+.chart-title{font-weight:700;font-size:.95rem;margin-bottom:2px}
+
+/* container calc */
+.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px}
+@media (max-width:860px){.calc{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.82rem;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.field label output{font-family:var(--f-mono);font-weight:600;color:var(--accent)}
+.field input[type=range]{width:100%;accent-color:var(--accent)}
+.field small{color:var(--muted);font-size:.76rem}
+.fields{display:flex;flex-direction:column;gap:12px}
+.budget{display:flex;flex-direction:column;gap:12px}
+.bar{position:relative;height:38px;border-radius:6px;background:var(--sunk);overflow:visible;display:flex}
+.bar .seg{height:100%;border-right:2px solid var(--surface);transition:width .3s}
+.bar .seg:first-child{border-radius:6px 0 0 6px}
+.bar .limit{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink)}
+.bar .limit span{position:absolute;top:-20px;transform:translateX(-50%);font-family:var(--f-mono);font-size:.7rem;white-space:nowrap;color:var(--ink)}
+.brows{display:flex;flex-direction:column;gap:4px;font-size:.84rem}
+.brows div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:3px}
+.brows i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.brows b{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.verdict{border-radius:8px;padding:10px 12px;font-weight:600;font-size:.9rem;display:flex;gap:8px;align-items:flex-start}
+.verdict.ok{background:var(--ok-soft);color:var(--ok)} .verdict.warn{background:var(--warn-soft);color:var(--warn)} .verdict.bad{background:var(--bad-soft);color:var(--bad)}
+.verdict span{color:var(--ink);font-weight:400}
+
+/* playbooks */
+.pb{display:flex;flex-direction:column;gap:12px}
+.pb .sym{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sev{font-family:var(--f-mono);font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.04em}
+.sev.bad{background:var(--bad-soft);color:var(--bad)} .sev.warn{background:var(--warn-soft);color:var(--warn)}
+.steps{counter-reset:s;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px}
+.steps li::before{content:counter(s);font-family:var(--f-mono);font-size:.74rem;font-weight:700;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-top:2px}
+
+/* gc log annotate */
+.logline{font-family:var(--f-mono);font-size:.8rem;background:var(--code-bg);color:var(--code-ink);border-radius:8px;padding:12px 14px;overflow-x:auto;white-space:nowrap}
+.logline span{border-bottom:2px solid;padding-bottom:1px}
+.logline .a1{border-color:var(--s1)} .logline .a2{border-color:var(--surv)} .logline .a3{border-color:var(--s2)} .logline .a4{border-color:var(--s3)} .logline .a5{border-color:var(--ok)}
+.anno{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;font-size:.84rem}
+.anno div{border-top:3px solid;padding-top:6px}
+
+/* Q&A */
+.qa{display:flex;flex-direction:column;gap:8px}
+.qa details{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.qa summary{cursor:pointer;padding:12px 14px;font-weight:600;list-style:none;display:flex;gap:10px;align-items:flex-start}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{content:"+";font-family:var(--f-mono);color:var(--accent);font-weight:700;width:14px;flex:none}
+.qa details[open] summary::before{content:"−"}
+.qa .ans{padding:0 16px 14px 38px;display:flex;flex-direction:column;gap:8px;font-size:.94rem}
+.qa .ans ul{margin:0;padding-left:20px}
+.lvl{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:10px;font-weight:700}
+.trap{font-family:var(--f-mono);font-size:.66rem;background:var(--warn-soft);color:var(--warn);padding:1px 6px;border-radius:4px;margin-left:auto;flex:none;align-self:center}
+.foot{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padding-top:16px}
+
+/* ===== thêm cho sổ tay concurrency ===== */
+.states{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:860px){.states{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:460px){.states{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stnode{border:1px solid var(--line);border-radius:8px;padding:10px 8px;text-align:center;background:var(--surface);font-family:var(--f-mono);font-size:.74rem;font-weight:600;transition:background-color .25s,border-color .25s,color .25s;min-width:0;overflow-wrap:anywhere}
+.stnode small{display:block;font-family:var(--f-ui);font-weight:400;color:var(--muted);font-size:.72rem;margin-top:3px}
+.stnode.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.stnode.on small{color:var(--accent-ink);opacity:.85}
+.sim-ctrl .btn:disabled{opacity:.4;cursor:default}
+.seg-ctl{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg-ctl button{border:0;background:transparent;color:var(--muted);padding:7px 12px;font-size:.86rem;border-right:1px solid var(--line)}
+.seg-ctl button:last-child{border-right:0}
+.seg-ctl button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.race{display:grid;grid-template-columns:minmax(0,1fr) 170px minmax(0,1fr);gap:12px;align-items:stretch}
+@media (max-width:700px){.race{grid-template-columns:1fr 1fr}.race .memcol{grid-column:1/-1;grid-row:1;flex-direction:row}}
+.thr{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:8px;min-width:0}
+.thr h4{display:flex;justify-content:space-between;gap:6px;font-size:.88rem;flex-wrap:wrap}
+.thr .badge{font-family:var(--f-mono);font-size:.68rem;padding:2px 7px;border-radius:4px;background:var(--sunk);color:var(--muted)}
+.thr .badge.run{background:var(--accent-soft);color:var(--accent)}
+.thr .badge.blk{background:var(--warn-soft);color:var(--warn)}
+.thr .badge.ok{background:var(--ok-soft);color:var(--ok)}
+.thr ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font-family:var(--f-mono);font-size:.76rem}
+.thr li{padding:4px 8px;border-radius:5px;color:var(--muted);border:1px solid transparent}
+.thr li.cur{border-color:var(--accent);color:var(--ink);background:var(--accent-soft)}
+.thr li.done{color:var(--ok)}
+.thr .reg{font-family:var(--f-mono);font-size:.78rem;background:var(--sunk);border-radius:5px;padding:5px 8px}
+.memcol{display:flex;flex-direction:column;gap:10px;justify-content:center}
+.ram{border:2px solid var(--ink);border-radius:10px;padding:12px;text-align:center;background:var(--surface);flex:1}
+.ram span{display:block;font-size:.72rem;color:var(--muted)}
+.ram b{display:block;font-family:var(--f-mono);font-size:2.2rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.ram small{font-family:var(--f-mono);color:var(--muted)}
+.ram.flash{animation:ramf .6s ease}
+@keyframes ramf{0%{background:var(--accent-soft)}100%{background:var(--surface)}}
+.lockbox{border:1px dashed var(--line);border-radius:8px;padding:8px;text-align:center;font-family:var(--f-mono);font-size:.76rem;color:var(--muted);flex:1}
+.lockbox.held{border-style:solid;border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.cache-diag{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cache-diag .core{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;background:var(--surface);min-width:0}
+.cache-diag .core span{font-size:.8rem;color:var(--muted)}
+.cache-diag .lv{font-family:var(--f-mono);font-size:.76rem;background:var(--sunk);border-radius:5px;padding:5px 8px;overflow-wrap:anywhere}
+.cache-diag i{font-style:normal;font-weight:700;color:var(--s2)}
+.cache-diag i.nw{color:var(--ok)}
+.cache-diag .ram-wide{grid-column:1/-1;border:2px solid var(--ink);border-radius:8px;padding:10px;text-align:center;font-family:var(--f-mono);font-size:.8rem}
+.adder{display:flex;flex-direction:column;gap:8px;margin:4px 0}
+.cells-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.cells-row span{border:1px solid var(--line);border-radius:6px;padding:6px;text-align:center;font-family:var(--f-mono);font-size:.7rem;color:var(--muted);background:var(--surface)}
+.cells-row b{display:block;font-size:1rem;color:var(--ink)}
+.adder .sum{font-family:var(--f-mono);font-size:.82rem;text-align:center;background:var(--accent-soft);border-radius:6px;padding:6px}
+.sel{font:inherit;font-size:.84rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 6px}
+.poolviz{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,.8fr);gap:10px}
+@media (max-width:760px){.poolviz{grid-template-columns:1fr}}
+.workers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.worker{border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-family:var(--f-mono);font-size:.72rem;display:flex;flex-direction:column;gap:4px;min-height:52px;background:var(--surface)}
+.worker.core{border:2px solid var(--accent)}
+.worker .pg{height:6px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.worker .pg i{display:block;height:100%;background:var(--accent);transition:width .4s}
+.worker.idle{color:var(--muted)}
+.worker.new{animation:ramf .8s ease}
+.queue{display:flex;flex-direction:column;gap:4px}
+.qslot{border:1px dashed var(--line);border-radius:5px;padding:4px 8px;font-family:var(--f-mono);font-size:.72rem;color:var(--muted);min-height:26px}
+.qslot.full{border-style:solid;border-color:var(--surv);color:var(--ink);background:var(--sunk)}
+.caller{font-family:var(--f-mono);font-size:.76rem;border:1px dashed var(--line);border-radius:6px;padding:8px;color:var(--muted)}
+.caller.busy{border-style:solid;border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+
+/* ===== hình động bổ sung ===== */
+.anim{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.anim svg{width:100%;min-width:520px;height:auto;display:block}
+.anim text{font-family:var(--f-ui);font-size:13px;fill:var(--ink)}
+.anim text.mono{font-family:var(--f-mono);font-size:12px}
+.anim text.dim{fill:var(--muted);font-size:11.5px}
+.anim text.big{font-family:var(--f-mono);font-size:22px;font-weight:600}
+.anim text.bad{fill:var(--bad);font-weight:600}
+.anim text.ok{fill:var(--ok);font-weight:600}
+.anim text.warn{fill:var(--warn);font-weight:600}
+.anim .bx{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.anim .bx.hot{stroke:var(--accent);stroke-width:2.5}
+.anim .bx.ram{stroke:var(--ink);stroke-width:2}
+.anim .bx.held{fill:var(--warn-soft);stroke:var(--warn);stroke-width:2}
+.anim .bx.cell{fill:var(--surface);stroke:var(--s1);stroke-width:1.5}
+.anim .reg{fill:var(--sunk);stroke:none;transition:fill .2s}
+.anim .reg.ping{fill:var(--accent-soft)}
+.anim .pk{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.anim .pk.old{fill:var(--s2)}
+.anim .edge-own{stroke:var(--accent);stroke-width:3;fill:none}
+.anim .edge-wait{stroke:var(--bad);stroke-width:3;fill:none;stroke-dasharray:8 6;animation:dashmove .8s linear infinite}
+@keyframes dashmove{to{stroke-dashoffset:-28}}
+.anim .th{stroke:var(--surface);stroke-width:3;transition:fill .3s}
+.anim .th.run{fill:var(--accent)} .anim .th.blk{fill:var(--warn)} .anim .th.done{fill:var(--ok)} .anim .th.dead{fill:var(--bad)}
+.anim .fl{stroke-width:3;animation:flfade .65s ease-out forwards}
+.anim .fl.ok{stroke:var(--ok)} .anim .fl.fail{stroke:var(--bad);stroke-dasharray:5 4}
+@keyframes flfade{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
+.anim .mark{animation:flfade .9s ease-out forwards;font-weight:700}
+.anim marker path{fill:var(--muted)}
+@media (prefers-reduced-motion: reduce){.anim .edge-wait{animation:none}}
+.vt-wrap{display:flex;flex-direction:column;gap:10px}
+.vt-carriers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.carrier{border:2px solid var(--ink);border-radius:10px;padding:10px;background:var(--surface);min-height:92px;display:flex;flex-direction:column;gap:6px;transition:border-color .3s,background-color .3s}
+.carrier h4{font-size:.82rem;display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.carrier h4 small{font-family:var(--f-mono);font-weight:400;color:var(--muted)}
+.carrier.pinned{border-color:var(--bad);background:var(--bad-soft)}
+.carrier .slot{min-height:40px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vt-row{border:1px dashed var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);min-width:0}
+.vt-row h4{font-size:.78rem;color:var(--muted);font-weight:600;margin-bottom:6px}
+.vt-row .chips{display:flex;flex-wrap:wrap;gap:6px;min-height:34px}
+.vtchip{font-family:var(--f-mono);font-size:.72rem;border-radius:6px;padding:4px 8px;background:var(--accent-soft);border:1px solid var(--accent);color:var(--ink);display:inline-flex;flex-direction:column;line-height:1.3;will-change:transform}
+.vtchip small{color:var(--muted);font-size:.66rem}
+.vtchip.io{background:var(--sunk);border-color:var(--line)}
+.vtchip.done{background:var(--ok-soft);border-color:var(--ok)}
+.vtchip.pin{border-style:dashed}
+.vtchip.pinwait{background:var(--bad-soft);border-color:var(--bad)}
+
+/* ===== thêm cho sổ tay Spring Boot ===== */
+.spring{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--s3);font-weight:600;letter-spacing:.03em}
+.spring::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--s3)}
+.w-txt{color:var(--bad);font-weight:700}
+.anim .bx.ok{fill:var(--ok-soft);stroke:var(--ok);stroke-width:2}
+.anim .bx.bad{fill:var(--bad-soft);stroke:var(--bad);stroke-width:2.5}
+/* lifecycle */
+.lc-track{position:relative;padding:8px 6px 30px}
+.lc-line{position:absolute;left:24px;right:24px;top:24px;height:4px;background:var(--sunk);border-radius:2px}
+.lc-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.lc-dots{position:relative;display:flex;justify-content:space-between;gap:2px}
+.lc-dot{background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:6px;width:11%;min-width:0;color:var(--muted)}
+.lc-dot span{width:32px;height:32px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.78rem;font-weight:700;transition:all .3s}
+.lc-dot small{font-size:.7rem;text-align:center;line-height:1.2;overflow-wrap:anywhere}
+.lc-dot.done span{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.lc-dot.cur span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);transform:scale(1.15)}
+.lc-dot.cur small{color:var(--ink);font-weight:700}
+.lc-bean{display:none}
+@media (max-width:640px){.lc-dot small{display:none}.lc-dot span{width:26px;height:26px}}
+.lc-detail{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.lc-detail h4{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+.lc-detail h4 code{font-weight:400}
+/* cache 3 cấp */
+.c3-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:860px){.c3-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.c3-box{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);min-height:110px;min-width:0}
+.c3-box h4{font-size:.8rem;display:flex;flex-direction:column;margin-bottom:8px}
+.c3-box h4 small{font-weight:400;color:var(--muted);font-size:.72rem}
+.c3-box .chips{display:flex;flex-wrap:wrap;gap:6px}
+/* auto-config */
+.ac-opts{display:flex;flex-direction:column;gap:6px}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:.9rem;cursor:pointer}
+.chk input{margin-top:4px;accent-color:var(--accent)}
+.ac-out{display:flex;flex-direction:column;gap:4px}
+.cond{display:grid;grid-template-columns:20px minmax(0,1fr);gap:6px;font-family:var(--f-mono);font-size:.74rem;padding:5px 8px;border-radius:5px;overflow-wrap:anywhere}
+.cond.ok{background:var(--ok-soft)} .cond.ok b{color:var(--ok)}
+.cond.no{background:var(--sunk)} .cond.no b{color:var(--bad)}
+/* tx flow */
+.flow{display:flex;flex-direction:column;gap:6px}
+.flow div{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;font-size:.92rem;padding:6px 8px;border-radius:6px;background:var(--bg)}
+.flow b{width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.76rem}
+.traps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:760px){.traps{grid-template-columns:1fr}}
+.trap-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:0 12px;min-width:0}
+.trap-card summary{cursor:pointer;padding:10px 0;font-weight:600;list-style:none;display:flex;gap:10px;align-items:center}
+.trap-card summary::-webkit-details-marker{display:none}
+.trap-card .tn{font-family:var(--f-mono);font-size:.74rem;width:22px;height:22px;border-radius:50%;background:var(--bad-soft);color:var(--bad);display:flex;align-items:center;justify-content:center;flex:none}
+.trap-card[open]{padding-bottom:12px}
+.trap-card p{font-size:.9rem;margin-top:6px}
+/* propagation */
+.pp-presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pp-presets .btn{font-size:.8rem;padding:5px 10px}
+.pp-ctrl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
+@media (max-width:860px){.pp-ctrl{grid-template-columns:1fr 1fr}}
+@media (max-width:480px){.pp-ctrl{grid-template-columns:1fr}}
+.pp-ctrl .sel{width:100%}
+.pp-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px}
+@media (max-width:860px){.pp-main{grid-template-columns:1fr}}
+.pp-tx #pp-verdict{flex-direction:column;gap:4px}
+.pp-tx{display:flex;flex-direction:column;gap:10px;min-width:0}
+.txcard{border:2px dashed var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;transition:all .3s;background:var(--surface)}
+.txcard h4{font-size:.78rem;color:var(--muted)}
+.txcard b{font-family:var(--f-mono);font-size:.9rem}
+.txcard small{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.txcard.act{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
+.txcard.sus{border-style:solid;border-color:var(--muted);background:var(--sunk)}
+.txcard.rbo{border-style:solid;border-color:var(--warn);background:var(--warn-soft)}
+.txcard.com{border-style:solid;border-color:var(--ok);background:var(--ok-soft)}
+.txcard.rb{border-style:solid;border-color:var(--bad);background:var(--bad-soft)}
+.pp-db{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dbt{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);min-width:0}
+.dbt h4{font-family:var(--f-mono);font-size:.74rem;color:var(--muted);margin-bottom:6px}
+.dbrow{display:block;font-family:var(--f-mono);font-size:.74rem;padding:5px 8px;border-radius:5px;transition:all .3s}
+.dbrow.pend{border:1px dashed var(--accent);background:var(--accent-soft)}
+.dbrow.saved{border:1px solid var(--ok);background:var(--ok-soft);color:var(--ok);font-weight:600}
+.dbrow.lost{border:1px solid var(--bad);background:var(--bad-soft);color:var(--bad);text-decoration:line-through}
+.pp-timeline{list-style:none;margin:0;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--code-bg);border-radius:8px;max-height:430px;overflow:auto;counter-reset:ev}
+.pp-timeline li{font-family:var(--f-mono);font-size:.76rem;color:var(--code-ink);counter-increment:ev;display:grid;grid-template-columns:22px minmax(0,1fr);gap:6px}
+.pp-timeline li::before{content:counter(ev);color:var(--code-dim)}
+.pp-timeline li.w{color:var(--code-warn)} .pp-timeline li.ok{color:var(--code-str)} .pp-timeline li.h{color:var(--code-hl)}
+.pp-timeline li.cap{display:block;color:var(--code-dim);font-family:var(--f-ui)}
+.pp-timeline li.cap::before{content:none}
+/* request pipeline */
+.rq-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px}
+@media (max-width:860px){.rq-grid{grid-template-columns:1fr}}
+.pipe{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.pipe li{display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px;align-items:center;font-size:.86rem;padding:7px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);transition:all .3s}
+.pipe .pi{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.pipe li.pass{border-color:var(--accent);background:var(--accent-soft)}
+.pipe li.back{border-color:var(--ok);background:var(--ok-soft)}
+.pipe li.err{border-color:var(--bad);background:var(--bad-soft);font-weight:600}
+.pipe li.skip{opacity:.4;border-style:dashed}
+.pipe li.cur{box-shadow:0 0 0 3px var(--accent);transform:translateX(6px)}
+.rq-side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.resp{border:2px dashed var(--line);border-radius:8px;padding:12px;font-family:var(--f-mono);font-weight:600;text-align:center}
+.resp.ok{border-style:solid;border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.resp.warn{border-style:solid;border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+.resp.bad{border-style:solid;border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+/* property precedence */
+.pr-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.pr-grid{grid-template-columns:1fr}}
+.srcs{display:flex;flex-direction:column;gap:6px}
+.src{display:grid;grid-template-columns:24px 20px minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);cursor:pointer;transition:all .3s}
+.src .rank{font-family:var(--f-mono);font-size:.74rem;color:var(--muted)}
+.src span b{display:block;font-size:.88rem}
+.src code{font-size:.74rem}
+.src small{display:block;color:var(--warn);font-size:.74rem}
+.src em{font-style:normal;font-family:var(--f-mono);font-size:.72rem;font-weight:700;color:var(--accent-ink);background:var(--accent);padding:2px 8px;border-radius:999px}
+.src.win{border-color:var(--accent);background:var(--accent-soft)}
+.src.off{opacity:.5}
+.chk.prof{padding:6px 2px}
+.pr-result{border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--bg);display:flex;flex-direction:column;gap:6px}
+.bignum{font-family:var(--f-mono);font-size:2.6rem;font-weight:600;color:var(--accent);line-height:1}
+
+/* ===== thêm cho sổ tay Database ===== */
+.mysql{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--s2);font-weight:600;letter-spacing:.03em}
+.mysql::before{content:"";width:7px;height:7px;transform:rotate(45deg);background:var(--s2)}
+.verdict.bad{background:var(--bad-soft);color:var(--bad)}
+.numin{font:inherit;font-family:var(--f-mono);font-size:.86rem;width:64px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 6px}
+/* storage */
+.store-diag{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+@media (max-width:560px){.store-diag{grid-template-columns:1fr}}
+.store-diag>div{display:flex;flex-direction:column;gap:8px;min-width:0}
+.sd-box{display:block;border:2px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.84rem;line-height:1.4;background:var(--surface)}
+.sd-box small{color:var(--muted)}
+.sd-box.pk{border-color:var(--accent);background:var(--accent-soft)}
+.sd-box.heap{border-color:var(--s2);border-style:dashed}
+.sd-box.sec{border-color:var(--s3)}
+/* B+Tree */
+.bt-node{fill:var(--surface);stroke:var(--line);stroke-width:1.5;transition:fill .3s,stroke .3s}
+.bt-node.hot{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5}
+.bt-node.leaf{fill:var(--bg)}
+.bt-node.leaf.hot{fill:var(--accent-soft)}
+.bt-edge{stroke:var(--line);stroke-width:1.5;fill:none;transition:stroke .3s}
+.bt-edge.hot{stroke:var(--accent);stroke-width:3}
+.bt-link{stroke:var(--s2);stroke-width:1.5;fill:none;stroke-dasharray:4 3}
+.bt-link.hot{stroke-width:3;stroke-dasharray:none}
+.anim text.bt-k{font-family:var(--f-mono);font-size:13px}
+.anim text.bt-k.hit{fill:var(--ok);font-weight:700}
+.anim text.bt-k.in{fill:var(--accent);font-weight:700}
+.anim text.bt-cap{font-size:12px;fill:var(--muted)}
+.anim text.bt-cmp{font-family:var(--f-mono);font-size:12px;fill:var(--accent);font-weight:600}
+.bt-key-bg.in{fill:var(--accent-soft)}
+.bt-key-bg{fill:transparent;transition:fill .3s}
+/* composite */
+.ci-ctrl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
+@media (max-width:760px){.ci-ctrl{grid-template-columns:1fr 1fr}}
+.ci-main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px}
+@media (max-width:860px){.ci-main{grid-template-columns:1fr}}
+.ci-idx{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface);min-width:0}
+.ci-head,.ci-row{display:grid;grid-template-columns:.7fr 1.3fr 1.2fr .8fr;gap:6px;padding:4px 10px;font-family:var(--f-mono);font-size:.76rem}
+.ci-head{background:var(--sunk);color:var(--muted);font-weight:600;padding-block:7px}
+.ci-row{border-top:1px solid var(--line);transition:background-color .3s,opacity .3s;position:relative}
+.ci-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ci-row.blk{background:var(--sunk)}
+.ci-row.seek{background:var(--accent-soft)}
+.ci-row.match{background:var(--ok-soft);font-weight:700}
+.ci-row.match::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--ok)}
+.ci-row.skip{opacity:.35}
+.ci-res{display:flex;flex-direction:column;gap:8px;min-width:0}
+.ci-res .bigline{font-family:var(--f-mono);font-size:.8rem;background:var(--code-bg);color:var(--code-ink);border-radius:8px;padding:10px 12px;overflow-wrap:anywhere}
+.ci-res .bigline b{color:var(--code-hl)}
+.ci-res .bigline .w{color:var(--code-warn)}
+.ci-cols{display:flex;gap:6px;flex-wrap:wrap}
+.ci-cols span{font-family:var(--f-mono);font-size:.74rem;padding:3px 8px;border-radius:6px;border:1px solid var(--line)}
+.ci-cols span.use{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ci-cols span.flt{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.ci-cols span.no{background:var(--sunk);color:var(--muted);text-decoration:line-through}
+/* tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:8px;padding:7px 12px;font-size:.86rem;display:flex;flex-direction:column;align-items:flex-start;gap:0;line-height:1.3;text-align:left}
+.tabs button b{font-family:var(--f-mono);font-size:.78rem;color:var(--ink)}
+.tabs button small{font-family:var(--f-mono);font-size:.72rem}
+.tabs button[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);box-shadow:inset 0 -3px 0 var(--accent)}
+#ex-panel{display:flex;flex-direction:column;gap:10px}
+.ex-badges{display:flex;gap:8px;flex-wrap:wrap}
+.ex-badges span{font-family:var(--f-mono);font-size:.76rem;border-radius:999px;padding:3px 10px;background:var(--sunk)}
+.ex-badges span.good{background:var(--ok-soft);color:var(--ok);font-weight:700}
+.ex-badges span.bad{background:var(--bad-soft);color:var(--bad);font-weight:700}
+.ex-notes{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:.92rem}
+/* no-index cards */
+.noidx{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.noidx{grid-template-columns:1fr}}
+.ni{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.ni h4{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ni h4 .n{font-family:var(--f-mono);font-size:.74rem;width:24px;height:24px;border-radius:50%;background:var(--bad-soft);color:var(--bad);display:flex;align-items:center;justify-content:center;flex:none}
+.ni pre.code{margin:0;font-size:.74rem}
+.ni-vs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ni-vs div{border-radius:7px;padding:6px 10px;font-size:.82rem;min-width:0}
+.ni-vs div b{display:block;font-family:var(--f-mono);font-size:1rem}
+.ni-vs .bad{background:var(--bad-soft);color:var(--bad)}
+.ni-vs .good{background:var(--ok-soft);color:var(--ok)}
+.ni-vs div small{color:var(--ink);opacity:.8;font-size:.74rem}
+.ni-bar{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden;margin-top:4px}
+.ni-bar i{display:block;height:100%;background:currentColor;border-radius:4px;width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.ni p{font-size:.9rem}
+/* ACID */
+.acid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.acid{grid-template-columns:1fr}}
+.acid .card{position:relative;padding-left:66px}
+.acid-l{position:absolute;left:14px;top:14px;width:40px;height:40px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:1.3rem;display:flex;align-items:center;justify-content:center}
+/* isolation */
+.is-lanes{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.is-head,.is-step{display:grid;grid-template-columns:minmax(0,1fr) 120px minmax(0,1fr);gap:8px;padding:6px 10px;align-items:center}
+@media (max-width:560px){.is-head,.is-step{grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr)}}
+.is-head{background:var(--sunk);font-size:.78rem;font-weight:700;color:var(--muted)}
+.is-head span:nth-child(2){text-align:center}
+.is-step{border-top:1px solid var(--line);font-family:var(--f-mono);font-size:.76rem;min-height:38px}
+.is-step>div{min-width:0;overflow-wrap:anywhere}
+.is-step .op{padding:5px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg)}
+.is-step .op.a{border-color:var(--s1)} .is-step .op.b{border-color:var(--s2)}
+.is-step .op .r{display:block;font-weight:700;margin-top:2px}
+.is-step .op.err{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.is-step .op.blk{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.is-step .op.anom .r{color:var(--bad)}
+.is-step .op.okv .r{color:var(--ok)}
+.is-step .db{text-align:center;font-weight:700;color:var(--muted);font-size:.72rem}
+.is-step.new{animation:isin .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes isin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+td.y{color:var(--bad);font-weight:700}
+td.nn{color:var(--ok);font-weight:700}
+td.mid{color:var(--warn);font-weight:700}
+#is-matrix tr.cur td{background:var(--accent-soft)}
+/* MVCC */
+.mv-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.mv-grid{grid-template-columns:1fr}}
+.mv-t{font-size:.8rem;color:var(--muted);margin-bottom:8px}
+.mv-heap,.mv-txs{display:flex;flex-direction:column;gap:8px;min-height:90px}
+.tup{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:6px;align-items:center;border:2px solid var(--line);border-radius:8px;padding:8px 10px;font-family:var(--f-mono);font-size:.76rem;background:var(--surface);transition:border-color .3s,background-color .3s,opacity .3s}
+.tup .v{font-weight:800;font-size:.9rem}
+.tup span small{display:block;color:var(--muted);font-size:.66rem}
+.tup.live{border-color:var(--ok)}
+.tup.dead{border-style:dashed;opacity:.7}
+.tup.pend{border-color:var(--accent);border-style:dashed}
+.txc{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);font-size:.84rem}
+.txc b{font-family:var(--f-mono)}
+.txc .sees{font-family:var(--f-mono);font-size:.76rem}
+.txc.act{border-color:var(--accent);background:var(--accent-soft)}
+.txc.done{opacity:.55}
+.see{display:inline-block;padding:0 6px;border-radius:4px;background:var(--ok-soft);color:var(--ok);font-weight:700}
+/* gap lock */
+.gl-rec{fill:var(--surface);stroke:var(--ink);stroke-width:2}
+.gl-rec.lk{fill:var(--bad-soft);stroke:var(--bad)}
+.gl-gap{fill:transparent;stroke:none}
+.gl-gap.lk{fill:var(--bad-soft);opacity:.75}
+.anim text.gl-v{font-family:var(--f-mono);font-weight:700;font-size:14px}
+.anim text.gl-c{font-size:11px;fill:var(--muted)}
+.gl-ins{transition:transform .5s}
+/* N+1 */
+.np-grid{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:12px}
+@media (max-width:640px){.np-grid{grid-template-columns:1fr}}
+.np-stat{display:flex;flex-direction:column;gap:8px}
+@media (max-width:640px){.np-stat{flex-direction:row}}
+.np-stat .stat b{font-size:1.6rem}
+.simlog .s{color:var(--code-str)}
+.simlog .d{color:var(--code-dim)}
+/* hikari */
+.hp-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:640px){.hp-grid{grid-template-columns:1fr}}
+.hp-slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.slot{height:42px;border-radius:7px;border:2px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.68rem;color:var(--muted);position:relative;overflow:hidden;transition:background-color .2s,border-color .2s}
+.slot.busy{border-style:solid;border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.slot i{position:absolute;left:0;bottom:0;height:4px;background:var(--accent);transition:width .05s linear}
+.hp-queue{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;min-height:96px;max-height:150px;overflow:hidden}
+.qd{width:16px;height:16px;border-radius:4px;background:var(--warn-soft);border:1px solid var(--warn);position:relative;overflow:hidden}
+.qd i{position:absolute;left:0;bottom:0;width:100%;background:var(--warn)}
+.qd.to{background:var(--bad);border-color:var(--bad)}
+.ci-ctrl .field{min-width:0}
+.ci-ctrl .sel{width:100%;min-width:0}
+.sim-ctrl label{flex-wrap:wrap;max-width:100%;min-width:0}
+.sim-ctrl .sel{max-width:100%;min-width:0}
+
+/* ===== thêm cho sổ tay Redis ===== */
+.txtin{font:inherit;font-family:var(--f-mono);font-size:.86rem;width:220px;max-width:100%;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 8px}
+.bt-node.found{fill:var(--ok-soft);stroke:var(--ok);stroke-width:2.5}
+.bt-node.fresh{stroke:var(--s2);stroke-width:2.5}
+/* playground */
+.pg-ex{display:flex;flex-wrap:wrap;gap:6px}
+.pg-ex .btn{font-size:.8rem;padding:5px 10px}
+.pg-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:860px){.pg-grid{grid-template-columns:1fr}}
+.pg-term{background:var(--code-bg);border-radius:8px;display:flex;flex-direction:column;min-width:0;height:420px}
+.pg-out{flex:1;overflow:auto;padding:10px 12px;font-family:var(--f-mono);font-size:.76rem;color:var(--code-ink);display:flex;flex-direction:column;gap:6px}
+.pg-out pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--code-str);font:inherit}
+.pg-out pre.err{color:var(--code-warn)}
+.pg-c{color:var(--code-ink);overflow-wrap:anywhere}
+.pg-c span,.pg-in span{color:var(--code-hl)}
+.pg-in{display:flex;gap:6px;align-items:center;border-top:1px solid #ffffff22;padding:8px 10px}
+.pg-in span{font-family:var(--f-mono);font-size:.8rem}
+.pg-in input{flex:1;min-width:0;background:transparent;border:0;color:var(--code-ink);font-family:var(--f-mono);font-size:.84rem;outline:none}
+.pg-in input::placeholder{color:var(--code-dim)}
+.pg-in .btn{padding:4px 10px;font-size:.8rem}
+.pg-view{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow:auto;min-width:0}
+.pg-key{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);transition:box-shadow .3s}
+.pg-key.hot{box-shadow:0 0 0 2px var(--accent)}
+.pg-kh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.pg-kh b{font-family:var(--f-mono);font-size:.8rem;overflow-wrap:anywhere}
+.pg-type{font-family:var(--f-mono);font-size:.66rem;padding:1px 6px;border-radius:4px;background:var(--accent);color:var(--accent-ink);font-weight:700}
+.pg-type.t-hash{background:var(--s3);color:#fff}.pg-type.t-list{background:var(--s2);color:#fff}.pg-type.t-set{background:var(--ok);color:#fff}.pg-type.t-zset{background:var(--old);color:#fff}.pg-type.t-bitmap,.pg-type.t-hll{background:var(--muted);color:#fff}
+.pg-enc{font-family:var(--f-mono);font-size:.66rem;color:var(--muted);border:1px solid var(--line);padding:0 5px;border-radius:4px}
+.pg-ttl{font-family:var(--f-mono);font-size:.66rem;color:var(--warn);background:var(--warn-soft);padding:1px 6px;border-radius:4px;margin-left:auto}
+.pg-str{font-family:var(--f-mono);font-size:.78rem;background:var(--bg);padding:5px 8px;border-radius:5px;overflow-wrap:anywhere}
+.pg-hash{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-family:var(--f-mono);font-size:.76rem}
+.pg-hash span{color:var(--muted)}.pg-hash b{overflow-wrap:anywhere}
+.pg-list,.pg-set{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-family:var(--f-mono);font-size:.74rem}
+.pg-list span,.pg-set span{border:1px solid var(--line);border-radius:5px;padding:2px 7px;background:var(--bg)}
+.pg-list span i{font-style:normal;color:var(--muted);font-size:.64rem;margin-right:4px}
+.pg-list small{color:var(--muted);font-size:.66rem}
+.pg-set span{border-radius:999px}
+.pg-z{display:flex;flex-direction:column;gap:3px;font-family:var(--f-mono);font-size:.74rem}
+.pg-z div{display:grid;grid-template-columns:18px minmax(0,1.2fr) minmax(0,1fr) auto;gap:6px;align-items:center}
+.pg-z .r{color:var(--muted)}.pg-z .m{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-z .bar{height:8px;background:var(--sunk);border-radius:4px;overflow:hidden}.pg-z .bar i{display:block;height:100%;background:var(--accent);transition:width .4s}
+.pg-z small{color:var(--muted)}
+.pg-bits{display:flex;flex-wrap:wrap;gap:2px}
+.pg-bits i{font-style:normal;font-family:var(--f-mono);font-size:.66rem;width:18px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:3px;background:var(--sunk);color:var(--muted)}
+.pg-bits i.on{background:var(--accent);color:var(--accent-ink);font-weight:700}
+/* eviction */
+.ev-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.ev-grid{grid-template-columns:1fr}}
+.ev-slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.evs{border:2px solid var(--line);border-radius:7px;padding:6px 4px;text-align:center;display:flex;flex-direction:column;gap:1px;min-width:0;transition:background-color .3s,border-color .3s}
+.evs b{font-family:var(--f-mono);font-size:.9rem}
+.evs small{font-size:.62rem;color:var(--muted);overflow-wrap:anywhere;line-height:1.2}
+.evs.hot{border-color:var(--accent);background:var(--accent-soft)}
+.evs.nw{animation:evin .5s}
+.evs.empty{border-style:dashed;color:var(--muted);font-size:.72rem;justify-content:center}
+@keyframes evin{from{transform:scale(.7);opacity:.2}to{transform:none;opacity:1}}
+.ev-req{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-height:30px}
+.evr{display:inline-flex;gap:2px;align-items:center;border:1px solid var(--line);border-radius:5px;padding:1px 4px;font-family:var(--f-mono);font-size:.72rem}
+.evr.hot b{color:var(--accent)}
+.evr i{font-style:normal;font-size:.6rem;width:13px;height:13px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+.evr i.h{background:var(--ok)}.evr i.m{background:var(--bad)}
+/* patterns, incidents */
+.patterns,.incidents{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.patterns,.incidents{grid-template-columns:1fr}}
+.inc-h{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.04em;text-transform:uppercase;color:var(--bad);font-weight:700}
+/* cache consistency */
+.ca-wrap{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:12px}
+@media (max-width:640px){.ca-wrap{grid-template-columns:1fr}}
+.ca-lanes{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface);min-width:0}
+.ca-head{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 10px;background:var(--sunk);font-size:.78rem;font-weight:700;color:var(--muted)}
+.ca-row.is-step{grid-template-columns:1fr 1fr}
+.ca-state{display:flex;flex-direction:column;gap:8px}
+@media (max-width:640px){.ca-state{flex-direction:row}}
+.ca-box{flex:1;border:2px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:2px}
+.ca-box small{font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.ca-box b{font-family:var(--f-mono);font-size:1.05rem}
+/* rate limit */
+.rl-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:860px){.rl-grid{grid-template-columns:1fr}}
+.rl-p svg{width:100%;height:auto;display:block}
+.rl-p svg text{font-family:var(--f-ui);font-size:11px;fill:var(--ink)}
+.rl-p svg text.bt-cmp{font-family:var(--f-mono);font-size:11px;fill:var(--accent);font-weight:600}
+.rl-p svg text.bt-cap{fill:var(--muted)}
+.rl-c{display:flex;flex-wrap:wrap;gap:6px;font-family:var(--f-mono);font-size:.72rem;margin-top:4px}
+.rl-c span{padding:1px 6px;border-radius:4px;background:var(--sunk)}
+.rl-c .okc{background:var(--ok-soft);color:var(--ok);font-weight:700}
+.rl-c .noc{background:var(--bad-soft);color:var(--bad);font-weight:700}
+/* stream */
+.sm-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
+@media (max-width:760px){.sm-grid{grid-template-columns:1fr}}
+.sm-log{display:flex;flex-direction:column;gap:4px;min-height:60px}
+.sm-e{display:grid;grid-template-columns:auto 1fr;gap:0 8px;border:1px solid var(--line);border-left-width:4px;border-radius:6px;padding:4px 8px;font-family:var(--f-mono);font-size:.72rem;background:var(--bg)}
+.sm-e small{grid-column:1/-1;color:var(--muted);font-size:.66rem}
+.sm-e.new{border-left-color:var(--muted)}
+.sm-e.pend{border-left-color:var(--warn);background:var(--warn-soft)}
+.sm-e.ack{border-left-color:var(--ok);opacity:.65}
+.sm-dead{font-size:.76rem;color:var(--bad);font-weight:700;margin-bottom:4px}
+.cs-ex{display:flex;flex-wrap:wrap;gap:4px}
+.cs-ex .chip{cursor:pointer;font-size:.7rem}
+.cs-ex .chip:hover{border-color:var(--accent)}
+
+/* ===== thêm cho sổ tay System design ===== */
+.simlb{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--s3);font-weight:600;letter-spacing:.03em}
+.simlb::before{content:"";width:7px;height:7px;border-radius:2px;border:2px solid var(--s3)}
+.numin.wide{width:100%}
+.frame{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:860px){.frame{grid-template-columns:1fr}}
+.fr-step{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+.fr-step>b{width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono)}
+.fr-step h4{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.fr-step h4 small{font-family:var(--f-mono);font-weight:400;color:var(--muted);font-size:.72rem}
+.fr-step p{font-size:.88rem}
+.calc-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:860px){.calc-grid{grid-template-columns:1fr 1fr}}
+.calc-grid .field span{font-size:.78rem;font-weight:600;color:var(--muted)}
+.calc-out{display:flex;flex-direction:column;gap:8px}
+.calc-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.calc-cards{grid-template-columns:1fr 1fr}}
+.calc-cards .stat{min-width:0}
+.calc-cards .stat b{font-size:1.05rem;overflow-wrap:anywhere}
+.layers{display:flex;flex-direction:column;gap:6px;max-width:760px}
+.ly{display:grid;grid-template-columns:200px 150px minmax(0,1fr);gap:10px;align-items:center;padding:10px 14px;border-radius:8px;background:var(--accent-soft);border-left:4px solid var(--accent)}
+.ly:nth-child(2){margin-left:16px}.ly:nth-child(3){margin-left:32px}.ly:nth-child(4){margin-left:48px}.ly:nth-child(5){margin-left:64px}
+.ly.db{background:var(--warn-soft);border-color:var(--warn)}
+.ly span{font-family:var(--f-mono);font-size:.8rem}.ly small{color:var(--muted);font-size:.82rem}
+@media (max-width:640px){.ly{grid-template-columns:1fr;margin-left:0!important;gap:2px}}
+.ladder{display:flex;flex-direction:column;gap:6px}
+.ld{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.ld>b{width:30px;height:30px;border-radius:8px;background:var(--sunk);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono)}
+.ld p{font-size:.9rem}
+.ring-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:760px){.ring-grid{grid-template-columns:1fr}}
+.ring-grid .anim svg{min-width:0;max-width:440px;margin:auto}
+.ring-side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.ring-load{display:flex;flex-direction:column;gap:4px}
+.rl-row{display:grid;grid-template-columns:80px minmax(0,1fr) 54px;gap:8px;align-items:center;font-size:.82rem}
+.rl-row span:first-child{display:flex;gap:6px;align-items:center}.rl-row i{display:inline-block;width:10px;height:10px;border-radius:3px}
+.rl-row .bar{height:10px;background:var(--sunk);border-radius:5px;overflow:hidden}.rl-row .bar i{display:block;height:100%;width:0;border-radius:5px;transition:width .5s}
+.rl-row b{font-family:var(--f-mono);font-size:.78rem;text-align:right}
+.sg-flow{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap}
+.sg-step{flex:1;min-width:140px;border:2px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;background:var(--surface);transition:all .3s}
+.sg-step small{color:var(--muted);font-size:.74rem}
+.sg-st{font-family:var(--f-mono);font-size:.72rem;margin-top:4px}
+.sg-step.run{border-color:var(--accent);background:var(--accent-soft)}
+.sg-step.ok{border-color:var(--ok);background:var(--ok-soft)}
+.sg-step.fail{border-color:var(--bad);background:var(--bad-soft)}
+.sg-step.compr{border-color:var(--warn);background:var(--warn-soft)}
+.sg-step.comp{border-color:var(--warn);border-style:dashed;opacity:.8}
+.sg-step.retry{border-color:var(--warn);background:var(--warn-soft)}
+.sg-arr{align-self:center;font-style:normal;color:var(--muted)}
+@media (max-width:640px){.sg-arr{display:none}.sg-step{min-width:calc(50% - 6px)}}
+.cb-grid,.tail-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px;align-items:center}
+@media (max-width:760px){.cb-grid,.tail-grid{grid-template-columns:1fr}}
+.cb-grid .anim svg,.tail-grid .anim svg{min-width:0}
+.cb-side,.tail-side{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cb-win{display:flex;gap:4px;flex-wrap:wrap}
+.cb-win span{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;font-weight:700}
+.cb-win span.ok{background:var(--ok)}.cb-win span.no{background:var(--bad)}
+.slo{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.slo-btns{display:flex;flex-wrap:wrap;gap:6px}.slo-btns .btn{padding:4px 10px;font-size:.8rem}
+.steps-case{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.steps-case{grid-template-columns:1fr}}
+.sf-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:860px){.sf-grid{grid-template-columns:1fr}}
+.sf-bits{display:grid;grid-template-columns:repeat(32,minmax(0,1fr));gap:1px;font-family:var(--f-mono);font-size:.6rem}
+.sf-bits i{font-style:normal;text-align:center;padding:2px 0;border-radius:2px;color:#fff}
+.b-sg{background:var(--muted)}.b-ts{background:var(--s1)}.b-wk{background:var(--s3)}.b-sq{background:var(--s2)}
+.sf-leg{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;font-size:.72rem}
+.sf-leg span{padding:1px 6px;border-radius:4px;color:#fff}
+.sf-list{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow:auto}
+.sf-row{display:flex;flex-direction:column;gap:1px;font-family:var(--f-mono);font-size:.72rem;border:1px solid var(--line);border-radius:6px;padding:4px 8px;overflow-wrap:anywhere}
+.sf-row small{color:var(--muted);margin-right:6px}
+.cms-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px}
+@media (max-width:760px){.cms-grid{grid-template-columns:1fr}}
+.cms-table{display:flex;flex-direction:column;gap:3px;min-width:0}
+.cms-row{display:grid;grid-template-columns:24px repeat(12,minmax(0,1fr));gap:3px;align-items:center}
+.cms-row small{font-family:var(--f-mono);font-size:.68rem;color:var(--muted)}
+.cms-row span{font-family:var(--f-mono);font-size:.74rem;text-align:center;padding:5px 0;border-radius:4px;background:var(--sunk);transition:background-color .3s}
+.cms-row span.hit{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+.cms-row span.min{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.cms-side table{font-size:.82rem}.cms-side td.over{color:var(--bad);font-weight:700}.cms-side tr.cur td{background:var(--accent-soft)}
+#cms-btns .btn{font-size:.78rem;padding:4px 9px}
+
+/* ===== thêm cho sổ tay Java core ===== */
+pre.code .ln{display:inline-block;width:100%;border-radius:3px;transition:background-color .3s}
+pre.code .ln.on{background:#ffffff1f;box-shadow:inset 3px 0 0 var(--code-hl)}
+.sp-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:12px}
+@media (max-width:760px){.sp-grid{grid-template-columns:1fr}}
+#sp-btns .btn{font-size:.74rem;padding:4px 8px}#sp-btns code{background:none;padding:0}
+.sp-side{display:flex;flex-direction:column;gap:6px;min-width:0}
+.sp-cmp{display:flex;flex-direction:column;gap:4px}
+.sp-cmp div{display:flex;justify-content:space-between;gap:8px;padding:5px 9px;border-radius:6px;font-family:var(--f-mono);font-size:.8rem}
+.sp-cmp div.t{background:var(--ok-soft)}.sp-cmp div.t b{color:var(--ok)}
+.sp-cmp div.f{background:var(--bad-soft)}.sp-cmp div.f b{color:var(--bad)}
+.hm-info{display:flex;flex-wrap:wrap;gap:6px}
+.hm-info span{font-size:.8rem;background:var(--sunk);padding:3px 9px;border-radius:999px}
+.hm-table{display:grid;gap:3px}
+.hb{border:1px solid var(--line);border-radius:5px;min-height:62px;padding:3px;display:flex;flex-direction:column;gap:2px;background:var(--surface);min-width:0;transition:background-color .3s,border-color .3s}
+.hb small{font-family:var(--f-mono);font-size:.6rem;color:var(--muted)}
+.hb span{font-family:var(--f-mono);font-size:.58rem;background:var(--accent-soft);border-radius:3px;padding:1px 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb span.more{background:var(--warn-soft);color:var(--warn);font-weight:700}
+.hb em{font-style:normal;font-size:.58rem;font-weight:700;color:#fff;background:var(--ok);border-radius:3px;text-align:center}
+.hb.empty{opacity:.55}
+.hb.hot{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.hb.tree{border-color:var(--ok);background:var(--ok-soft)}
+@media (max-width:640px){.hm-table{grid-template-columns:repeat(8,minmax(0,1fr))!important}}
+.al-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:760px){.al-grid{grid-template-columns:1fr}}
+.al-arr{display:flex;flex-wrap:wrap;gap:2px}
+.al-arr span{width:28px;height:28px;border:1px dashed var(--line);border-radius:3px;font-family:var(--f-mono);font-size:.7rem;display:flex;align-items:center;justify-content:center;transition:background-color .3s}
+.al-arr span.f{border-style:solid;background:var(--accent-soft)}
+.al-arr span.hl{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.al-arr span.sh{background:var(--warn-soft);border-color:var(--warn)}
+.ll-list{display:flex;flex-wrap:wrap;gap:2px;align-items:center}
+.ll-list span{min-width:28px;height:28px;border:1px solid var(--s2);border-radius:14px;padding:0 6px;font-family:var(--f-mono);font-size:.7rem;display:flex;align-items:center;justify-content:center;background:var(--surface)}
+.ll-list span.walk{background:var(--warn-soft)}
+.ll-list span.hl{background:var(--s2);color:#fff;font-weight:700}
+.ll-list i{font-style:normal;font-size:.6rem;color:var(--muted)}
+.al-note{font-size:.84rem;margin-top:8px;min-height:40px}
+.cme-grid{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:12px;align-items:start}
+@media (max-width:640px){.cme-grid{grid-template-columns:1fr}}
+.cme-list{display:flex;gap:6px;position:relative;padding-bottom:30px;flex-wrap:wrap}
+.cme-list span{width:52px;height:46px;border:2px solid var(--line);border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--f-mono);font-weight:700;background:var(--surface)}
+.cme-list span small{font-size:.6rem;color:var(--muted);font-weight:400}
+.cme-list span.cur{border-color:var(--accent);background:var(--accent-soft)}
+.cme-ptr{position:absolute;left:calc(var(--c) * 58px);bottom:4px;font-family:var(--f-mono);font-size:.72rem;color:var(--accent);font-weight:700;transition:left .4s;white-space:nowrap}
+.cme-state{display:flex;flex-direction:column;gap:4px}
+.cme-state div{display:flex;justify-content:space-between;padding:5px 10px;border-radius:6px;background:var(--sunk);font-size:.84rem}
+.cme-state b{font-family:var(--f-mono)}.cme-state b.bad{color:var(--bad)}
+.dp-grid,.io-grid,.pv-grid,.fy-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:860px){.dp-grid,.io-grid,.pv-grid,.fy-grid{grid-template-columns:1fr}}
+.dp-grid pre,.io-grid pre,.pv-grid pre,.fy-grid pre{margin:0;font-size:.74rem}
+.pv-grid .anim svg{min-width:0}
+.dp-res{display:flex;flex-direction:column;gap:8px}
+.dp-phase{border-left:3px solid var(--accent);background:var(--surface);padding:8px 12px;border-radius:0 8px 8px 0;font-size:.88rem;display:flex;flex-direction:column;gap:2px}
+.dp-phase b{font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--accent)}
+.dp-phase.bad{border-color:var(--bad);background:var(--bad-soft)}.dp-phase.bad b{color:var(--bad)}
+.dp-out{font-family:var(--f-mono);font-size:1.3rem;font-weight:700;color:var(--ok);padding:6px 12px}
+.io-out{display:flex;flex-direction:column;gap:6px;min-width:0}.io-out h4{font-size:.8rem;color:var(--muted)}
+.fy-side{display:flex;flex-direction:column;gap:8px;min-width:0}
+.fy-box{border:2px solid var(--accent);border-radius:8px;padding:10px 12px;background:var(--accent-soft);display:flex;flex-direction:column}
+.fy-box small{font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.fy-box b{font-family:var(--f-mono);font-size:1.4rem}
+.pe-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:760px){.pe-grid{grid-template-columns:1fr}}
+.pe{border:2px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.pe code{background:none;padding:0;font-size:.78rem}
+.pe b{font-size:.8rem}.pe small{font-family:var(--f-mono);font-size:.68rem;color:var(--muted);overflow-wrap:anywhere}
+.pe.ok{border-color:var(--ok);background:var(--ok-soft)}.pe.ok b{color:var(--ok)}
+.pe.no{border-color:var(--bad);background:var(--bad-soft)}.pe.no b{color:var(--bad)}
+.bd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:640px){.bd-grid{grid-template-columns:1fr}}
+.bd-c{border:2px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.bd-c small{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.bd-c code{font-size:.74rem;overflow-wrap:anywhere}
+.bd-c b{font-family:var(--f-mono);font-size:1.25rem;overflow-wrap:anywhere}
+.bd-c span{font-size:.8rem;color:var(--muted)}
+.bd-c.ok{border-color:var(--ok)}.bd-c.ok b{color:var(--ok)}
+.bd-c.bad{border-color:var(--bad)}.bd-c.bad b{color:var(--bad)}
+.pz-top{display:flex;justify-content:space-between;align-items:center}
+.pz-score{font-family:var(--f-mono);font-size:.84rem;font-weight:700;color:var(--accent)}
+.pz-opts{display:flex;flex-wrap:wrap;gap:8px}
+.pz-opts .btn{font-family:var(--f-mono);font-size:.84rem}
+.pz-opts .btn.right{background:var(--ok);border-color:var(--ok);color:#fff}
+.pz-opts .btn.wrong{background:var(--bad);border-color:var(--bad);color:#fff}
+.pz-opts .btn:disabled{cursor:default;opacity:1}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="toc" aria-label="Mục lục">
+  <div class="brand">Sổ tay Java core</div>
+  <ol id="toc">
+    <li><a href="#map"><span>00</span>Bản đồ</a></li>
+    <li><a href="#types"><span>01</span>Primitive và wrapper</a></li>
+    <li><a href="#string"><span>02</span>String</a></li>
+    <li><a href="#eq"><span>03</span>equals và hashCode</a></li>
+    <li><a href="#hashmap"><span>04</span>HashMap bên trong</a></li>
+    <li><a href="#coll"><span>05</span>Collections</a></li>
+    <li><a href="#oop"><span>06</span>OOP và dispatch</a></li>
+    <li><a href="#pass"><span>07</span>Truyền tham trị, immutability</a></li>
+    <li><a href="#exc"><span>08</span>Exception</a></li>
+    <li><a href="#generics"><span>09</span>Generics</a></li>
+    <li><a href="#stream"><span>10</span>Lambda và Stream</a></li>
+    <li><a href="#modern"><span>11</span>Java 8 → 21</a></li>
+    <li><a href="#proxy"><span>12</span>Reflection và proxy</a></li>
+    <li><a href="#money"><span>13</span>Tiền: BigDecimal</a></li>
+    <li><a href="#time"><span>14</span>Thời gian: java.time</a></li>
+    <li><a href="#puzzle"><span>15</span>Đoán output</a></li>
+    <li><a href="#interview"><span>16</span>Câu hỏi phỏng vấn</a></li>
+    <li><a href="#lab"><span>17</span>Lab tự làm</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero" id="top">
+  <div class="eyebrow">Java 21 · Collections · OOP · Generics · Stream</div>
+  <h1>Sổ tay Java core</h1>
+  <p class="lede">Những câu Java "cơ bản" mà rất nhiều người trả lời sai: Integer cache, String pool, hợp đồng equals/hashCode, HashMap bên trong, ArrayList hay LinkedList, finally, generics, Stream lười, BigDecimal, múi giờ. Mọi output gắn nhãn <span class="real">ĐO THẬT</span> là kết quả chạy thật bằng OpenJDK 21.0.12 trên máy mình, kể cả lỗi biên dịch của javac. Số đo hiệu năng là micro-benchmark tự viết (không có JMH vì không tải được thư viện), chỉ để so bậc độ lớn.</p>
+  <div class="facts"><span>14 mô phỏng tương tác</span><span>6 biểu đồ số đo</span><span>18 chương</span><span>16 câu đoán output</span><span>40 câu hỏi phỏng vấn</span></div>
+</header>
+
+<!-- 00 -->
+<section class="ch" id="map">
+  <div class="ch-head"><div class="eyebrow">Chương 00</div><h2>Bản đồ</h2>
+    <p>Java core thường là vòng hỏi đầu tiên. Câu hỏi nghe đơn giản, nhưng người phỏng vấn đang kiểm tra bạn có hiểu <b>vì sao</b> không, và đã từng dính bẫy thật chưa.</p></div>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Nhóm</th><th>Câu hay gặp</th><th>Chương</th></tr></thead>
+    <tbody>
+      <tr><td><b>Ngôn ngữ</b></td><td><code>==</code> và <code>equals</code>, String bất biến, Integer cache, pass-by-value</td><td>01 – 03, 07</td></tr>
+      <tr><td><b>Collections</b></td><td>HashMap hoạt động thế nào, ArrayList hay LinkedList, ConcurrentModificationException</td><td>04 – 05</td></tr>
+      <tr><td><b>OOP</b></td><td>Overload và override, abstract class và interface, thứ tự khởi tạo</td><td>06</td></tr>
+      <tr><td><b>Lỗi</b></td><td>Checked và unchecked, finally, try-with-resources</td><td>08</td></tr>
+      <tr><td><b>Java hiện đại</b></td><td>Generics, lambda, Stream, Optional, record, pattern matching</td><td>09 – 11</td></tr>
+      <tr><td><b>Thực chiến</b></td><td>Proxy (nền tảng của @Transactional), tiền, múi giờ</td><td>12 – 14</td></tr>
+    </tbody></table></div>
+  <div class="callout"><b class="t">Liên hệ với các sổ tay khác</b>Bộ nhớ, GC, JIT nằm trong sổ tay JVM; thread, lock, volatile, CompletableFuture, virtual thread nằm trong sổ tay Concurrency; proxy và AOP của Spring nằm trong sổ tay Spring Boot. Cuốn này tập trung vào ngôn ngữ và thư viện chuẩn.</div>
+</section>
+
+<!-- 01 -->
+<section class="ch" id="types">
+  <div class="ch-head"><div class="eyebrow">Chương 01</div><h2>Primitive, wrapper và Integer cache</h2>
+    <p>8 kiểu nguyên thủy (<code>byte short int long float double char boolean</code>) lưu giá trị trực tiếp. Mỗi kiểu có một lớp bọc (<code>Integer</code>, <code>Long</code>…) là object trên heap. Java tự đổi qua lại (autoboxing), và đó là nguồn của ba bẫy kinh điển.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li><code>Integer a = 127, b = 127; a == b</code>? Còn 128?</li><li>Autoboxing có tốn gì không?</li><li>Khi nào unboxing ném NullPointerException?</li></ul></div>
+  <div class="card sim" id="ic">
+    <div class="sim-ctrl">
+      <label for="ic-a">Integer a = <input type="number" id="ic-a" class="numin" value="127"></label>
+      <label for="ic-b">Integer b = <input type="number" id="ic-b" class="numin" value="127"></label>
+      <button class="btn primary" type="button" id="ic-go">So sánh</button>
+      <button class="btn" type="button" data-p="127">127</button><button class="btn" type="button" data-p="128">128</button><button class="btn" type="button" data-p="-128">-128</button><button class="btn" type="button" data-p="1000">1000</button>
+    </div>
+    <div class="anim"><svg id="ic-svg" viewBox="0 0 760 250" role="img" aria-label="Biến trên stack trỏ vào cache hoặc object mới trên heap"></svg></div>
+    <div class="verdict" id="ic-v" style="display:none"></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Output chạy thật</h4>
+<pre class="code">Integer i1 = 127, i2 = 127;  i1 == i2   → <span class="h">true</span>
+Integer i3 = 128, i4 = 128;  i3 == i4   → <span class="w">false</span>
+i3.equals(i4)                           → true
+Long l = 127L;  l.equals(127)           → <span class="w">false</span>   <span class="c">// Long so với Integer</span>
+Integer nul = null; int x = nul;        → <span class="w">NullPointerException</span>
+int s = map.get("sushi");  <span class="c">// key không có</span> → <span class="w">NullPointerException</span>
+Integer r = cond ? nullInteger : 0;     → <span class="w">NullPointerException</span></pre>
+      <p class="cap" style="margin-top:8px">Dòng cuối là bẫy khó thấy nhất: một vế là <code>int</code> nên cả biểu thức ba ngôi có kiểu <code>int</code>, Java unbox vế <code>Integer</code> null.</p></div>
+    <div class="card"><span class="real">ĐO THẬT</span><div class="chart-title" style="margin-top:6px">Cộng 50 triệu số: long và Long</div><p class="cap">mili giây, tốt nhất trong 5 lần</p><div class="chart" id="ch-box"></div>
+      <p class="cap" style="margin-top:6px"><code>Long s = 0L; s += i;</code> mỗi vòng tạo một object <code>Long</code> mới (ngoài cache): chậm hơn 11 lần và sinh rác cho GC. Bẫy hay gặp khi khai báo biến tích luỹ là <code>Long</code>/<code>Integer</code>, hoặc dùng <code>List&lt;Integer&gt;</code> cho mảng số lớn.</p></div>
+  </div>
+  <div class="callout"><b class="t">Quy tắc</b>So sánh wrapper luôn dùng <code>equals</code> (hoặc <code>Objects.equals</code> nếu có thể null), không bao giờ <code>==</code>. <code>Integer.valueOf</code> cache −128..127 (cận trên chỉnh được bằng <code>-XX:AutoBoxCacheMax</code>); <code>Long</code>, <code>Short</code>, <code>Byte</code>, <code>Character</code> (0..127) cũng có cache; <code>Double</code>, <code>Float</code> không có. Code chạy đúng với id nhỏ trong test rồi sai trên production khi id vượt 127 là chuyện có thật.</div>
+</section>
+
+<!-- 02 -->
+<section class="ch" id="string">
+  <div class="ch-head"><div class="eyebrow">Chương 02</div><h2>String: bất biến, pool và nối chuỗi</h2>
+    <p>String trong Java là <b>bất biến</b>: mọi thao tác "sửa" đều tạo String mới. Các literal giống nhau dùng chung một object trong <b>String pool</b>.</p></div>
+  <div class="card sim" id="sp">
+    <div class="sim-ctrl" id="sp-btns"></div>
+    <div class="sp-grid">
+      <div class="anim"><svg id="sp-svg" viewBox="0 0 640 280" role="img" aria-label="Biến trỏ vào String pool hoặc heap"></svg></div>
+      <div class="sp-side"><h4>So sánh bằng ==</h4><div id="sp-cmp" class="sp-cmp"></div></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Output chạy thật</h4>
+<pre class="code">String s1 = "hugeclub", s3 = new String("hugeclub");
+String part = "huge";
+s1 == "hugeclub"            → <span class="h">true</span>    <span class="c">// cùng literal trong pool</span>
+s1 == s3                    → <span class="w">false</span>   <span class="c">// new luôn tạo object mới</span>
+s1 == part + "club"         → <span class="w">false</span>   <span class="c">// nối lúc chạy → object mới</span>
+s1 == "huge" + "club"       → <span class="h">true</span>    <span class="c">// compiler gộp sẵn thành literal</span>
+s1 == (part + "club").intern() → <span class="h">true</span>
+s.toUpperCase();  <span class="c">// không gán lại</span>  → s vẫn là "hugeclub"</pre></div>
+    <div class="card prose"><h4>Vì sao String bất biến</h4>
+      <ul><li><b>An toàn khi dùng chung</b>: pool chỉ có thể tồn tại vì không ai sửa được object dùng chung.</li><li><b>An toàn với luồng</b> mà không cần khoá.</li><li><b>Bảo mật</b>: tên file, URL, tên class đã kiểm tra rồi thì không bị đổi sau lưng.</li><li><b>Cache hashCode</b>: tính một lần, nên String là key HashMap lý tưởng.</li><li><b>Compact strings</b> (Java 9+): chuỗi chỉ có ký tự Latin-1 lưu 1 byte/ký tự thay vì 2. <span class="real">ĐO THẬT</span> 1 triệu chuỗi như <code>"sushi-5-tokyo"</code>: 67,5 MB mặc định, 83,5 MB khi tắt <code>-XX:-CompactStrings</code>. Chuỗi có chữ tiếng Việt có dấu luôn dùng 2 byte/ký tự.</li></ul></div>
+  </div>
+  <div class="card"><span class="real">ĐO THẬT</span><div class="chart-title" style="margin-top:6px">Nối N lần chữ "x": dùng <code>+=</code> trong vòng lặp và StringBuilder</div><p class="cap">mili giây, thang log</p><div class="chart-legend" id="lg-concat"></div><div class="chart" id="ch-concat"></div>
+    <p class="cap" style="margin-top:6px"><code>s += "x"</code> trong vòng lặp mỗi lần tạo chuỗi mới và chép lại toàn bộ: O(N²). Với 40 000 lần: 253 ms so với 0,32 ms, chậm gần 800 lần. Nối vài chuỗi trên một dòng (<code>"a" + b + "c"</code>) thì không sao, compiler đã tối ưu.</p></div>
+</section>
+
+<!-- 03 -->
+<section class="ch" id="eq">
+  <div class="ch-head"><div class="eyebrow">Chương 03</div><h2>equals và hashCode</h2>
+    <p><code>==</code> so <b>địa chỉ</b> (cùng một object). <code>equals</code> so <b>nội dung</b> theo cách class định nghĩa. Mặc định <code>Object.equals</code> chính là <code>==</code>.</p></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Hợp đồng bắt buộc</h4>
+      <ol><li><code>a.equals(b)</code> thì <b>bắt buộc</b> <code>a.hashCode() == b.hashCode()</code>.</li><li>Ngược lại không bắt buộc: hai object khác nhau được phép cùng hashCode (đụng độ).</li><li>equals phải phản xạ, đối xứng, bắc cầu, nhất quán, và <code>x.equals(null) == false</code>.</li><li>Field dùng trong equals/hashCode không nên đổi khi object đang nằm trong HashMap/HashSet.</li></ol>
+<pre class="code"><span class="h">@Override public boolean</span> equals(Object o) {
+  <span class="h">if</span> (<span class="h">this</span> == o) <span class="h">return true</span>;
+  <span class="h">if</span> (!(o <span class="h">instanceof</span> Reservation r)) <span class="h">return false</span>;
+  <span class="h">return</span> Objects.equals(id, r.id);
+}
+<span class="h">@Override public int</span> hashCode() { <span class="h">return</span> Objects.hash(id); }</pre></div>
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Vi phạm hợp đồng thì HashMap "mất" dữ liệu</h4>
+<pre class="code"><span class="c">// Key chỉ override equals, không override hashCode</span>
+map.put(new Key("u1"), "An");
+map.get(new Key("u1"))          → <span class="w">null</span>
+
+<span class="c">// Key2 override cả hai</span>
+map2.get(new Key2("u1"))        → <span class="h">An</span>
+
+<span class="c">// đổi field của key sau khi đã add vào HashSet</span>
+set.add(mk); mk.id = "u2";
+set.contains(mk)                → <span class="w">false</span>, size = 1</pre>
+      <p class="cap" style="margin-top:8px">Object nằm trong bucket tính theo hashCode cũ; tìm bằng hashCode mới thì không thấy, và cũng không xoá được: rò bộ nhớ. Dùng field bất biến (id) hoặc <code>record</code> làm key.</p></div>
+  </div>
+  <div class="callout warn"><b class="t">JPA entity</b>Không dùng id tự sinh trong equals/hashCode của entity một cách ngây thơ: trước khi persist id là null, sau khi persist hashCode đổi, entity trong HashSet bị "lạc". Cách phổ biến: so theo id nhưng hashCode trả hằng số theo class, hoặc dùng khoá nghiệp vụ bất biến. Không dùng <code>@Data</code> của Lombok cho entity (nó đưa cả quan hệ lazy vào equals/hashCode/toString).</div>
+</section>
+
+<!-- 04 -->
+<section class="ch" id="hashmap">
+  <div class="ch-head"><div class="eyebrow">Chương 04</div><h2>HashMap bên trong</h2>
+    <p>Một mảng bucket. Mỗi key được băm, lấy vị trí <code>(n − 1) &amp; hash</code>; các key cùng bucket nối thành danh sách, dài quá thì thành cây đỏ-đen. Thêm key và xem bảng lớn lên.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>HashMap hoạt động thế nào? Đụng độ xử lý ra sao?</li><li>Load factor là gì? Khi nào resize?</li><li>Java 8 thay đổi gì (treeify)?</li><li>HashMap có thread-safe không? Dùng gì thay?</li></ul></div>
+  <div class="card sim" id="hm">
+    <div class="sim-ctrl">
+      <input id="hm-key" class="txtin" value="sushi" spellcheck="false" aria-label="Key">
+      <button class="btn primary" type="button" id="hm-put">put</button>
+      <button class="btn" type="button" id="hm-many">put 6 key ngẫu nhiên</button>
+      <label class="chk"><input type="checkbox" id="hm-bad"> hashCode tệ (luôn trả 42)</label>
+      <button class="btn" type="button" id="hm-reset">Đặt lại</button>
+    </div>
+    <div class="hm-info" id="hm-info"></div>
+    <div class="hm-table" id="hm-table"></div>
+    <div class="simlog" id="hm-log" aria-live="polite" style="height:90px"></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><div class="chart-title" style="margin-top:6px">20 000 lần get() trên HashMap 20 000 key</div><p class="cap">mili giây, thang log</p><div class="chart" id="ch-hm"></div>
+      <p class="cap" style="margin-top:6px">hashCode tốt: 0,52 ms. hashCode luôn 42 nhưng key <code>Comparable</code>: cây đỏ-đen sắp theo compareTo, O(log n): 4,8 ms. hashCode luôn 42 và key không Comparable: cây không biết đi nhánh nào, phải tìm cả hai phía: <b>3,2 giây</b>, chậm hơn 6 000 lần.</p></div>
+    <div class="card prose"><h4>Các con số cần nhớ</h4>
+      <ul><li>Dung lượng mặc định <b>16</b>, luôn là luỹ thừa của 2 (để <code>(n−1) &amp; hash</code> thay cho phép chia lấy dư).</li><li><b>Load factor 0,75</b>: số phần tử vượt 75% dung lượng thì gấp đôi bảng và chia lại các phần tử (resize). Biết trước số lượng thì khởi tạo sẵn: <code>HashMap.newHashMap(n)</code> (Java 19+).</li><li>Hash được trộn: <code>h ^ (h &gt;&gt;&gt; 16)</code> để bit cao cũng ảnh hưởng vị trí.</li><li>Một bucket dài <b>quá 8</b> phần tử: nếu bảng còn nhỏ hơn <b>64</b> thì resize; nếu đã ≥ 64 thì chuyển bucket đó thành cây đỏ-đen (Java 8+). Còn ≤ 6 phần tử thì về lại danh sách.</li><li>Cho phép <b>một key null</b> (bucket 0) và nhiều value null. <code>ConcurrentHashMap</code> và <code>Hashtable</code> không cho null.</li><li><b>Không thread-safe</b>: ghi đồng thời có thể mất dữ liệu (Java 7 còn có thể tạo vòng lặp vô hạn khi resize). Dùng <code>ConcurrentHashMap</code>.</li></ul></div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section class="ch" id="coll">
+  <div class="ch-head"><div class="eyebrow">Chương 05</div><h2>Collections: chọn đúng cấu trúc</h2>
+    <p>ArrayList là mảng liền kề tự giãn; LinkedList là chuỗi node nằm rải rác trên heap. Lý thuyết O(1)/O(n) trên giấy và số đo thật khác nhau khá nhiều.</p></div>
+  <div class="card sim" id="al">
+    <div class="sim-ctrl"><button class="btn primary" type="button" id="al-add">add() 1 phần tử</button><button class="btn" type="button" id="al-add5">add() 5 phần tử</button><button class="btn" type="button" id="al-mid">add() vào giữa</button><button class="btn" type="button" id="al-get">get(giữa)</button><button class="btn" type="button" id="al-reset">Đặt lại</button></div>
+    <div class="al-grid">
+      <div class="gen"><h4>ArrayList <small id="al-cap"></small></h4><div class="al-arr" id="al-arr"></div><div class="al-note" id="al-note1"></div></div>
+      <div class="gen"><h4>LinkedList <small id="ll-cap"></small></h4><div class="ll-list" id="ll-list"></div><div class="al-note" id="al-note2"></div></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><div class="chart-title" style="margin-top:6px">ArrayList và LinkedList, danh sách 100 000 phần tử</div><p class="cap">mili giây cho 2 000 thao tác (riêng duyệt: duyệt hết 1 lần); thang log</p><div class="chart-legend" id="lg-list"></div><div class="chart" id="ch-list"></div></div>
+    <div class="card prose"><h4>Đọc số liệu</h4>
+      <ul><li><b>get(i) ngẫu nhiên</b>: ArrayList 0,11 ms, LinkedList 133 ms (phải đi từ đầu hoặc cuối tới vị trí i): chậm hơn 1 000 lần.</li><li><b>Chèn vào giữa</b>: lý thuyết nói LinkedList O(1), nhưng nó phải <b>đi tới</b> giữa trước: 169 ms. ArrayList dịch mảng bằng <code>System.arraycopy</code> rất nhanh: 11 ms.</li><li><b>Chèn vào đầu</b>: chỗ duy nhất LinkedList thắng (2 ms so với 18 ms). Cần hàng đợi hai đầu thì dùng <code>ArrayDeque</code>, còn nhanh hơn nữa.</li><li><b>Kết luận khi phỏng vấn</b>: mặc định ArrayList; hầu như không có lý do dùng LinkedList trong code thật.</li></ul></div>
+  </div>
+  <div class="tblwrap"><table><thead><tr><th>Cần</th><th>Dùng</th><th>Ghi chú</th></tr></thead><tbody>
+    <tr><td>Danh sách thường</td><td><code>ArrayList</code></td><td>Giãn 1,5 lần khi đầy (10 → 15 → 22 → 33…)</td></tr>
+    <tr><td>Hàng đợi / ngăn xếp</td><td><code>ArrayDeque</code></td><td>Thay cho <code>Stack</code> (cũ, đồng bộ hoá) và LinkedList</td></tr>
+    <tr><td>Tra cứu theo key</td><td><code>HashMap</code></td><td>Không giữ thứ tự</td></tr>
+    <tr><td>Giữ thứ tự chèn / LRU</td><td><code>LinkedHashMap</code></td><td><code>new LinkedHashMap(16, 0.75f, true)</code> + override <code>removeEldestEntry</code> = LRU cache</td></tr>
+    <tr><td>Sắp theo key, tìm khoảng</td><td><code>TreeMap</code></td><td>Cây đỏ-đen, O(log n); <code>floorKey</code>, <code>subMap</code></td></tr>
+    <tr><td>Ưu tiên</td><td><code>PriorityQueue</code></td><td>Heap; top-K</td></tr>
+    <tr><td>Nhiều luồng</td><td><code>ConcurrentHashMap</code>, <code>CopyOnWriteArrayList</code></td><td>Sổ tay Concurrency</td></tr>
+    <tr><td>Key là enum</td><td><code>EnumMap</code>, <code>EnumSet</code></td><td>Mảng/bit bên trong, rất nhanh</td></tr>
+  </tbody></table></div>
+  <div class="card sim" id="cme">
+    <h3 style="margin:0">Hình động: vì sao xoá trong for-each lại ném ConcurrentModificationException</h3>
+    <div class="sim-ctrl">
+      <select id="cme-t" class="sel" aria-label="Phần tử cần xoá"><option value="b">Xoá "b" (giữa danh sách)</option><option value="c">Xoá "c" (áp chót)</option></select>
+      <button class="btn" type="button" id="cme-prev">Bước trước</button><button class="btn primary" type="button" id="cme-next">Bước tiếp</button>
+    </div>
+    <div class="cme-grid"><div class="cme-list" id="cme-list"></div><div class="cme-state" id="cme-state"></div></div>
+    <div class="lc-detail" id="cme-note"></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Output chạy thật</h4>
+<pre class="code">for (s : [a,b,c,d]) if (s == "b") list.remove(s);
+  → <span class="w">ConcurrentModificationException</span>
+for (s : [a,b,c,d]) if (s == "c") list.remove(s);
+  → <span class="w">không lỗi!</span> list = [a, b, d]   <span class="c">// d bị bỏ qua, không được duyệt</span>
+list.removeIf(s -&gt; s.equals("b"))   → [a, c, d]
+
+Arrays.asList("a","b").add("c")    → <span class="w">UnsupportedOperationException</span>
+Arrays.asList("a","b").set(0,"z")  → [z, b]      <span class="c">// sửa được, không thêm được</span>
+List.of("a").set(0,"z")            → <span class="w">UnsupportedOperationException</span>
+List.of("a", null)                 → <span class="w">NullPointerException</span>
+Collections.unmodifiableList(src); src.add("b") → view = [a, b]  <span class="c">// chỉ là "khung nhìn"</span></pre></div>
+    <div class="card prose"><h4>Xoá an toàn khi đang duyệt</h4>
+      <ul><li><code>list.removeIf(predicate)</code> (gọn nhất).</li><li><code>Iterator it = list.iterator(); … it.remove();</code>.</li><li>Duyệt ngược theo chỉ số.</li><li>Tạo danh sách mới bằng stream <code>filter</code>.</li></ul>
+      <p>"Fail-fast" chỉ là cố gắng phát hiện, không phải đảm bảo: như trường hợp xoá phần tử áp chót, vòng lặp kết thúc sớm mà không có lỗi nào, và bạn mất một phần tử chưa duyệt.</p></div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section class="ch" id="oop">
+  <div class="ch-head"><div class="eyebrow">Chương 06</div><h2>OOP, overload, override và thứ tự khởi tạo</h2>
+    <p>Bốn tính chất (đóng gói, kế thừa, đa hình, trừu tượng) ai cũng thuộc. Điểm phân biệt người hiểu sâu là: <b>Java chọn method nào, lúc nào</b>.</p></div>
+  <div class="card sim" id="dp">
+    <div class="sim-ctrl">
+      <label for="dp-st">Kiểu khai báo <select id="dp-st" class="sel"><option>Animal</option><option>Dog</option></select></label>
+      <label for="dp-rt">Object thật <select id="dp-rt" class="sel"><option>Dog</option><option>Animal</option></select></label>
+      <label for="dp-call">Lời gọi <select id="dp-call" class="sel"><option value="who">x.who()  (override)</option><option value="greet">greet(x)  (overload)</option><option value="static">x.kind()  (static)</option><option value="field">x.name  (field)</option></select></label>
+      <button class="btn primary" type="button" id="dp-go">Chạy</button>
+    </div>
+    <div class="dp-grid"><pre class="code" id="dp-code"></pre><div class="dp-res" id="dp-res"></div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Output chạy thật</h4>
+<pre class="code">Animal x = new Dog();
+x.who()            → <span class="h">Dog</span>            <span class="c">// override: chọn lúc chạy theo object thật</span>
+greet(x)           → <span class="w">greet(Animal)</span>  <span class="c">// overload: chọn lúc biên dịch theo kiểu khai báo</span>
+greet((Dog) x)     → greet(Dog)</pre>
+      <p class="cap" style="margin-top:8px">Overload (cùng tên, khác tham số) được quyết định khi biên dịch (static dispatch). Override (lớp con định nghĩa lại) được quyết định khi chạy (dynamic dispatch, qua bảng vtable). Static method, field, private method không bị override; chúng bị "che" (hiding).</p></div>
+    <div class="card prose"><h4>Abstract class hay interface</h4>
+      <div class="tblwrap"><table><thead><tr><th></th><th>Abstract class</th><th>Interface</th></tr></thead><tbody>
+        <tr><td>Kế thừa</td><td>Một lớp cha</td><td>Nhiều interface</td></tr>
+        <tr><td>Trạng thái</td><td>Có field, constructor</td><td>Chỉ hằng số</td></tr>
+        <tr><td>Method có thân</td><td>Có</td><td><code>default</code>, <code>static</code>, <code>private</code> (Java 8/9+)</td></tr>
+        <tr><td>Dùng khi</td><td>Các lớp chung code và trạng thái ("là một")</td><td>Năng lực, hợp đồng ("làm được"): <code>Comparable</code>, <code>PaymentGateway</code></td></tr>
+      </tbody></table></div>
+      <p>Ưu tiên <b>composition hơn inheritance</b>: kế thừa ràng buộc chặt, đổi lớp cha dễ làm vỡ lớp con. Spring khuyến khích interface + inject implementation.</p></div>
+  </div>
+  <div class="card sim" id="io">
+    <h3 style="margin:0">Hình động: thứ tự khởi tạo khi <code>new Child()</code></h3>
+    <div class="io-grid"><pre class="code" id="io-code"></pre><div class="io-out"><h4>Console</h4><div class="simlog" id="io-log" style="height:230px"></div></div></div>
+    <div class="sim-ctrl"><button class="btn" type="button" id="io-prev">Bước trước</button><button class="btn primary" type="button" id="io-next">Bước tiếp</button><button class="btn" type="button" id="io-auto">Tự chạy</button><span class="cap" id="io-cnt"></span></div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section class="ch" id="pass">
+  <div class="ch-head"><div class="eyebrow">Chương 07</div><h2>Java luôn truyền tham trị. Immutability và final</h2>
+    <p>Java <b>luôn</b> truyền tham trị (pass-by-value). Với object, giá trị được sao chép là <b>tham chiếu</b>: method nhận một bản sao của "địa chỉ", nên sửa được nội dung object nhưng không đổi được biến bên ngoài trỏ đi đâu.</p></div>
+  <div class="card sim" id="pv">
+    <div class="sim-ctrl"><span class="seg-ctl" role="radiogroup" aria-label="Ví dụ" id="pv-mode"><button type="button" data-m="swap" aria-pressed="true">swap(a, b)</button><button type="button" data-m="change" aria-pressed="false">change(a)</button></span><button class="btn" type="button" id="pv-prev">Bước trước</button><button class="btn primary" type="button" id="pv-next">Bước tiếp</button></div>
+    <div class="pv-grid"><pre class="code" id="pv-code"></pre><div class="anim"><svg id="pv-svg" viewBox="0 0 520 260" role="img" aria-label="Stack và heap"></svg></div></div>
+    <div class="lc-detail" id="pv-note"></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Output chạy thật</h4>
+<pre class="code">swap(b1, b2);   → b1 = Box(1), b2 = Box(2)   <span class="c">// không đổi gì</span>
+change(b3);     → b3 = <span class="h">Box(42)</span>
+  <span class="c">// a.v = 42 sửa object chung; a = new Box(7) chỉ đổi bản sao</span></pre></div>
+    <div class="card prose"><h4>final và immutability</h4>
+      <ul><li><code>final</code> biến: không gán lại được; object nó trỏ tới <b>vẫn sửa được</b> (<code>final List</code> vẫn <code>add</code> được).</li><li><code>final</code> method: không override được. <code>final</code> class: không kế thừa được (String).</li><li>Class bất biến: mọi field <code>private final</code>, không setter, sao chép phòng thủ khi nhận/trả collection hoặc object có thể sửa, class <code>final</code>. Java 16+: <code>record</code> làm phần lớn việc này (nhưng List bên trong record vẫn sửa được nếu không bọc).</li><li>Lợi ích: an toàn với luồng, làm key HashMap an toàn, dễ suy luận.</li></ul></div>
+  </div>
+</section>
+
+<!-- 08 -->
+<section class="ch" id="exc">
+  <div class="ch-head"><div class="eyebrow">Chương 08</div><h2>Exception</h2>
+    <p><code>Throwable</code> chia hai nhánh: <code>Error</code> (lỗi hệ thống, không nên bắt: <code>OutOfMemoryError</code>, <code>StackOverflowError</code>) và <code>Exception</code>. Trong <code>Exception</code>, nhánh <code>RuntimeException</code> là <b>unchecked</b>, còn lại là <b>checked</b> (bắt buộc khai báo hoặc bắt).</p></div>
+  <div class="card sim" id="fy">
+    <div class="sim-ctrl"><select id="fy-case" class="sel" aria-label="Ví dụ"><option value="f1">try { return 1 } finally { return 2 }</option><option value="f2">try { return x } finally { x = 99 }</option><option value="f3">try { return sb } finally { sb.append("b") }</option><option value="twr">try-with-resources, 2 tài nguyên, lỗi khi đóng</option></select><button class="btn" type="button" id="fy-prev">Bước trước</button><button class="btn primary" type="button" id="fy-next">Bước tiếp</button></div>
+    <div class="fy-grid"><pre class="code" id="fy-code"></pre><div class="fy-side"><div class="fy-box" id="fy-ret"></div><div class="simlog" id="fy-log" style="height:150px"></div></div></div>
+    <div class="lc-detail" id="fy-note"></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><div class="chart-title" style="margin-top:6px">200 000 lần báo lỗi từ độ sâu 10 tầng gọi hàm</div><p class="cap">mili giây</p><div class="chart" id="ch-exc"></div>
+      <p class="cap" style="margin-top:6px">Phần đắt của exception là <b>chụp stack trace</b> (<code>fillInStackTrace</code>): 1,7 µs mỗi lần. Tắt stack trace còn 0,58 µs; trả mã lỗi bình thường 0,015 µs. Đừng dùng exception cho luồng nghiệp vụ chạy rất thường xuyên (kiểm tra tồn tại bằng exception trong vòng lặp lớn); còn lỗi thật thì cứ ném, stack trace đáng giá hơn vài micro giây.</p></div>
+    <div class="card prose"><h4>Thực hành tốt</h4>
+      <ul><li>Bắt cụ thể, không <code>catch (Exception e) {}</code> nuốt lỗi.</li><li>Ném lại thì bọc kèm nguyên nhân: <code>throw new OrderException("…", e)</code>, đừng làm mất stack trace gốc.</li><li>Log <b>hoặc</b> ném, không làm cả hai ở mọi tầng (log trùng).</li><li>Exception nghiệp vụ trong Spring thường là unchecked (để <code>@Transactional</code> rollback mặc định và không làm rối chữ ký method), xử lý tập trung ở <code>@RestControllerAdvice</code>.</li><li>Đóng tài nguyên bằng try-with-resources; lỗi khi đóng không làm mất lỗi chính mà nằm trong <code>getSuppressed()</code>.</li><li>Không <code>return</code> trong <code>finally</code>: nó nuốt mất exception đang bay.</li></ul></div>
+  </div>
+</section>
+
+<!-- 09 -->
+<section class="ch" id="generics">
+  <div class="ch-head"><div class="eyebrow">Chương 09</div><h2>Generics: type erasure và PECS</h2>
+    <p>Generics chỉ tồn tại lúc biên dịch. Sau khi biên dịch, <code>List&lt;String&gt;</code> và <code>List&lt;Integer&gt;</code> đều là <code>List</code> (type erasure).</p></div>
+  <div class="card sim" id="pecs">
+    <h3 style="margin:0">Thử với javac: thao tác nào biên dịch được?</h3>
+    <p class="cap">Mọi ô dưới đây là kết quả biên dịch thật bằng javac 21, kèm thông báo lỗi nguyên văn.</p>
+    <div class="sim-ctrl">
+      <label for="pe-d">Khai báo <select id="pe-d" class="sel"><option value="ext">List&lt;? extends Number&gt; l = new ArrayList&lt;Integer&gt;()</option><option value="sup">List&lt;? super Integer&gt; l = new ArrayList&lt;Number&gt;()</option><option value="num">List&lt;Number&gt; l = new ArrayList&lt;Number&gt;()</option><option value="unb">List&lt;?&gt; l = new ArrayList&lt;Integer&gt;()</option></select></label>
+    </div>
+    <div class="pe-grid" id="pe-grid"></div>
+    <div class="verdict" id="pe-v" style="display:none"></div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>PECS: Producer Extends, Consumer Super</h4>
+      <ul><li><code>&lt;? extends T&gt;</code>: danh sách <b>cho ra</b> T (đọc được T), không nhét gì vào được (trừ null), vì không biết chính xác là List của kiểu con nào.</li><li><code>&lt;? super T&gt;</code>: danh sách <b>nhận vào</b> T (add T được), đọc ra chỉ biết là Object.</li><li>Ví dụ chuẩn: <code>Collections.copy(List&lt;? super T&gt; dest, List&lt;? extends T&gt; src)</code>.</li><li><code>List&lt;Integer&gt;</code> <b>không phải</b> <code>List&lt;Number&gt;</code> (generics bất biến), dù Integer là Number. <span class="real">ĐO THẬT</span> javac: <code>ArrayList&lt;Integer&gt; cannot be converted to List&lt;Number&gt;</code>.</li></ul></div>
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Type erasure và heap pollution</h4>
+<pre class="code">new ArrayList&lt;String&gt;().getClass() == new ArrayList&lt;Integer&gt;().getClass()
+  → <span class="h">true</span>
+
+List raw = new ArrayList&lt;String&gt;();  raw.add(42);   <span class="c">// chỉ cảnh báo</span>
+List&lt;String&gt; strs = raw;  String z = strs.get(0);
+  → <span class="w">ClassCastException</span>   <span class="c">// lỗi nổ ở chỗ đọc, xa chỗ gây ra</span></pre>
+      <p class="cap" style="margin-top:8px">Hệ quả của erasure: không <code>new T()</code>, không <code>instanceof List&lt;String&gt;</code>, không tạo mảng <code>T[]</code>, không overload hai method chỉ khác tham số generic. Muốn giữ kiểu lúc chạy thì truyền <code>Class&lt;T&gt;</code> (Jackson dùng <code>TypeReference</code>).</p></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="ch" id="stream">
+  <div class="ch-head"><div class="eyebrow">Chương 10</div><h2>Lambda và Stream</h2>
+    <p>Stream là một <b>đường ống lười</b>: các thao tác trung gian (<code>filter</code>, <code>map</code>) không chạy cho tới khi có thao tác kết thúc (<code>toList</code>, <code>sum</code>), và từng phần tử đi hết đường ống rồi mới tới phần tử sau.</p></div>
+  <div class="card sim" id="sl">
+    <div class="sim-ctrl"><button class="btn primary" type="button" id="sl-run">Chạy pipeline</button><span class="cap">names.stream().filter(n → n.length() &gt; 2).map(toUpperCase).limit(2).toList()</span></div>
+    <div class="anim"><svg id="sl-svg" viewBox="0 0 760 230" role="img" aria-label="Phần tử đi qua filter, map, limit"></svg></div>
+    <div class="simlog" id="sl-log" aria-live="polite" style="height:150px"></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><div class="chart-title" style="margin-top:6px">Tổng bình phương số chẵn, 10 triệu phần tử</div><p class="cap">mili giây; mỗi cách chạy trong một JVM riêng, lấy trung vị 3 lần</p><div class="chart" id="ch-stream"></div>
+      <p class="cap" style="margin-top:6px">Stream trên <code>int[]</code> không chậm hơn vòng for (lần này còn nhanh hơn). Thứ tốn thật là <b>boxing</b>: <code>Stream&lt;Integer&gt;</code> chậm gần gấp 3. <code>parallel()</code> trên máy 2 nhân chỉ nhanh hơn chút; nó dùng chung <code>ForkJoinPool.commonPool</code>, đừng dùng cho việc chờ I/O trong ứng dụng web.</p></div>
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Output của pipeline trên</h4>
+<pre class="code">   filter an
+   filter binh
+   map binh
+   filter chi
+   map chi
+   kết quả [BINH, CHI]        <span class="c">// "dung", "em" không bao giờ được xét</span>
+
+stream.count(); stream.count();
+  → <span class="w">IllegalStateException: stream has already been operated upon or closed</span></pre></div>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Functional interface hay gặp</h4>
+      <div class="tblwrap"><table><tbody>
+        <tr><td><code>Supplier&lt;T&gt;</code></td><td><code>() → T</code></td></tr>
+        <tr><td><code>Consumer&lt;T&gt;</code></td><td><code>T → void</code></td></tr>
+        <tr><td><code>Function&lt;T,R&gt;</code></td><td><code>T → R</code></td></tr>
+        <tr><td><code>Predicate&lt;T&gt;</code></td><td><code>T → boolean</code></td></tr>
+        <tr><td><code>UnaryOperator</code>, <code>BiFunction</code>, <code>Runnable</code>, <code>Callable</code></td><td></td></tr>
+      </tbody></table></div>
+      <p>Lambda chỉ dùng được biến cục bộ <b>effectively final</b> (không gán lại sau khi khai báo).</p></div>
+    <div class="card prose"><h4>Collectors và Optional</h4>
+<pre class="code">Map&lt;String, Long&gt; byStatus = orders.stream()
+  .collect(groupingBy(Order::status, counting()));
+Map&lt;Long, Order&gt; byId = orders.stream()
+  .collect(toMap(Order::id, o -&gt; o));   <span class="c">// trùng key → IllegalStateException</span>
+String names = list.stream().map(User::name).collect(joining(", "));</pre>
+      <ul><li><code>Optional</code> dùng làm <b>kiểu trả về</b> cho "có thể không có". Không dùng làm field, tham số, hay bọc collection (trả list rỗng thay vì Optional&lt;List&gt;).</li><li><code>orElse(x)</code> luôn tính x; <code>orElseGet(() → x)</code> chỉ tính khi rỗng. <code>get()</code> không kiểm tra thì chẳng hơn null.</li></ul></div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="ch" id="modern">
+  <div class="ch-head"><div class="eyebrow">Chương 11</div><h2>Java 8 → 21: những gì nên biết</h2>
+    <p>Spring Boot 3 yêu cầu Java 17 trở lên; các dự án mới thường chạy Java 21 (LTS). Interviewer hay hỏi "bạn dùng tính năng nào của Java mới".</p></div>
+  <div class="tblwrap"><table><thead><tr><th>Phiên bản</th><th>Tính năng đáng nói</th></tr></thead><tbody>
+    <tr><td><b>8</b> (LTS)</td><td>Lambda, Stream, <code>Optional</code>, <code>java.time</code>, default method, <code>CompletableFuture</code></td></tr>
+    <tr><td><b>9 – 11</b> (11 LTS)</td><td><code>List.of</code>/<code>Map.of</code>, <code>var</code> (10), <code>HttpClient</code>, <code>String.isBlank</code>/<code>strip</code>/<code>lines</code>, compact strings, module system</td></tr>
+    <tr><td><b>14 – 17</b> (17 LTS)</td><td>Switch expression, <b>text block</b> <code>"""</code>, <b>record</b>, <code>instanceof</code> pattern, <b>sealed class</b>, NullPointerException có thông báo rõ biến nào null</td></tr>
+    <tr><td><b>21</b> (LTS)</td><td><b>Virtual thread</b>, pattern matching cho switch, record pattern, sequenced collections (<code>getFirst</code>, <code>getLast</code>, <code>reversed</code>), Generational ZGC</td></tr>
+  </tbody></table></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Record, sealed, pattern matching</h4>
+<pre class="code"><span class="h">sealed interface</span> Payment <span class="h">permits</span> Card, Point, Cash {}
+<span class="h">record</span> Card(String last4, BigDecimal amount) <span class="h">implements</span> Payment {}
+<span class="h">record</span> Point(<span class="h">long</span> points) <span class="h">implements</span> Payment {}
+<span class="h">record</span> Cash(BigDecimal amount) <span class="h">implements</span> Payment {}
+
+String describe(Payment p) {
+  <span class="h">return switch</span> (p) {            <span class="c">// thiếu nhánh → lỗi biên dịch</span>
+    <span class="h">case</span> Card c <span class="h">when</span> c.amount().signum() &lt;= 0 -&gt; <span class="s">"thẻ, số tiền lỗi"</span>;
+    <span class="h">case</span> Card c   -&gt; <span class="s">"thẻ "</span> + c.last4();
+    <span class="h">case</span> Point(<span class="h">long</span> pts) -&gt; pts + <span class="s">" điểm"</span>;
+    <span class="h">case</span> Cash c   -&gt; <span class="s">"tiền mặt"</span>;
+  };
+}</pre></div>
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Record và switch mới</h4>
+<pre class="code">record Point(int x, int y) {}
+p1.equals(p2)   → true      <span class="c">// equals, hashCode, toString tự sinh</span>
+p1.toString()   → Point[x=1, y=2]
+
+switch (o) { case Point(int px, int py) when px == py -&gt; …
+             case Point(int px, int py) -&gt; "điểm " + px + "," + py; }
+  → điểm 1,2
+
+switch (null) kiểu cũ  → <span class="w">NullPointerException</span>
+  <span class="c">// Java 21: viết được "case null -&gt;" trong pattern switch</span></pre>
+      <p class="cap" style="margin-top:8px">Record hợp làm DTO, key của Map, kết quả trả về nhiều giá trị. Không hợp làm JPA entity (entity cần constructor rỗng và field sửa được).</p></div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="ch" id="proxy">
+  <div class="ch-head"><div class="eyebrow">Chương 12</div><h2>Reflection, annotation và dynamic proxy</h2>
+    <p>Đây là ba viên gạch mà Spring, Hibernate, Jackson xây trên đó. Hiểu chúng là hiểu vì sao <code>@Transactional</code> có lúc không chạy.</p></div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Tự viết một "@Transactional" bằng JDK dynamic proxy</h4>
+<pre class="code">OrderService real = id -&gt; <span class="s">"placed "</span> + id;
+OrderService px = (OrderService) Proxy.newProxyInstance(loader,
+    <span class="h">new</span> Class[]{OrderService.<span class="h">class</span>},
+    (proxy, method, args) -&gt; {
+      log(<span class="s">"BEGIN"</span>); Object r = method.invoke(real, args); log(<span class="s">"COMMIT"</span>); <span class="h">return</span> r;
+    });
+px.place(<span class="s">"A1"</span>);
+
+<span class="c">// output thật:</span>
+   [proxy] BEGIN transaction trước place
+   [proxy] COMMIT
+   placed A1
+   class của proxy: <span class="h">$Proxy0</span></pre></div>
+    <div class="card prose"><h4>Liên hệ với Spring</h4>
+      <ul><li>Spring bọc bean bằng proxy (JDK proxy nếu theo interface, CGLIB tạo lớp con nếu không) và chèn logic transaction, cache, bảo mật quanh lời gọi.</li><li>Gọi <code>this.method()</code> từ bên trong bean là gọi thẳng object thật, <b>không đi qua proxy</b>: annotation bị bỏ qua (chi tiết trong sổ tay Spring Boot).</li><li>CGLIB không override được method <code>final</code>/<code>private</code>: annotation trên đó cũng vô tác dụng.</li><li><b>Annotation</b> chỉ là siêu dữ liệu; phải có code đọc nó qua reflection (<code>getAnnotation</code>) lúc chạy (cần <code>@Retention(RUNTIME)</code>) hoặc annotation processor lúc biên dịch (Lombok, MapStruct).</li><li><b>Reflection</b> chậm hơn gọi thẳng và phá đóng gói; framework cache <code>Method</code>, và Java 17+ chặn truy cập sâu vào nội bộ JDK nếu không mở module.</li></ul></div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="ch" id="money">
+  <div class="ch-head"><div class="eyebrow">Chương 13</div><h2>Tiền và điểm: BigDecimal</h2>
+    <p><code>double</code> lưu số theo hệ nhị phân, không biểu diễn chính xác được 0,1. Với tiền, sai một xu nhân lên hàng triệu giao dịch là sai thật.</p></div>
+  <div class="card sim" id="bd">
+    <div class="sim-ctrl">
+      <label for="bd-a">Giá <input id="bd-a" class="numin" value="100" inputmode="decimal"></label>
+      <select id="bd-op" class="sel" aria-label="Phép tính"><option value="mul">×</option><option value="add">+</option><option value="sub">−</option><option value="div">÷</option></select>
+      <label for="bd-b"><input id="bd-b" class="numin" value="1.1" inputmode="decimal"></label>
+      <button class="btn primary" type="button" id="bd-go">Tính</button>
+      <span class="cs-ex" id="bd-ex"></span>
+    </div>
+    <div class="bd-grid" id="bd-out"></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Output chạy thật</h4>
+<pre class="code">0.1 + 0.2                    = <span class="w">0.30000000000000004</span>
+cộng 0.1 mười lần             = <span class="w">0.9999999999999999</span>
+100 yên × 1.1 thuế (double)   = <span class="w">110.00000000000001</span>
+(int)(1.15 × 100)            = <span class="w">114</span>     <span class="c">// BigDecimal: 115</span>
+new BigDecimal(0.1)          = <span class="w">0.1000000000000000055511151231257827021181583404541015625</span>
+BigDecimal.valueOf(0.1)      = <span class="h">0.1</span>
+new BigDecimal("2.0").equals(new BigDecimal("2.00")) = <span class="w">false</span>
+compareTo                    = <span class="h">0</span>
+10 ÷ 3 không làm tròn         → <span class="w">ArithmeticException: Non-terminating decimal expansion</span>
+10 ÷ 3 (scale 2, HALF_UP)    = 3.33</pre></div>
+    <div class="card prose"><h4>Quy tắc dùng BigDecimal</h4>
+      <ul><li>Tạo từ <b>String</b> hoặc <code>BigDecimal.valueOf(double)</code>, không bao giờ <code>new BigDecimal(double)</code>.</li><li>So sánh bằng <code>compareTo</code>; <code>equals</code> so cả scale (2.0 ≠ 2.00). Hệ quả: BigDecimal làm key HashMap/HashSet dễ sai, chuẩn hoá bằng <code>stripTrailingZeros()</code>.</li><li>Phép chia luôn chỉ định <code>scale</code> và <code>RoundingMode</code>.</li><li>Quy tắc làm tròn là quy tắc nghiệp vụ (thuế tiêu dùng Nhật thường làm tròn xuống tới yên); viết ra rõ, không để mặc định.</li><li>Yên không có số lẻ: có thể lưu <code>long</code> đơn vị yên; điểm thưởng cũng là số nguyên. Database: <code>DECIMAL</code>/<code>NUMERIC</code>.</li><li>Bất biến: <code>a.add(b)</code> trả object mới, quên gán lại là mất kết quả (giống String).</li></ul></div>
+  </div>
+</section>
+
+<!-- 14 -->
+<section class="ch" id="time">
+  <div class="ch-head"><div class="eyebrow">Chương 14</div><h2>Thời gian: java.time và múi giờ</h2>
+    <p>Job gửi mail của bạn lấy dữ liệu "từ đầu tới cuối ngày hôm qua". Hôm qua theo giờ nào? Server ECS chạy UTC, người dùng ở Nhật (UTC+9), đội dev ở Việt Nam (UTC+7).</p></div>
+  <div class="card sim" id="tz">
+    <div class="sim-ctrl"><label for="tz-h">Job chạy lúc (giờ UTC) <input type="range" id="tz-h" min="0" max="23" value="16"><output id="tz-h-v" class="mono">16:30</output></label></div>
+    <div class="anim"><svg id="tz-svg" viewBox="0 0 760 250" role="img" aria-label="Ba trục thời gian UTC, Tokyo, Việt Nam"></svg></div>
+    <div class="verdict" id="tz-v" style="display:none"></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Cùng một thời điểm, ba ngày khác nhau</h4>
+<pre class="code">Instant now = 2026-10-13T16:30:00Z
+Asia/Tokyo        = 2026-10-14T01:30+09:00
+Asia/Ho_Chi_Minh  = 2026-10-13T23:30+07:00
+LocalDate theo UTC = <span class="w">2026-10-13</span>, theo Tokyo = <span class="h">2026-10-14</span>
+
+"Hôm qua" theo Tokyo = 2026-10-13
+  → từ 2026-10-12T15:00:00Z tới 2026-10-13T15:00:00Z</pre></div>
+    <div class="card prose"><h4>Chọn kiểu nào</h4>
+      <div class="tblwrap"><table><tbody>
+        <tr><td><code>Instant</code></td><td>Một thời điểm tuyệt đối (UTC). Lưu DB, log, so sánh.</td></tr>
+        <tr><td><code>ZonedDateTime</code></td><td>Thời điểm + múi giờ khu vực. Hiển thị, tính "đầu ngày theo Tokyo".</td></tr>
+        <tr><td><code>LocalDate</code> / <code>LocalDateTime</code></td><td>Không có múi giờ: ngày sinh, giờ mở cửa nhà hàng "11:00". <b>Không</b> dùng cho thời điểm sự kiện.</td></tr>
+        <tr><td><code>Duration</code> / <code>Period</code></td><td>Khoảng thời gian theo giây / theo ngày tháng.</td></tr>
+      </tbody></table></div>
+      <ul><li>Luôn truyền <code>ZoneId</code> rõ ràng; đừng dựa vào múi giờ mặc định của JVM (khác nhau giữa máy dev và container).</li><li>Tiêm <code>Clock</code> vào service để test được logic "hôm qua".</li><li><code>Date</code>, <code>Calendar</code>, <code>SimpleDateFormat</code> là API cũ; <code>SimpleDateFormat</code> không thread-safe.</li></ul></div>
+  </div>
+</section>
+
+<!-- 15 -->
+<section class="ch" id="puzzle">
+  <div class="ch-head"><div class="eyebrow">Chương 15</div><h2>Đoán output</h2>
+    <p>Mỗi câu là một đoạn code đã chạy thật. Đoán trước rồi mới bấm xem.</p></div>
+  <div class="card sim" id="pz">
+    <div class="pz-top"><span class="cap" id="pz-cnt"></span><span class="pz-score" id="pz-score"></span></div>
+    <pre class="code" id="pz-code"></pre>
+    <div class="pz-opts" id="pz-opts"></div>
+    <div class="verdict" id="pz-v" style="display:none"></div>
+    <div class="sim-ctrl"><button class="btn" type="button" id="pz-prev">Câu trước</button><button class="btn primary" type="button" id="pz-next">Câu tiếp</button></div>
+  </div>
+</section>
+
+<!-- 16 -->
+<section class="ch" id="interview">
+  <div class="ch-head"><div class="eyebrow">Chương 16</div><h2>40 câu hỏi phỏng vấn và cách trả lời</h2>
+    <p>Tự trả lời thành tiếng trước, rồi mới mở đáp án. Nhãn "bẫy" là câu hay bị trả lời sai.</p></div>
+  <div class="qa" id="qa"></div>
+</section>
+
+<!-- 17 -->
+<section class="ch" id="lab">
+  <div class="ch-head"><div class="eyebrow">Chương 17</div><h2>Lab tự làm</h2></div>
+  <div class="grid3">
+    <div class="card pb"><h4>Lab 1: Chạy lại các bẫy</h4><ol class="steps"><li><div>Dùng <code>jshell</code> (có sẵn trong JDK) gõ lại từng đoạn ở chương 15.</div></li><li><div>Thử <code>-XX:AutoBoxCacheMax=1000</code> rồi so <code>Integer 500 == 500</code>.</div></li><li><div>Viết class Key thiếu hashCode, cho vào HashMap, quan sát.</div></li></ol></div>
+    <div class="card pb"><h4>Lab 2: Đo bằng JMH</h4><ol class="steps"><li><div>Tạo project JMH bằng Maven archetype <code>jmh-java-benchmark-archetype</code>.</div></li><li><div>Đo lại String concat, boxing, ArrayList/LinkedList, stream; so với số trong sổ tay này.</div></li><li><div>Học vì sao micro-benchmark tự viết dễ sai (dead code, JIT, warmup).</div></li></ol></div>
+    <div class="card pb"><h4>Lab 3: Trong dự án</h4><ol class="steps"><li><div>Tìm chỗ dùng <code>Long</code>/<code>Integer</code> so bằng <code>==</code> (SonarLint báo được).</div></li><li><div>Tìm <code>new BigDecimal(double)</code>, <code>double</code> cho tiền.</div></li><li><div>Tìm <code>LocalDateTime.now()</code> không có ZoneId trong job theo ngày.</div></li></ol></div>
+  </div>
+  <p class="foot">Nhãn ĐO THẬT: OpenJDK 21.0.12, máy ảo 2 vCPU. Output là kết quả chạy thật; lỗi biên dịch là thông báo nguyên văn của javac. Số đo hiệu năng là micro-benchmark tự viết (lấy lần tốt nhất hoặc trung vị sau khi làm nóng), chỉ dùng để so bậc độ lớn; dùng JMH cho số đo nghiêm túc.</p>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NS='http://www.w3.org/2000/svg';
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function S(tag,a,p){const e=document.createElementNS(NS,tag);for(const k in a)if(a[k]!==undefined&&a[k]!==null)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function T(txt,a,p){const e=S('text',a,p);e.textContent=txt;if(a&&a.fill)e.style.fill=a.fill;return e;}
+function logTo(id,msg,cls){const d=document.createElement('div');if(cls)d.className=cls;d.textContent=msg;const l=$(id);l.appendChild(d);while(l.children.length>80)l.firstChild.remove();l.scrollTop=l.scrollHeight;}
+const wait=ms=>new Promise(r=>setTimeout(r,RM?Math.min(ms,60):ms));
+function flip(container,render){const before={};if(!RM)container.querySelectorAll('[data-id]').forEach(e=>before[e.dataset.id]=e.getBoundingClientRect());render();
+  if(!RM)container.querySelectorAll('[data-id]').forEach(e=>{const b=before[e.dataset.id];if(!b){e.animate([{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'none'}],{duration:350});return;}const a=e.getBoundingClientRect();const dx=b.left-a.left,dy=b.top-a.top;if(Math.abs(dx)+Math.abs(dy)>2)e.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:500,easing:'cubic-bezier(.2,.8,.2,1)'});});}
+function seg(id,cb){const box=$(id);box.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;box.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));cb(b.dataset.m);});}
+function onVisible(el,cb){const o=new IntersectionObserver(es=>es.forEach(e=>cb(e.isIntersecting)),{threshold:0.05});o.observe(el);}
+
+/* ===== mục lục ===== */
+const links=$$('#toc a');const secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));const on=links.find(l=>l.classList.contains('on'));if(on&&innerWidth<980)on.scrollIntoView({block:'nearest',inline:'center'});}});},{rootMargin:'-30% 0px -60% 0px'});
+secs.forEach(s=>s&&io.observe(s));
+
+/* ===== biểu đồ ===== */
+function tipShow(box,html,x,y){let t=box.querySelector('.tip');if(!t){t=document.createElement('div');t.className='tip';box.appendChild(t);}t.innerHTML=html;t.style.display='block';const bw=box.clientWidth;const tw=t.offsetWidth;let left=x+14;if(left+tw>bw)left=x-tw-14;if(left<0)left=0;t.style.left=left+'px';t.style.top=Math.max(0,y-10)+'px';}
+function tipHide(box){const t=box.querySelector('.tip');if(t)t.style.display='none';}
+function fmtN(v){return v>=100?Math.round(v).toLocaleString('vi-VN'):(v>=1?(+v.toFixed(2)).toLocaleString('vi-VN'):(+v.toFixed(3)).toLocaleString('vi-VN'));}
+function hbar(id,rows,opt){
+  const box=$(id);box.innerHTML='';const W=480,rowH=34,padL=opt.padL||74,padR=64,top=6;const H=top+rows.length*rowH+24;
+  const svg=S('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':opt.aria},box);
+  const iw=W-padL-padR;let sx;
+  if(opt.log){const lo=Math.log10(opt.min),hi=Math.log10(opt.max);sx=v=>padL+(Math.log10(Math.max(v,opt.min))-lo)/(hi-lo)*iw;}
+  else sx=v=>padL+v/opt.max*iw;
+  const g=S('g',{class:'grid'},svg);const ax=S('g',{class:'ax'},svg);
+  for(const t of opt.ticks){const x=sx(t);S('line',{x1:x,x2:x,y1:top,y2:H-22},g);T(t.toLocaleString('vi-VN'),{x,y:H-6,'text-anchor':'middle'},ax);}
+  rows.forEach((r,i)=>{const y=top+i*rowH+8,h=rowH-16;
+    const lb=T(r.name,{x:padL-8,y:y+h/2+4,'text-anchor':'end',class:'lbl'},svg);lb.setAttribute('fill',css('--ink'));
+    const x0=opt.log?sx(opt.min):padL,x1=sx(r.v);const w=Math.max(2,x1-x0);
+    const rr=Math.min(4,w/2);S('path',{d:`M${x0},${y} H${x0+w-rr} Q${x0+w},${y} ${x0+w},${y+rr} V${y+h-rr} Q${x0+w},${y+h} ${x0+w-rr},${y+h} H${x0} Z`,fill:css(r.color||'--s1')},svg);
+    T(fmtN(r.v)+(opt.unit||''),{x:x0+w+6,y:y+h/2+4,class:'val'},svg);
+    const hit=S('rect',{x:0,y:top+i*rowH,width:W,height:rowH,class:'hit'},svg);
+    hit.addEventListener('mousemove',ev=>{const b=box.getBoundingClientRect();tipShow(box,`<div class="tt">${esc(r.name)}</div>${r.tip}`,ev.clientX-b.left,ev.clientY-b.top);});
+    hit.addEventListener('mouseleave',()=>tipHide(box));});
+}
+function lineChart(id,series,opt){
+  const box=$(id);box.innerHTML='';const W=720,H=opt.h||280,padL=50,padR=16,top=10,bot=30;
+  const svg=S('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':opt.aria},box);
+  const iw=W-padL-padR,ih=H-top-bot;
+  const sx=v=>padL+(v-opt.xmin)/(opt.xmax-opt.xmin)*iw;
+  let sy;if(opt.log){const lo=Math.log10(opt.ymin),hi=Math.log10(opt.ymax);sy=v=>top+ih-(Math.log10(Math.max(v,opt.ymin))-lo)/(hi-lo)*ih;}else sy=v=>top+ih-(v-opt.ymin)/(opt.ymax-opt.ymin)*ih;
+  const g=S('g',{class:'grid'},svg),ax=S('g',{class:'ax'},svg);
+  if(opt.band){const [b1,b2,bl]=opt.band;S('rect',{x:sx(b1),y:top,width:sx(b2)-sx(b1),height:ih,fill:css('--bad-soft')},svg);T(bl,{x:(sx(b1)+sx(b2))/2,y:top+14,'text-anchor':'middle','font-size':11,fill:css('--bad')},svg);}
+  for(const t of opt.yt){const y=sy(t);S('line',{x1:padL,x2:W-padR,y1:y,y2:y},g);T(t.toLocaleString('vi-VN'),{x:padL-6,y:y+4,'text-anchor':'end'},ax);}
+  for(const t of opt.xt){T(opt.xf?opt.xf(t):t,{x:sx(t),y:H-10,'text-anchor':'middle'},ax);}
+  for(const s of series){const d=s.pts.map((p,i)=>(i?'L':'M')+sx(p[0]).toFixed(1)+','+sy(p[1]).toFixed(1)).join(' ');
+    S('path',{d,fill:'none',stroke:css(s.color),'stroke-width':2.5,'stroke-linejoin':'round','stroke-linecap':'round'},svg);
+    for(const p of s.pts)S('circle',{cx:sx(p[0]),cy:sy(p[1]),r:3.5,fill:css(s.color),stroke:css('--surface'),'stroke-width':1.5},svg);}
+  const xh=S('line',{class:'xh',y1:top,y2:top+ih,x1:0,x2:0,visibility:'hidden'},svg);
+  const dots=series.map(s=>S('circle',{r:5,fill:css(s.color),stroke:css('--surface'),'stroke-width':2,cx:0,cy:0,visibility:'hidden'},svg));
+  const hit=S('rect',{x:padL,y:top,width:iw,height:ih,class:'hit'},svg);
+  hit.addEventListener('mousemove',ev=>{const b=svg.getBoundingClientRect();const px=(ev.clientX-b.left)/b.width*W;const xv=opt.xmin+(px-padL)/iw*(opt.xmax-opt.xmin);
+    let rows='',bx0=null;series.forEach((s,k)=>{let best=s.pts[0];for(const p of s.pts)if(Math.abs(p[0]-xv)<Math.abs(best[0]-xv))best=p;bx0=best[0];
+      dots[k].setAttribute('visibility','visible');dots[k].setAttribute('cx',sx(best[0]));dots[k].setAttribute('cy',sy(best[1]));rows+=`<div class="tr"><span><i class="sw" style="background:${css(s.color)}"></i>${esc(s.name)}</span><b>${fmtN(best[1])} ${opt.unit}</b></div>`;});
+    xh.setAttribute('x1',sx(bx0));xh.setAttribute('x2',sx(bx0));xh.setAttribute('visibility','visible');
+    const bx=box.getBoundingClientRect();tipShow(box,`<div class="tt">${opt.xf?opt.xf(bx0):bx0}</div>${rows}`,ev.clientX-bx.left,ev.clientY-bx.top);});
+  hit.addEventListener('mouseleave',()=>{tipHide(box);xh.setAttribute('visibility','hidden');dots.forEach(d=>d.setAttribute('visibility','hidden'));});
+}
+function legend(id,series){$(id).innerHTML=series.map(s=>`<span><i style="background:${css(s.color)}"></i>${esc(s.name)}</span>`).join('');}
+
+const JC={"concat": {"1000": [0.651857, 0.057691], "5000": [13.667223, 0.305588], "10000": [18.780087, 0.358967], "20000": [149.545249, 0.200908], "40000": [252.912216, 0.320502]}, "boxing": [19.152825, 217.34619], "lists": {"get": [0.114794, 133.02707], "mid": [11.319566, 169.490419], "front": [18.293977, 2.037807], "iter": [0.992898, 1.3011]}, "hashmap": {"put": [2.73005, 4.103426, 2859.789007], "get": [0.524628, 4.848189, 3164.67131]}, "exceptions": [343.940815, 115.482164, 2.973028], "stream": [18.73, 10.37, 29.7, 8.71], "compact": [67.49, 83.54]};
+const GEN={"ext:add_int": {"ok": false, "err": "incompatible types: Integer cannot be converted to CAP#1"}, "ext:add_dbl": {"ok": false, "err": "incompatible types: Double cannot be converted to CAP#1"}, "ext:add_null": {"ok": true, "err": null}, "ext:get_num": {"ok": true, "err": null}, "ext:get_int": {"ok": false, "err": "incompatible types: CAP#1 cannot be converted to Integer"}, "ext:get_obj": {"ok": true, "err": null}, "sup:add_int": {"ok": true, "err": null}, "sup:add_dbl": {"ok": false, "err": "incompatible types: Double cannot be converted to CAP#1"}, "sup:add_null": {"ok": true, "err": null}, "sup:get_num": {"ok": false, "err": "incompatible types: CAP#1 cannot be converted to Number"}, "sup:get_int": {"ok": false, "err": "incompatible types: CAP#1 cannot be converted to Integer"}, "sup:get_obj": {"ok": true, "err": null}, "num:add_int": {"ok": true, "err": null}, "num:add_dbl": {"ok": true, "err": null}, "num:add_null": {"ok": true, "err": null}, "num:get_num": {"ok": true, "err": null}, "num:get_int": {"ok": false, "err": "incompatible types: Number cannot be converted to Integer"}, "num:get_obj": {"ok": true, "err": null}, "unb:add_int": {"ok": false, "err": "incompatible types: Integer cannot be converted to CAP#1"}, "unb:add_dbl": {"ok": false, "err": "incompatible types: Double cannot be converted to CAP#1"}, "unb:add_null": {"ok": true, "err": null}, "unb:get_num": {"ok": false, "err": "incompatible types: CAP#1 cannot be converted to Number"}, "unb:get_int": {"ok": false, "err": "incompatible types: CAP#1 cannot be converted to Integer"}, "unb:get_obj": {"ok": true, "err": null}, "assign:List<Number> l = new ArrayList<Integer>();": {"ok": false, "err": "incompatible types: ArrayList<Integer> cannot be converted to List<Number>"}, "assign:List<? extends Number> l = new ArrayList<Integer>();": {"ok": true, "err": null}, "assign:List<? super Integer> l = new ArrayList<Number>();": {"ok": true, "err": null}, "assign:List<Object> l = new ArrayList<String>();": {"ok": false, "err": "incompatible types: ArrayList<String> cannot be converted to List<Object>"}};
+
+/* ===== 01. Integer cache ===== */
+(function(){
+  const svg=$('#ic-svg');
+  function go(){let a=Math.round(+$('#ic-a').value),b=Math.round(+$('#ic-b').value);if(isNaN(a))a=0;if(isNaN(b))b=0;
+    const ca=a>=-128&&a<=127,cb=b>=-128&&b<=127;svg.innerHTML='';
+    const defs=S('defs',{},svg);const m=S('marker',{id:'ica',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto'},defs);S('path',{d:'M0,0 L10,5 L0,10 z',fill:css('--accent')},m);
+    T('Stack',{x:30,y:24,class:'bt-cap'},svg);T('Heap',{x:260,y:24,class:'bt-cap'},svg);
+    S('rect',{x:250,y:30,width:490,height:84,rx:8,fill:'none',stroke:css('--s3'),'stroke-dasharray':'4 3'},svg);T('IntegerCache.cache[]: 256 object tạo sẵn cho −128 … 127',{x:262,y:48,'font-size':12,'font-weight':600},svg);
+    const vals=[-128,-127,'…',0,1,'…',126,127];vals.forEach((v,i)=>{const x=262+i*58;const hit=(ca&&v===a)||(cb&&v===b);S('rect',{x,y:60,width:52,height:40,rx:5,fill:hit?css('--accent-soft'):css('--surface'),stroke:hit?css('--accent'):css('--line'),'stroke-width':hit?2.5:1},svg);T(v,{x:x+26,y:85,'text-anchor':'middle',class:'bt-k'},svg);});
+    const pos=(v,c,i)=>{if(c){let k=vals.indexOf(v);if(k<0){k=v<0?1:v<64?4:6;}return [262+k*58+26,100];}return [330+i*200,190];};
+    [[a,ca,'a',0],[b,cb,'b',1]].forEach(([v,c,n,i])=>{const y=70+i*80;S('rect',{x:30,y,width:110,height:40,rx:6,class:'bx hot'},svg);T('Integer '+n,{x:85,y:y+25,'text-anchor':'middle','font-weight':700},svg);
+      if(!c){S('rect',{x:270+i*200,y:165,width:130,height:50,rx:8,fill:css('--warn-soft'),stroke:css('--warn'),'stroke-width':2},svg);T('new Integer('+v+')',{x:335+i*200,y:194,'text-anchor':'middle',class:'bt-k'},svg);T('@'+(0x1a2b+i*0x3f).toString(16),{x:335+i*200,y:210,'text-anchor':'middle',class:'bt-cap','font-size':10},svg);}
+      const [tx,ty]=c?pos(v,c,i):[335+i*200,165];S('path',{d:`M140,${y+20} C200,${y+20} ${tx-40},${ty+(c?30:-20)} ${tx},${ty}`,fill:'none',stroke:css('--accent'),'stroke-width':2,'marker-end':'url(#ica)'},svg);});
+    const eqRef=ca&&cb&&a===b;const v=$('#ic-v');v.style.display='flex';v.className='verdict '+(a===b?(eqRef?'ok':'warn'):'ok');
+    v.innerHTML=`<span><code>a == b</code> → <b>${eqRef}</b> · <code>a.equals(b)</code> → <b>${a===b}</b>. ${a!==b?'Hai giá trị khác nhau.':eqRef?'Cả hai lấy cùng một object có sẵn trong cache nên cùng địa chỉ.':'Giá trị nằm ngoài −128…127: mỗi lần autoboxing tạo object mới, hai địa chỉ khác nhau dù cùng giá trị.'}</span>`;}
+  $('#ic-go').addEventListener('click',go);$$('#ic [data-p]').forEach(b=>b.addEventListener('click',()=>{$('#ic-a').value=b.dataset.p;$('#ic-b').value=b.dataset.p;go();}));go();
+})();
+hbar('#ch-box',[['long s',JC.boxing[0]],['Long s',JC.boxing[1]]].map(([n,v],i)=>({name:n,v,color:i?'--s2':'--s1',tip:`<div class="tr"><span>50 triệu phép cộng</span><b>${fmtN(v)} ms</b></div>`})),{max:250,ticks:[0,50,100,150,200,250],padL:70,unit:' ms',aria:'Thời gian cộng 50 triệu số với long và Long'});
+
+/* ===== 02. String pool ===== */
+(function(){
+  const svg=$('#sp-svg');
+  const D=[['s1','String s1 = "hugeclub";','P'],['s2','String s2 = "hugeclub";','P'],['s3','String s3 = new String("hugeclub");','H1'],['s4','String s4 = part + "club";','H2'],['s5','String s5 = "huge" + "club";','P'],['s6','String s6 = s4.intern();','P']];
+  let n=0;
+  $('#sp-btns').innerHTML=D.map((d,i)=>`<button class="btn" type="button" data-i="${i}"><code>${esc(d[1])}</code></button>`).join('')+'<button class="btn" type="button" data-r="1">Đặt lại</button>';
+  function draw(){svg.innerHTML='';const defs=S('defs',{},svg);const m=S('marker',{id:'spa',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto'},defs);S('path',{d:'M0,0 L10,5 L0,10 z',fill:css('--accent')},m);
+    T('Stack',{x:20,y:20,class:'bt-cap'},svg);T('Heap',{x:280,y:20,class:'bt-cap'},svg);
+    S('rect',{x:270,y:30,width:350,height:100,rx:10,fill:css('--accent-soft'),stroke:css('--accent'),'stroke-dasharray':'5 3'},svg);T('String pool',{x:285,y:52,'font-weight':700,'font-size':12},svg);
+    const used=new Set(D.slice(0,n).map(d=>d[2]));
+    const OBJ={P:[445,80],H1:[350,215],H2:[530,215]};
+    if(used.has('P')||n===0){S('rect',{x:375,y:62,width:140,height:40,rx:6,class:'bx'},svg);T('"hugeclub" @a1',{x:445,y:87,'text-anchor':'middle',class:'bt-k'},svg);}
+    if(used.has('H1')){S('rect',{x:280,y:195,width:140,height:40,rx:6,class:'bx'},svg);T('"hugeclub" @b7',{x:350,y:220,'text-anchor':'middle',class:'bt-k'},svg);T('new String(...)',{x:350,y:250,'text-anchor':'middle',class:'bt-cap'},svg);}
+    if(used.has('H2')){S('rect',{x:460,y:195,width:140,height:40,rx:6,class:'bx'},svg);T('"hugeclub" @c3',{x:530,y:220,'text-anchor':'middle',class:'bt-k'},svg);T('nối lúc chạy',{x:530,y:250,'text-anchor':'middle',class:'bt-cap'},svg);}
+    D.slice(0,n).forEach((d,i)=>{const y=36+i*40;S('rect',{x:20,y,width:70,height:30,rx:5,class:'bx'+(i===n-1?' hot':'')},svg);T(d[0],{x:55,y:y+20,'text-anchor':'middle','font-weight':700,class:'bt-k'},svg);
+      const [tx,ty]=OBJ[d[2]];const ex=d[2]==='P'?tx-70:tx-70;const ey=d[2]==='P'?ty:ty;S('path',{d:`M90,${y+15} C180,${y+15} ${ex-60},${ey} ${ex},${ey}`,fill:'none',stroke:css('--accent'),'stroke-width':i===n-1?2.5:1.3,opacity:i===n-1?1:.6,'marker-end':'url(#spa)'},svg);});
+    const rows=D.slice(1,n).map(d=>{const same=d[2]===D[0][2];return `<div class="${same?'t':'f'}"><code>s1 == ${d[0]}</code><b>${same}</b></div>`;});
+    $('#sp-cmp').innerHTML=n<2?'<span class="cap">Tạo thêm biến để so với s1.</span>':rows.join('')+'<p class="cap">Mọi cặp <code>equals</code> đều true: nội dung giống nhau.</p>';}
+  $('#sp-btns').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.r){n=0;}else n=Math.max(n,+b.dataset.i+1);draw();});
+  n=1;draw();
+})();
+(function(){const N=[1000,5000,10000,20000,40000];const ser=[{name:'s += "x"',color:'--s2',pts:N.map(n=>[n,JC.concat[n][0]])},{name:'StringBuilder.append',color:'--s1',pts:N.map(n=>[n,JC.concat[n][1]])}];
+  legend('#lg-concat',ser);lineChart('#ch-concat',ser,{xmin:0,xmax:40000,ymin:0.01,ymax:1000,log:true,yt:[0.01,0.1,1,10,100,1000],xt:[1000,10000,20000,30000,40000],xf:v=>Math.round(v).toLocaleString('vi-VN')+' lần',unit:'ms',h:240,aria:'Thời gian nối chuỗi theo số lần'});})();
+
+/* ===== 04. HashMap ===== */
+(function(){
+  let cap,size,tab,bad,tree;const POOL=['sushi','ramen','udon','tempura','yakiniku','soba','gyoza','curry','tonkatsu','okonomi','takoyaki','sashimi','unagi','karaage','onigiri','miso','natto','mochi','dango','yakitori','shabu','sukiyaki','katsudon','oden','matcha','wagashi','taiyaki','gyudon','nabe','edamame'];
+  function jh(s){let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(31,h)+s.charCodeAt(i))|0;return h;}
+  const spread=h=>(h^(h>>>16))|0;
+  const H=k=>bad?42:spread(jh(k));
+  function reset(){cap=16;size=0;tab=Array.from({length:cap},()=>[]);tree=new Set();$('#hm-log').innerHTML='';render();}
+  function resize(){const old=tab;cap*=2;tab=Array.from({length:cap},()=>[]);tree=new Set();old.flat().forEach(k=>tab[H(k)&(cap-1)].push(k));logTo('#hm-log',`resize: ${cap/2} → ${cap} bucket, chia lại ${size} key theo (n − 1) & hash`,'w');}
+  function put(k){const h=H(k),i=h&(cap-1);const b=tab[i];if(b.includes(k)){logTo('#hm-log',`put("${k}"): key đã có ở bucket ${i}, chỉ thay value`,'d');render(i);return;}
+    b.push(k);size++;logTo('#hm-log',`put("${k}"): hash = ${bad?'42 (hashCode tệ)':h} → index = hash & ${cap-1} = ${i}${b.length>1?` · đụng độ, bucket có ${b.length} key`:''}`,b.length>1?'h':'');
+    if(b.length>8){if(cap<64){logTo('#hm-log',`bucket ${i} dài ${b.length} > 8 nhưng bảng < 64 → resize thay vì tạo cây`,'w');resize();}else if(!tree.has(i)){tree.add(i);logTo('#hm-log',`bucket ${i} dài ${b.length} > 8 và bảng ≥ 64 → treeify: danh sách thành cây đỏ-đen`,'w');}}
+    if(size>cap*0.75)resize();render(H(k)&(cap-1));}
+  function render(hot){$('#hm-info').innerHTML=`<span>capacity <b>${cap}</b></span><span>size <b>${size}</b></span><span>ngưỡng resize <b>${cap*0.75}</b> (×0,75)</span><span>bucket dài nhất <b>${Math.max(...tab.map(b=>b.length))}</b></span>`;
+    $('#hm-table').style.gridTemplateColumns=`repeat(${Math.min(cap,16)},minmax(0,1fr))`;
+    $('#hm-table').innerHTML=tab.map((b,i)=>`<div class="hb${i===hot?' hot':''}${tree.has(i)?' tree':''}${b.length?'':' empty'}"><small>${i}</small>${tree.has(i)?'<em>cây</em>':''}${b.slice(0,3).map(k=>`<span>${esc(k)}</span>`).join('')}${b.length>3?`<span class="more">+${b.length-3}</span>`:''}</div>`).join('');}
+  $('#hm-put').addEventListener('click',()=>{const k=$('#hm-key').value.trim();if(k)put(k);});
+  $('#hm-key').addEventListener('keydown',e=>{if(e.key==='Enter'){const k=e.target.value.trim();if(k)put(k);}});
+  $('#hm-many').addEventListener('click',()=>{let c=0;for(const k of POOL){if(c>=6)break;if(!tab.some(b=>b.includes(k))){put(k);c++;}}if(c<6)for(let i=0;c<6;i++){const k='mon'+(size+i);put(k);c++;}});
+  $('#hm-bad').addEventListener('change',e=>{bad=e.target.checked;reset();logTo('#hm-log',bad?'hashCode luôn trả 42: mọi key vào cùng một bucket':'hashCode của String: s[0]·31^(n−1) + … + s[n−1]','d');});
+  bad=false;reset();
+})();
+hbar('#ch-hm',[['hashCode tốt',JC.hashmap.get[0]],['luôn 42, key Comparable',JC.hashmap.get[1]],['luôn 42, không Comparable',JC.hashmap.get[2]]].map(([n,v],i)=>({name:n,v,color:i===2?'--s2':i?'--s3':'--s1',tip:`<div class="tr"><span>20 000 get()</span><b>${fmtN(v)} ms</b></div><div class="tr"><span>20 000 put()</span><b>${fmtN(JC.hashmap.put[i])} ms</b></div>`})),{log:true,min:0.1,max:10000,ticks:[0.1,1,10,100,1000,10000],padL:170,unit:' ms',aria:'Thời gian get theo chất lượng hashCode'});
+
+/* ===== 05. ArrayList vs LinkedList ===== */
+(function(){
+  let arr,cap,ll,seq;
+  function reset(){arr=[];cap=10;ll=[];seq=0;for(let i=0;i<8;i++){arr.push(seq);ll.push(seq);seq++;}render();note('ArrayList: mảng 10 ô, đã dùng 8.','LinkedList: mỗi phần tử là một node riêng với con trỏ prev/next.');}
+  function note(a,b){$('#al-note1').innerHTML=a;$('#al-note2').innerHTML=b;}
+  function render(hl){hl=hl||{};$('#al-cap').textContent=`size ${arr.length} / capacity ${cap}`;$('#ll-cap').textContent=`size ${ll.length}`;
+    $('#al-arr').innerHTML=Array.from({length:cap},(_,i)=>`<span class="${i<arr.length?'f':''}${hl.a&&hl.a.includes(i)?' hl':''}${hl.s&&hl.s.includes(i)?' sh':''}">${i<arr.length?arr[i]:''}</span>`).join('');
+    $('#ll-list').innerHTML=ll.map((v,i)=>`<span class="${hl.l&&hl.l.includes(i)?'hl':''}${hl.w&&hl.w.includes(i)?' walk':''}">${v}</span>`).join('<i>⇄</i>');}
+  function add(){const v=seq++;let grew='';if(arr.length===cap){const nc=cap+(cap>>1);grew=` Mảng đầy → tạo mảng mới ${cap} + ${cap>>1} = <b>${nc}</b> ô, chép ${arr.length} phần tử sang (Arrays.copyOf).`;cap=nc;}
+    arr.push(v);ll.push(v);render({a:[arr.length-1],l:[ll.length-1]});note(`add(${v}) vào cuối: O(1) trung bình.${grew}`,`add(${v}): tạo node mới, nối vào cuối. O(1), nhưng mỗi node tốn thêm ~24–40 byte và nằm rải rác trên heap.`);}
+  $('#al-add').addEventListener('click',add);$('#al-add5').addEventListener('click',async()=>{for(let i=0;i<5;i++){add();await wait(300);}});
+  $('#al-mid').addEventListener('click',async()=>{const m=arr.length>>1,v=seq++;const sh=Array.from({length:arr.length-m},(_,i)=>m+1+i);if(arr.length===cap)cap=cap+(cap>>1);arr.splice(m,0,v);
+    const walk=Array.from({length:m},(_,i)=>i);ll.splice(m,0,v);render({a:[m],s:sh,l:[m],w:walk});note(`add(${m}, ${v}): dịch ${sh.length} phần tử sang phải bằng System.arraycopy (một lệnh chép bộ nhớ liền khối, rất nhanh).`,`add(${m}, ${v}): phải đi qua ${m} node để tới vị trí (đuổi theo con trỏ, mỗi bước có thể là một cache miss), rồi mới nối node vào.`);});
+  $('#al-get').addEventListener('click',()=>{const m=arr.length>>1;const steps=Math.min(m,ll.length-1-m);render({a:[m],l:[m],w:Array.from({length:steps},(_,i)=>i)});note(`get(${m}): địa chỉ = đầu mảng + ${m} × kích thước ô. 1 bước.`,`get(${m}): đi từ đầu gần hơn qua ${steps} node. Đo thật trên 100 000 phần tử: chậm hơn ArrayList khoảng 1 000 lần.`);});
+  $('#al-reset').addEventListener('click',reset);reset();
+})();
+(function(){const L=JC.lists;const rows=[['get(i) ngẫu nhiên','get'],['add(giữa)','mid'],['add(0) / addFirst','front'],['duyệt hết','iter']];
+  const data=[];rows.forEach(([n,k])=>{data.push({name:n+' · AL',v:L[k][0],color:'--s1',tip:`<div class="tr"><span>ArrayList</span><b>${fmtN(L[k][0])} ms</b></div>`});data.push({name:n+' · LL',v:L[k][1],color:'--s2',tip:`<div class="tr"><span>LinkedList</span><b>${fmtN(L[k][1])} ms</b></div>`});});
+  legend('#lg-list',[{name:'ArrayList (AL)',color:'--s1'},{name:'LinkedList (LL)',color:'--s2'}]);
+  hbar('#ch-list',data,{log:true,min:0.1,max:1000,ticks:[0.1,1,10,100,1000],padL:170,unit:' ms',aria:'So sánh ArrayList và LinkedList'});})();
+
+/* ===== 05. CME ===== */
+(function(){
+  let i=0,steps=[];
+  function build(t){const L=['a','b','c','d'];const S=[];let list=[...L],cursor=0,mod=0,exp=0;
+    S.push({list:[...list],cursor,mod,exp,n:'<code>for (String s : list)</code> tạo Iterator: <code>cursor = 0</code>, ghi nhớ <code>expectedModCount = modCount = 0</code>.'});
+    while(true){if(cursor===list.length){S.push({list:[...list],cursor,mod,exp,n:`<code>hasNext()</code>: cursor (${cursor}) == size (${list.length}) → <b>false</b>. Vòng lặp kết thúc${t==='c'?'. Phần tử "d" chưa bao giờ được duyệt, và không có exception nào báo cho bạn biết.':''}`,end:t==='c'?'skip':'ok'});break;}
+      if(mod!==exp){S.push({list:[...list],cursor,mod,exp,n:`<code>hasNext()</code>: cursor (${cursor}) != size (${list.length}) → true. <code>next()</code> kiểm tra modCount (${mod}) != expectedModCount (${exp}) → <b>ConcurrentModificationException</b>.`,end:'cme'});break;}
+      const v=list[cursor];cursor++;S.push({list:[...list],cursor,mod,exp,cur:cursor-1,n:`<code>next()</code> trả "${v}", cursor = ${cursor}.`});
+      if(v===t){list.splice(list.indexOf(v),1);mod++;S.push({list:[...list],cursor,mod,exp,n:`<code>list.remove("${v}")</code> gọi thẳng vào list, không qua iterator: size = ${list.length}, <b>modCount = ${mod}</b>, các phần tử sau dịch lên. Iterator không biết.`});}}
+    return S;}
+  function render(){const s=steps[i];
+    $('#cme-list').innerHTML=s.list.map((v,k)=>`<span class="${k===s.cur?'cur':''}">${v}<small>${k}</small></span>`).join('')+`<div class="cme-ptr" style="--c:${s.cursor}">↑ cursor = ${s.cursor}</div>`;
+    $('#cme-state').innerHTML=`<div><span>size</span><b>${s.list.length}</b></div><div><span>modCount</span><b class="${s.mod!==s.exp?'bad':''}">${s.mod}</b></div><div><span>expectedModCount</span><b>${s.exp}</b></div>`;
+    $('#cme-note').innerHTML=`<h4>Bước ${i+1}/${steps.length}${s.end==='cme'?' · ném exception':s.end==='skip'?' · kết thúc sớm, sót phần tử':''}</h4><p>${s.n}</p>`;$('#cme-prev').disabled=i===0;$('#cme-next').disabled=i===steps.length-1;}
+  function reset(){steps=build($('#cme-t').value);i=0;render();}
+  $('#cme-t').addEventListener('change',reset);$('#cme-prev').addEventListener('click',()=>{if(i>0){i--;render();}});$('#cme-next').addEventListener('click',()=>{if(i<steps.length-1){i++;render();}});reset();
+})();
+
+/* ===== 06. dispatch ===== */
+(function(){
+  const CODE=`class Animal {
+  String name = "animal";
+  String who()          { return "Animal"; }
+  static String kind()  { return "Animal.kind"; }
+}
+class Dog extends Animal {
+  String name = "dog";
+  @Override String who(){ return "Dog"; }
+  static String kind()  { return "Dog.kind"; }
+}
+static String greet(Animal a) { return "greet(Animal)"; }
+static String greet(Dog d)    { return "greet(Dog)"; }`;
+  function go(){const st=$('#dp-st').value,rt=$('#dp-rt').value,c=$('#dp-call').value;
+    const decl=`${st} x = new ${rt}();`;const call={who:'x.who()',greet:'greet(x)',static:'x.kind()',field:'x.name'}[c];
+    $('#dp-code').innerHTML=esc(CODE)+'\n\n<span class="h">'+esc(decl)+'</span>\n<span class="h">'+esc(call)+'</span>';
+    let html;
+    if(st==='Dog'&&rt==='Animal'){html=`<div class="dp-phase bad"><b>Biên dịch</b><span>Lỗi: <code>incompatible types: Animal cannot be converted to Dog</code>. Biến kiểu Dog không trỏ được tới object Animal (không phải Animal nào cũng là Dog).</span></div>`;}
+    else{const r={who:rt==='Dog'?'"Dog"':'"Animal"',greet:st==='Dog'?'"greet(Dog)"':'"greet(Animal)"',static:st==='Dog'?'"Dog.kind"':'"Animal.kind"',field:st==='Dog'?'"dog"':'"animal"'}[c];
+      const comp={who:`Kiểu khai báo ${st} có method <code>who()</code>, ghi vào bytecode: <code>invokevirtual ${st}.who()</code>.`,greet:`Chọn overload theo <b>kiểu khai báo</b> ${st}: chốt <code>greet(${st})</code> ngay lúc này.`,static:`Static method gắn với class, không có đa hình: chốt <code>${st}.kind()</code> (javac còn cảnh báo gọi static qua biến).`,field:`Field không có đa hình: chốt <code>${st}.name</code>. Object ${rt} có ${rt==='Dog'?'hai':'một'} field tên name.`}[c];
+      const run={who:`Tra bảng method ảo (vtable) của object thật <b>${rt}</b> → chạy <code>${rt}.who()</code>.`,greet:'Không xét lại: overload đã quyết định xong lúc biên dịch.',static:'Không xét object thật.',field:'Không xét object thật.'}[c];
+      html=`<div class="dp-phase"><b>Lúc biên dịch</b><span>${comp}</span></div><div class="dp-phase"><b>Lúc chạy</b><span>${run}</span></div><div class="dp-out">→ ${esc(r)}</div>`;}
+    $('#dp-res').innerHTML=html;}
+  ['#dp-st','#dp-rt','#dp-call'].forEach(id=>$(id).addEventListener('change',go));$('#dp-go').addEventListener('click',go);go();
+})();
+
+/* ===== 06. init order ===== */
+(function(){
+  const L=[`class Parent {`,`  static { print("1. Parent static block"); }`,`  { print("3. Parent instance block"); }`,`  Parent() {`,`    print("4. Parent constructor");`,`    hello();               // gọi method bị override!`,`  }`,`  void hello() { … }`,`}`,`class Child extends Parent {`,`  static { print("2. Child static block"); }`,`  String name = "An";`,`  { print("5. Child instance block, name = " + name); }`,`  Child() {                // super() ngầm ở đây`,`    print("6. Child constructor");`,`  }`,`  @Override void hello() { print("Child.hello(), name = " + name); }`,`}`,``,`new Child();  new Child();`];
+  const ST=[
+    [[19],null,'Gặp <code>new Child()</code> lần đầu: JVM nạp class. Phải khởi tạo lớp cha trước.'],
+    [[1],'1. Parent static block','Static block của Parent chạy <b>một lần</b> khi class được khởi tạo.'],
+    [[10],'2. Child static block','Rồi tới static block của Child.'],
+    [[13],null,'Cấp phát object: mọi field ở giá trị mặc định (<code>name = null</code>). Constructor Child bắt đầu bằng lời gọi <code>super()</code> ngầm.'],
+    [[2],'3. Parent instance block','Trong constructor Parent: chạy khởi tạo field và instance block của Parent trước.'],
+    [[4],'4. Parent constructor','Thân constructor Parent.'],
+    [[5,16],'   Child.hello() gọi từ constructor cha, name = null','<code>hello()</code> là method ảo nên chạy bản của <b>Child</b>, nhưng field của Child <b>chưa được khởi tạo</b>: name vẫn null. Đây là lý do không gọi method có thể override trong constructor.'],
+    [[11,12],'5. Child instance block, name = An','Quay về Child: giờ mới gán <code>name = "An"</code> và chạy instance block (theo thứ tự xuất hiện trong code).'],
+    [[14],'6. Child constructor','Cuối cùng là thân constructor Child.'],
+    [[19],'3. Parent instance block  … (lần 2 không còn dòng 1, 2)','<code>new Child()</code> lần hai: class đã khởi tạo nên static block không chạy lại; chỉ lặp lại các bước 3 → 6.']];
+  let i=-1,auto=null;
+  function render(){const s=i>=0?ST[i]:[[],null,''];$('#io-code').innerHTML=L.map((l,k)=>`<span class="ln${s[0].includes(k)?' on':''}">${esc(l)||' '}</span>`).join('\n');
+    $('#io-log').innerHTML='';ST.slice(0,i+1).forEach(x=>{if(x[1])logTo('#io-log',x[1],x===ST[i]?'h':'');});if(i>=0)logTo('#io-log','// '+s[2].replace(/<[^>]+>/g,''),'d');
+    $('#io-cnt').textContent=`${Math.max(0,i+1)}/${ST.length}`;$('#io-prev').disabled=i<0;$('#io-next').disabled=i===ST.length-1;}
+  function stop(){if(auto){clearInterval(auto);auto=null;$('#io-auto').textContent='Tự chạy';}}
+  $('#io-prev').addEventListener('click',()=>{stop();if(i>=0){i--;render();}});$('#io-next').addEventListener('click',()=>{stop();if(i<ST.length-1){i++;render();}});
+  $('#io-auto').addEventListener('click',()=>{if(auto){stop();return;}if(i===ST.length-1)i=-1;$('#io-auto').textContent='Dừng';auto=setInterval(()=>{if(i<ST.length-1){i++;render();}else stop();},1800);});
+  render();
+})();
+
+/* ===== 07. pass by value ===== */
+(function(){
+  const svg=$('#pv-svg');let mode='swap',i=0;
+  const C={swap:`Box b1 = new Box(1), b2 = new Box(2);
+swap(b1, b2);
+
+static void swap(Box a, Box b) {
+  Box t = a;
+  a = b;
+  b = t;
+}`,change:`Box b3 = new Box(1);
+change(b3);
+
+static void change(Box a) {
+  a.v = 42;
+  a = new Box(7);
+  a.v = 8;
+}`};
+  const ST={swap:[
+    {main:{b1:'X',b2:'Y'},fr:null,heap:{X:1,Y:2},ln:0,n:'main có hai biến b1, b2 chứa <b>tham chiếu</b> tới hai object Box trên heap.'},
+    {main:{b1:'X',b2:'Y'},fr:{a:'X',b:'Y'},heap:{X:1,Y:2},ln:1,n:'Gọi <code>swap(b1, b2)</code>: Java <b>sao chép giá trị</b> của b1, b2 (tức địa chỉ) vào hai biến mới a, b trong frame của swap.'},
+    {main:{b1:'X',b2:'Y'},fr:{a:'X',b:'Y',t:'X'},heap:{X:1,Y:2},ln:4,n:'<code>t = a</code>: t trỏ tới Box(1).'},
+    {main:{b1:'X',b2:'Y'},fr:{a:'Y',b:'Y',t:'X'},heap:{X:1,Y:2},ln:5,n:'<code>a = b</code>: chỉ đổi biến a <b>của swap</b>.'},
+    {main:{b1:'X',b2:'Y'},fr:{a:'Y',b:'X',t:'X'},heap:{X:1,Y:2},ln:6,n:'<code>b = t</code>: trong swap, a và b đã đổi chỗ…'},
+    {main:{b1:'X',b2:'Y'},fr:null,heap:{X:1,Y:2},ln:1,n:'…nhưng frame của swap bị huỷ khi return. b1, b2 trong main không hề thay đổi. <b>Đo thật:</b> b1 = Box(1), b2 = Box(2).'}],
+   change:[
+    {main:{b3:'X'},fr:null,heap:{X:1},ln:0,n:'b3 trỏ tới Box(1).'},
+    {main:{b3:'X'},fr:{a:'X'},heap:{X:1},ln:1,n:'Gọi <code>change(b3)</code>: a là bản sao của tham chiếu, cùng trỏ tới Box(1).'},
+    {main:{b3:'X'},fr:{a:'X'},heap:{X:42},ln:4,n:'<code>a.v = 42</code>: sửa <b>object dùng chung</b>. b3 cũng thấy thay đổi này.'},
+    {main:{b3:'X'},fr:{a:'Z'},heap:{X:42,Z:7},ln:5,n:'<code>a = new Box(7)</code>: a trỏ sang object mới. b3 vẫn trỏ Box cũ.'},
+    {main:{b3:'X'},fr:{a:'Z'},heap:{X:42,Z:8},ln:6,n:'<code>a.v = 8</code>: chỉ sửa object mới.'},
+    {main:{b3:'X'},fr:null,heap:{X:42,Z:8},ln:1,n:'Return: b3 = <b>Box(42)</b> (đo thật). Object Box(8) không còn ai trỏ tới, chờ GC.'}]};
+  function render(){const s=ST[mode][i];svg.innerHTML='';const defs=S('defs',{},svg);const m=S('marker',{id:'pva',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto'},defs);S('path',{d:'M0,0 L10,5 L0,10 z',fill:css('--accent')},m);
+    $('#pv-code').innerHTML=C[mode].split('\n').map((l,k)=>`<span class="ln${k===s.ln?' on':''}">${esc(l)||' '}</span>`).join('\n');
+    T('Stack',{x:20,y:18,class:'bt-cap'},svg);T('Heap',{x:330,y:18,class:'bt-cap'},svg);
+    const HP={X:[400,60],Y:[400,140],Z:[400,215]};
+    for(const [k,v] of Object.entries(s.heap)){const [x,y]=HP[k];const orphan=k==='Z'&&!s.fr&&mode==='change';S('rect',{x:x-50,y:y-18,width:100,height:36,rx:6,class:'bx'+(orphan?'':' hot'),opacity:orphan?.5:1},svg);T(`Box(${v})`,{x,y:y+5,'text-anchor':'middle',class:'bt-k','font-weight':700},svg);}
+    const varBox=(n,tgt,x,y)=>{S('rect',{x,y,width:60,height:28,rx:4,class:'bx'},svg);T(n,{x:x+30,y:y+19,'text-anchor':'middle',class:'bt-k'},svg);const [hx,hy]=HP[tgt];S('path',{d:`M${x+60},${y+14} C${x+140},${y+14} ${hx-120},${hy} ${hx-52},${hy}`,fill:'none',stroke:css('--accent'),'stroke-width':1.8,'marker-end':'url(#pva)'},svg);};
+    S('rect',{x:10,y:28,width:200,height:98,rx:8,fill:'none',stroke:css('--line')},svg);T('frame main',{x:20,y:44,class:'bt-cap'},svg);
+    Object.entries(s.main).forEach(([n,t],k)=>varBox(n,t,30,54+k*34));
+    if(s.fr){S('rect',{x:10,y:138,width:200,height:112,rx:8,fill:css('--accent-soft'),stroke:css('--accent')},svg);T('frame '+mode,{x:20,y:154,class:'bt-cap'},svg);Object.entries(s.fr).forEach(([n,t],k)=>varBox(n,t,30+(k===2?100:0),164+(k===2?0:k*36)));}
+    $('#pv-note').innerHTML=`<h4>Bước ${i+1}/${ST[mode].length}</h4><p>${s.n}</p>`;$('#pv-prev').disabled=i===0;$('#pv-next').disabled=i===ST[mode].length-1;}
+  seg('#pv-mode',m=>{mode=m;i=0;render();});$('#pv-prev').addEventListener('click',()=>{if(i>0){i--;render();}});$('#pv-next').addEventListener('click',()=>{if(i<ST[mode].length-1){i++;render();}});render();
+})();
+
+/* ===== 08. finally ===== */
+(function(){
+  const C={
+    f1:{code:`static int f1() {
+  try {
+    return 1;
+  } finally {
+    return 2;
+  }
+}`,st:[[2,'1','<code>return 1</code>: giá trị 1 được cất vào ô "sẽ trả về", rồi phải chạy finally trước khi rời method.'],[4,'2','<code>return 2</code> trong finally <b>ghi đè</b> kết quả. Nếu try đang ném exception, return trong finally còn <b>nuốt mất exception</b>.'],[6,'2','Kết quả thật: <b>2</b>. javac cảnh báo "finally clause cannot complete normally".']]},
+    f2:{code:`static int f2() {
+  int x = 1;
+  try {
+    return x;
+  } finally {
+    x = 99;
+  }
+}`,st:[[3,'1','<code>return x</code>: <b>giá trị</b> của x (1) được chép vào ô trả về ngay lúc này.'],[5,'1','finally gán x = 99, nhưng chỉ đổi biến cục bộ; ô trả về đã chứa 1.'],[7,'1','Kết quả thật: <b>1</b>.']]},
+    f3:{code:`static StringBuilder f3() {
+  StringBuilder sb = new StringBuilder("a");
+  try {
+    return sb;
+  } finally {
+    sb.append("b");
+  }
+}`,st:[[3,'→ sb ("a")','<code>return sb</code>: chép <b>tham chiếu</b> vào ô trả về.'],[5,'→ sb ("ab")','finally sửa <b>object</b> mà tham chiếu đó trỏ tới.'],[7,'"ab"','Kết quả thật: <b>ab</b>. Cùng quy tắc với pass-by-value ở chương 07.']]},
+    twr:{code:`try (Res r1 = new Res("A");
+     Res r2 = new Res("B")) {
+  throw new RuntimeException("lỗi trong try");
+} catch (Exception e) {
+  print("bắt được: " + e.getMessage());
+  for (Throwable t : e.getSuppressed())
+    print("suppressed: " + t.getMessage());
+}`,st:[[0,'','Mở r1: <code>   mở A</code>','   mở A'],[1,'','Mở r2: <code>   mở B</code>','   mở B'],[2,'RuntimeException','Thân try ném exception chính.'],[1,'RuntimeException','Đóng tài nguyên theo <b>thứ tự ngược</b>: r2 trước. close() của B cũng ném lỗi → gắn vào exception chính làm <b>suppressed</b>.','   đóng B'],[0,'RuntimeException','Đóng r1, lỗi khi đóng A cũng thành suppressed.','   đóng A'],[4,'','catch nhận exception <b>chính</b>, không bị lỗi khi đóng che mất.','   bắt được: lỗi trong try'],[6,'','Lỗi khi đóng vẫn xem được.','   suppressed: lỗi khi đóng B\n   suppressed: lỗi khi đóng A']]}};
+  let k='f1',i=0;
+  function render(){const c=C[k],s=c.st[i];$('#fy-code').innerHTML=c.code.split('\n').map((l,j)=>`<span class="ln${j===s[0]?' on':''}">${esc(l)||' '}</span>`).join('\n');
+    $('#fy-ret').innerHTML=k==='twr'?`<small>Exception đang bay</small><b>${esc(s[1]||'—')}</b>`:`<small>Ô "sẽ trả về"</small><b>${esc(s[1])}</b>`;
+    $('#fy-log').innerHTML='';if(k==='twr')c.st.slice(0,i+1).forEach(x=>{if(x[3])x[3].split('\n').forEach(l=>logTo('#fy-log',l,x===s?'h':''));});else logTo('#fy-log',`${k}() → ${c.st[c.st.length-1][1]} (đo thật)`,'d');
+    $('#fy-note').innerHTML=`<h4>Bước ${i+1}/${c.st.length}</h4><p>${s[2]}</p>`;$('#fy-prev').disabled=i===0;$('#fy-next').disabled=i===c.st.length-1;}
+  $('#fy-case').addEventListener('change',e=>{k=e.target.value;i=0;render();});$('#fy-prev').addEventListener('click',()=>{if(i>0){i--;render();}});$('#fy-next').addEventListener('click',()=>{if(i<C[k].st.length-1){i++;render();}});render();
+})();
+hbar('#ch-exc',[['throw new Exception',JC.exceptions[0]],['exception không stack trace',JC.exceptions[1]],['trả mã lỗi',JC.exceptions[2]]].map(([n,v],i)=>({name:n,v,color:i===0?'--s2':i===1?'--s3':'--s1',tip:`<div class="tr"><span>200 000 lần</span><b>${fmtN(v)} ms</b></div><div class="tr"><span>Mỗi lần</span><b>${fmtN(v/200)} µs</b></div>`})),{max:400,ticks:[0,100,200,300,400],padL:170,unit:' ms',aria:'Chi phí exception'});
+
+/* ===== 09. PECS ===== */
+(function(){
+  const OPS=[['add_int','l.add(Integer.valueOf(5))'],['add_dbl','l.add(Double.valueOf(2.5))'],['add_null','l.add(null)'],['get_num','Number x = l.get(0)'],['get_int','Integer x = l.get(0)'],['get_obj','Object x = l.get(0)']];
+  const RULE={ext:'<b>? extends Number</b>: danh sách này là List của <i>một kiểu con nào đó</i> của Number (có thể là Integer, có thể là Double). Đọc ra chắc chắn là Number; nhét vào thì không được, vì không biết kiểu chính xác. Dùng cho tham số <b>cho ra</b> dữ liệu (Producer Extends).',
+    sup:'<b>? super Integer</b>: List của Integer hoặc kiểu cha của nó. Nhét Integer vào luôn an toàn; đọc ra chỉ biết là Object. Dùng cho tham số <b>nhận vào</b> dữ liệu (Consumer Super).',
+    num:'<b>List&lt;Number&gt;</b>: đọc ghi Number thoải mái, nhưng không gán được <code>new ArrayList&lt;Integer&gt;()</code> cho nó (generics bất biến).',
+    unb:'<b>List&lt;?&gt;</b>: không biết gì về kiểu phần tử. Chỉ đọc ra Object và chỉ thêm được null. Dùng khi method không quan tâm kiểu (như <code>size()</code>, <code>clear()</code>).'};
+  function render(){const d=$('#pe-d').value;
+    $('#pe-grid').innerHTML=OPS.map(([k,code])=>{const r=GEN[d+':'+k];return `<div class="pe ${r.ok?'ok':'no'}"><code>${esc(code)}</code><b>${r.ok?'✓ biên dịch được':'✗ lỗi biên dịch'}</b>${r.err?`<small>${esc(r.err.split(' | ')[0])}</small>`:''}</div>`;}).join('');
+    const v=$('#pe-v');v.style.display='flex';v.className='verdict ok';v.innerHTML='<span>'+RULE[d]+'</span>';}
+  $('#pe-d').addEventListener('change',render);render();
+})();
+
+/* ===== 10. stream lazy ===== */
+(function(){
+  const svg=$('#sl-svg');const N=['an','binh','chi','dung','em'];let run=0;
+  const X={src:70,filter:250,map:420,limit:570,out:700};
+  function base(st){svg.innerHTML='';
+    [['filter','filter\nlength > 2'],['map','map\ntoUpperCase'],['limit','limit(2)']].forEach(([k,l])=>{S('rect',{x:X[k]-60,y:30,width:120,height:170,rx:10,fill:css('--surface'),stroke:css('--line')},svg);l.split('\n').forEach((t,j)=>T(t,{x:X[k],y:52+j*16,'text-anchor':'middle','font-weight':j?400:700,'font-size':j?11:13,class:j?'bt-cap':''},svg));});
+    T('nguồn',{x:X.src,y:24,'text-anchor':'middle',class:'bt-cap'},svg);T('kết quả',{x:X.out,y:24,'text-anchor':'middle',class:'bt-cap'},svg);
+    N.forEach((n,i)=>{const s=st.src[i];S('rect',{x:X.src-38,y:40+i*34,width:76,height:26,rx:5,fill:s==='never'?css('--sunk'):s==='done'?css('--bg'):css('--accent-soft'),stroke:css(s==='never'?'--line':'--accent'),opacity:s==='done'?.4:1},svg);T(n,{x:X.src,y:58+i*34,'text-anchor':'middle',class:'bt-k',opacity:s==='never'?.5:1},svg);});if(st.src.includes('never'))T('xám: không bao giờ được xét',{x:X.src,y:222,'text-anchor':'middle','font-size':10.5,class:'bt-cap'},svg);
+    st.out.forEach((v,i)=>{S('rect',{x:X.out-38,y:40+i*34,width:76,height:26,rx:5,fill:css('--ok-soft'),stroke:css('--ok')},svg);T(v,{x:X.out,y:58+i*34,'text-anchor':'middle',class:'bt-k','font-weight':700},svg);});}
+  function tok(label,x1,x2,y,c,drop){return new Promise(res=>{const g=S('g',{},svg);const r=S('rect',{x:0,y:y-13,width:70,height:26,rx:5,fill:css(c),opacity:.95},g);const t=T(label,{x:35,y:y+5,'text-anchor':'middle',fill:'#fff','font-weight':700,'font-size':12},g);const t0=performance.now(),D=RM?40:520;
+    (function f(n){const k=Math.min(1,(n-t0)/D);g.setAttribute('transform',`translate(${x1-35+(x2-x1)*k},${drop?k*40:0})`);g.setAttribute('opacity',drop?1-k:1);if(k<1)requestAnimationFrame(f);else{g.remove();res();}})(t0);});}
+  async function go(){const my=++run;const st={src:N.map(()=>'wait'),out:[]};base(st);$('#sl-log').innerHTML='';
+    logTo('#sl-log','.filter(…).map(…).limit(2) → chưa chạy gì cả: chỉ dựng đường ống','d');await wait(700);if(my!==run)return;
+    logTo('#sl-log','.toList() → thao tác kết thúc, bắt đầu kéo từng phần tử','d');
+    for(let i=0;i<N.length;i++){if(my!==run)return;if(st.out.length>=2){for(let j=i;j<N.length;j++)st.src[j]='never';base(st);logTo('#sl-log','limit đã đủ 2 phần tử → dừng, không đọc tiếp nguồn (short-circuit)','w');break;}
+      const n=N[i];st.src[i]='done';base(st);logTo('#sl-log','   filter '+n,'h');await tok(n,X.src+40,X.filter,120,'--accent');if(my!==run)return;
+      if(n.length<=2){await tok(n,X.filter,X.filter+30,120,'--muted',true);continue;}
+      logTo('#sl-log','   map '+n,'h');await tok(n,X.filter,X.map,120,'--accent');if(my!==run)return;const U=n.toUpperCase();await tok(U,X.map,X.limit,120,'--s3');if(my!==run)return;await tok(U,X.limit,X.out-38,120,'--ok');st.out.push(U);base(st);}
+    if(my===run)logTo('#sl-log','   kết quả [BINH, CHI]  (khớp output thật)','s');}
+  $('#sl-run').addEventListener('click',go);base({src:N.map(()=>'wait'),out:[]});
+  let started=false;onVisible($('#sl'),v=>{if(v&&!started){started=true;go();}});
+})();
+hbar('#ch-stream',[['vòng for',JC.stream[0]],['IntStream',JC.stream[1]],['Stream<Integer>',JC.stream[2]],['IntStream.parallel()',JC.stream[3]]].map(([n,v],i)=>({name:n,v,color:i===2?'--s2':'--s1',tip:`<div class="tr"><span>Trung vị</span><b>${fmtN(v)} ms</b></div>`})),{max:35,ticks:[0,10,20,30],padL:150,unit:' ms',aria:'So sánh vòng for và stream'});
+
+/* ===== 13. BigDecimal ===== */
+(function(){
+  function parse(s){s=String(s).trim().replace(',','.');if(!/^-?\d+(\.\d+)?$/.test(s))return null;const neg=s.startsWith('-');if(neg)s=s.slice(1);const [a,b='']=s.split('.');return {u:BigInt((neg?'-':'')+a+b),s:b.length};}
+  const P10=n=>10n**BigInt(n);
+  function str(x){let neg=x.u<0n,d=(neg?-x.u:x.u).toString();if(x.s>0){d=d.padStart(x.s+1,'0');d=d.slice(0,d.length-x.s)+'.'+d.slice(d.length-x.s);}return (neg?'-':'')+d;}
+  function add(a,b,sg){const s=Math.max(a.s,b.s);return {u:a.u*P10(s-a.s)+sg*b.u*P10(s-b.s),s};}
+  function mul(a,b){return {u:a.u*b.u,s:a.s+b.s};}
+  function div(a,b,sc){let num=a.u*P10(sc+b.s),den=b.u*P10(a.s);if(den<0n){num=-num;den=-den;}let q=num/den,r=num%den;if(r<0n)r=-r;if(2n*r>=den)q+=num<0n?-1n:1n;return {u:q,s:sc};}
+  function terminates(a,b){let n=a.u*P10(b.s),d=b.u*P10(a.s);if(d<0n)d=-d;if(n<0n)n=-n;const g=(x,y)=>y?g(y,x%y):x;let k=g(n,d);d/=k;while(d%2n===0n)d/=2n;while(d%5n===0n)d/=5n;return d===1n;}
+  function jd(v){if(!isFinite(v))return String(v);const a=Math.abs(v);if(a!==0&&(a>=1e7||a<1e-3)){let e=v.toExponential();let [m,x]=e.split('e');if(!m.includes('.'))m+='.0';return m+'E'+(+x);}const s=String(v);return Number.isInteger(v)?s+'.0':s;}
+  const EX=[['100','mul','1.1'],['0.1','add','0.2'],['1.15','mul','100'],['10','div','3'],['1980','mul','0.08'],['0.3','sub','0.1']];
+  $('#bd-ex').innerHTML=EX.map((e,i)=>`<button type="button" class="chip" data-i="${i}">${e[0]} ${({mul:'×',add:'+',sub:'−',div:'÷'})[e[1]]} ${e[2]}</button>`).join('');
+  function go(){const as=$('#bd-a').value,bs=$('#bd-b').value,op=$('#bd-op').value;const a=parse(as),b=parse(bs);const out=$('#bd-out');
+    if(!a||!b){out.innerHTML='<p class="cap">Nhập số dạng 123 hoặc 1.15</p>';return;}
+    const da=+as.replace(',','.'),db=+bs.replace(',','.');const dv=op==='mul'?da*db:op==='add'?da+db:op==='sub'?da-db:da/db;
+    let bdTxt,bdNote='';
+    if(op==='div'){if(b.u===0n){bdTxt='ArithmeticException: / by zero';}else if(terminates(a,b)){let sc=0;let r;for(sc=0;sc<40;sc++){r=div(a,b,sc);if(mul(r,b).u*P10(a.s)===a.u*P10(r.s+b.s))break;}bdTxt=str(r);bdNote='chia hết, không cần làm tròn';}else{bdTxt=str(div(a,b,2));bdNote='không chỉ định làm tròn → <b>ArithmeticException</b>; đây là kết quả với <code>divide(b, 2, HALF_UP)</code>';}}
+    else{const r=op==='mul'?mul(a,b):add(a,b,op==='add'?1n:-1n);bdTxt=str(r);bdNote=`scale = ${r.s}`;}
+    const exact=parse(bdTxt);const same=exact&&Math.abs(Number(bdTxt)-dv)===0&&String(dv)===String(Number(bdTxt));
+    const sym=({mul:'multiply',add:'add',sub:'subtract',div:'divide'})[op];
+    out.innerHTML=`<div class="bd-c ${same?'ok':'bad'}"><small>double</small><code>${as} ${({mul:'*',add:'+',sub:'-',div:'/'})[op]} ${bs}</code><b>${jd(dv)}</b><span>${same?'trùng với kết quả chính xác':'lệch so với kết quả chính xác'}${op!=='div'?` · ép (int): ${Math.trunc(dv)}`:''}</span></div>
+      <div class="bd-c ok"><small>BigDecimal</small><code>new BigDecimal("${as}").${sym}(new BigDecimal("${bs}"))</code><b>${esc(bdTxt)}</b><span>${bdNote}${op!=='div'&&exact?` · intValue(): ${str({u:exact.u/P10(exact.s),s:0})}`:''}</span></div>`;}
+  $('#bd-go').addEventListener('click',go);['#bd-a','#bd-b','#bd-op'].forEach(id=>$(id).addEventListener('change',go));
+  $('#bd-ex').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const x=EX[+b.dataset.i];$('#bd-a').value=x[0];$('#bd-op').value=x[1];$('#bd-b').value=x[2];go();});go();
+})();
+
+/* ===== 14. múi giờ ===== */
+(function(){
+  const svg=$('#tz-svg');const T0=Date.UTC(2026,9,11,12),SPAN=72*3600e3;const X=t=>90+(t-T0)/SPAN*650;
+  const Z=[['UTC',0],['Tokyo +9',9],['VN +7',7]];
+  const fd=t=>{const d=new Date(t);return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}`;};
+  function draw(){const h=+$('#tz-h').value;$('#tz-h-v').textContent=`${String(h).padStart(2,'0')}:30`;const now=Date.UTC(2026,9,13,h,30);svg.innerHTML='';
+    const day=(t,off)=>Math.floor((t+off*3600e3)/86400e3);
+    const yTk=day(now,9)-1,yUtc=day(now,0)-1;const tkS=yTk*86400e3-9*3600e3,utS=yUtc*86400e3;
+    S('rect',{x:X(tkS),y:22,width:X(tkS+86400e3)-X(tkS),height:186,fill:css('--accent-soft'),opacity:.8},svg);T('"hôm qua" theo Tokyo (đúng ý người dùng)',{x:X(tkS)+4,y:36,'font-size':11,fill:css('--accent'),'font-weight':700},svg);
+    S('rect',{x:X(utS),y:206,width:X(utS+86400e3)-X(utS),height:16,fill:css('--warn'),opacity:.6},svg);T('"hôm qua" theo UTC: LocalDate.now().minusDays(1) trên server',{x:X(utS)+4,y:240,'font-size':11,fill:css('--warn'),'font-weight':700},svg);
+    Z.forEach(([n,off],r)=>{const y=70+r*50;T(n,{x:84,y:y+4,'text-anchor':'end','font-size':11,'font-weight':600},svg);S('line',{x1:90,x2:740,y1:y,y2:y,stroke:css('--line'),'stroke-width':2},svg);
+      for(let d=day(T0,off);d<=day(T0+SPAN,off)+1;d++){const t=d*86400e3-off*3600e3;if(t<T0||t>T0+SPAN)continue;S('line',{x1:X(t),x2:X(t),y1:y-8,y2:y+8,stroke:css('--ink'),'stroke-width':1.5},svg);T(fd(d*86400e3)+' 00:00',{x:X(t)+3,y:y-10,'font-size':10,class:'bt-cap'},svg);}
+      const loc=new Date(now+off*3600e3);T(`${fd(now+off*3600e3)} ${String(loc.getUTCHours()).padStart(2,'0')}:30`,{x:X(now)+4,y:y+18,'font-size':10.5,'font-weight':700,fill:css('--bad')},svg);});
+    S('line',{x1:X(now),x2:X(now),y1:44,y2:205,stroke:css('--bad'),'stroke-width':2.5},svg);T('job chạy',{x:X(now),y:56,'text-anchor':'middle','font-size':11,fill:css('--bad'),'font-weight':700},svg);
+    const v=$('#tz-v');v.style.display='flex';const same=tkS===utS;v.className='verdict '+(same?'ok':'warn');
+    v.innerHTML=`<span>Người dùng Nhật hiểu "hôm qua" là ngày <b>${fd(yTk*86400e3)}</b> giờ Tokyo = <code>${new Date(tkS).toISOString().slice(0,16)}Z</code> → <code>${new Date(tkS+86400e3).toISOString().slice(0,16)}Z</code>. Code dùng múi giờ mặc định UTC của server lấy ngày <b>${fd(yUtc*86400e3)}</b> từ 00:00Z: ${same?'trùng (hiếm)':`hai cửa sổ lệch nhau <b>${Math.abs(tkS-utS)/3600e3} giờ</b>${yTk!==yUtc?' và là hai ngày khác nhau':''}: dữ liệu trong khoảng lệch đó bị gửi sai ngày hoặc bị bỏ sót`}. Sửa: <code>LocalDate.now(ZoneId.of("Asia/Tokyo")).minusDays(1).atStartOfDay(zone).toInstant()</code>.</span>`;}
+  $('#tz-h').addEventListener('input',draw);draw();
+})();
+
+/* ===== 15. đoán output ===== */
+(function(){
+  const PZ=[
+    ['Integer a = 128, b = 128;\nSystem.out.println(a == b);',['true','false','Lỗi biên dịch'],1,'Ngoài khoảng cache −128…127, mỗi lần autoboxing tạo object mới. 127 thì ra true.'],
+    ['Long l = 127L;\nSystem.out.println(l.equals(127));',['true','false','NullPointerException'],1,'127 được autobox thành Integer; Long.equals chỉ trả true với Long.'],
+    ['String part = "huge";\nString s = "hugeclub";\nSystem.out.println(s == part + "club");',['true','false'],1,'Nối với biến diễn ra lúc chạy, tạo String mới trên heap.'],
+    ['String s = "hugeclub";\nSystem.out.println(s == "huge" + "club");',['true','false'],0,'Hai literal được compiler gộp sẵn thành "hugeclub", dùng chung object trong pool.'],
+    ['static int f() {\n  try { return 1; }\n  finally { return 2; }\n}\nSystem.out.println(f());',['1','2','Lỗi biên dịch'],1,'return trong finally ghi đè (và nuốt cả exception nếu có). Chỉ là cảnh báo, không phải lỗi biên dịch.'],
+    ['static int f() {\n  int x = 1;\n  try { return x; }\n  finally { x = 99; }\n}\nSystem.out.println(f());',['1','99'],0,'Giá trị trả về được chốt (chép) trước khi finally chạy.'],
+    ['static String greet(Animal a) { return "Animal"; }\nstatic String greet(Dog d)    { return "Dog"; }\n\nAnimal x = new Dog();\nSystem.out.println(greet(x));',['Animal','Dog'],0,'Overload chọn theo kiểu khai báo lúc biên dịch, không theo object thật.'],
+    ['class Parent { Parent() { hello(); } void hello() {} }\nclass Child extends Parent {\n  String name = "An";\n  void hello() { System.out.println(name); }\n}\nnew Child();',['An','null','NullPointerException'],1,'Constructor cha chạy trước khi field của con được gán; method override thấy name = null.'],
+    ['static void swap(Box a, Box b) { Box t = a; a = b; b = t; }\nBox b1 = new Box(1), b2 = new Box(2);\nswap(b1, b2);\nSystem.out.println(b1 + " " + b2);',['Box(1) Box(2)','Box(2) Box(1)'],0,'Java truyền tham trị: swap chỉ đổi bản sao của tham chiếu.'],
+    ['List<String> l = new ArrayList<>(List.of("a","b","c","d"));\nfor (String s : l) if (s.equals("c")) l.remove(s);\nSystem.out.println(l);',['ConcurrentModificationException','[a, b, d]','[a, b, c, d]'],1,'Xoá phần tử áp chót làm cursor == size, hasNext() trả false, vòng lặp dừng mà không kiểm tra modCount. "d" không được duyệt.'],
+    ['List<String> l = Arrays.asList("a", "b");\nl.add("c");',['[a, b, c]','UnsupportedOperationException','Lỗi biên dịch'],1,'Arrays.asList trả danh sách kích thước cố định bọc mảng; set được, add/remove thì không.'],
+    ['System.out.println(0.1 + 0.2);',['0.3','0.30000000000000004','0.30000000000000001'],1,'0,1 và 0,2 không biểu diễn chính xác trong hệ nhị phân.'],
+    ['System.out.println(\n  new BigDecimal("2.0").equals(new BigDecimal("2.00")));',['true','false'],1,'equals so cả scale. Dùng compareTo (trả 0).'],
+    ["System.out.println('a' + 'b');",['ab','195','Lỗi biên dịch'],1,'char cộng char là phép cộng số (97 + 98). Muốn nối chuỗi: "" + \'a\' + \'b\'.'],
+    ['System.out.println(1 + 2 + "3");\nSystem.out.println("1" + 2 + 3);',['33 và 123','123 và 123','33 và 15'],0,'Tính từ trái sang: 1 + 2 = 3 rồi mới nối "3"; còn "1" + 2 đã thành chuỗi.'],
+    ['System.out.println(Math.abs(Integer.MIN_VALUE));',['2147483648','-2147483648','ArithmeticException'],1,'Không có số dương 2³¹ trong int; tràn số quay về chính nó. Dùng Math.absExact để ném lỗi.']];
+  let i=0,ans={};
+  function render(){const p=PZ[i];$('#pz-code').textContent=p[0];$('#pz-cnt').textContent=`Câu ${i+1}/${PZ.length}`;const sc=Object.entries(ans).filter(([k,v])=>v===PZ[k][2]).length;$('#pz-score').textContent=`Đúng ${sc}/${Object.keys(ans).length}`;
+    const a=ans[i];$('#pz-opts').innerHTML=p[1].map((o,k)=>`<button type="button" class="btn${a!==undefined?(k===p[2]?' right':k===a?' wrong':''):''}" data-k="${k}" ${a!==undefined?'disabled':''}>${esc(o)}</button>`).join('');
+    const v=$('#pz-v');if(a===undefined){v.style.display='none';}else{v.style.display='flex';v.className='verdict '+(a===p[2]?'ok':'bad');v.innerHTML=`<span><b>${a===p[2]?'Đúng.':'Chưa đúng.'}</b> Output thật: <code>${esc(p[1][p[2]])}</code>. ${p[3]}</span>`;}
+    $('#pz-prev').disabled=i===0;$('#pz-next').disabled=i===PZ.length-1;}
+  $('#pz-opts').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||ans[i]!==undefined)return;ans[i]=+b.dataset.k;render();});
+  $('#pz-prev').addEventListener('click',()=>{if(i>0){i--;render();}});$('#pz-next').addEventListener('click',()=>{if(i<PZ.length-1){i++;render();}});render();
+})();
+
+/* ===== 16. câu hỏi ===== */
+const QA=[
+ {l:'Tầng 1 · Ngôn ngữ'},
+ {q:'== và equals khác nhau thế nào?',a:'<p><code>==</code> với object so sánh tham chiếu (cùng một object); với primitive so giá trị. <code>equals</code> so nội dung theo cách class định nghĩa; mặc định của Object chính là <code>==</code>. String, wrapper, record, collection đều override equals.</p>'},
+ {q:'Integer a = 128, b = 128; a == b ra gì? Vì sao?',trap:1,a:'<p>false. <code>Integer.valueOf</code> cache −128…127; ngoài khoảng đó mỗi lần autoboxing tạo object mới. 127 thì true. Luôn dùng equals cho wrapper (đo thật cả hai trường hợp).</p>'},
+ {q:'Autoboxing có vấn đề gì?',a:'<p>Tạo object (tốn bộ nhớ, GC): đo thật cộng 50 triệu số với <code>Long</code> chậm hơn <code>long</code> 11 lần. Unboxing giá trị null ném NullPointerException (<code>int s = map.get(k)</code>, toán tử ba ngôi trộn Integer và int). So sánh bằng == sai ngoài khoảng cache.</p>'},
+ {q:'Vì sao String bất biến?',a:'<p>Cho phép String pool dùng chung object, an toàn đa luồng không cần khoá, an toàn bảo mật (tham số đã kiểm tra không bị đổi), cache được hashCode nên làm key HashMap tốt. Mọi thao tác "sửa" trả String mới.</p>'},
+ {q:'String pool là gì? new String("a") tạo mấy object?',trap:1,a:'<p>Vùng (trên heap) chứa các String literal dùng chung. <code>new String("a")</code> tạo một object mới trên heap; literal "a" nằm trong pool (tạo khi class được nạp nếu chưa có). Nên câu trả lời thường là "một hoặc hai". <code>intern()</code> trả về bản trong pool.</p>'},
+ {q:'String, StringBuilder, StringBuffer khác nhau?',a:'<p>String bất biến. StringBuilder sửa được, không đồng bộ, dùng trong một luồng (gần như luôn dùng cái này). StringBuffer đồng bộ (cũ, ít khi cần). Đo thật: nối 40 000 lần bằng <code>+=</code> 253 ms, StringBuilder 0,32 ms.</p>'},
+ {q:'Hợp đồng equals/hashCode là gì? Vi phạm thì sao?',a:'<p>equals bằng nhau thì hashCode phải bằng nhau. Chỉ override equals: HashMap tìm sai bucket, <code>get</code> trả null (đo thật). Đổi field tham gia hashCode sau khi đưa vào HashSet: <code>contains</code> false, không xoá được. Dùng field bất biến hoặc record.</p>'},
+ {q:'Java truyền tham trị hay tham chiếu?',trap:1,a:'<p>Luôn truyền tham trị. Với object, giá trị được chép là tham chiếu: method sửa được nội dung object nhưng không làm biến bên ngoài trỏ sang object khác. Đo thật: swap(b1, b2) không đổi gì; change(b3) sửa a.v = 42 thì b3 thấy, gán a = new Box thì không.</p>'},
+ {q:'final, finally, finalize khác nhau?',a:'<p>final: biến không gán lại, method không override, class không kế thừa. finally: khối luôn chạy sau try/catch. finalize: method cũ được GC gọi trước khi thu hồi, đã deprecated (Java 9) và bị đánh dấu xoá; dùng try-with-resources hoặc Cleaner.</p>'},
+ {q:'static nghĩa là gì? Static method có override được không?',a:'<p>Thuộc về class, không thuộc object; một bản duy nhất. Static method không override được, chỉ bị che (hiding): gọi qua biến thì chọn theo kiểu khai báo. Static block chạy một lần khi class được khởi tạo.</p>'},
+ {q:'Overload và override khác nhau thế nào?',a:'<p>Overload: cùng tên, khác tham số, chọn lúc biên dịch theo kiểu khai báo. Override: lớp con định nghĩa lại cùng chữ ký, chọn lúc chạy theo object thật. Đo thật: <code>Animal x = new Dog()</code>: <code>x.who()</code> ra Dog, <code>greet(x)</code> ra greet(Animal).</p>'},
+ {q:'Abstract class và interface: khi nào dùng cái nào?',a:'<p>Abstract class khi các lớp chung trạng thái và code (quan hệ "là một"), chỉ kế thừa được một. Interface cho hợp đồng/năng lực, implement nhiều cái, có default method từ Java 8. Ưu tiên interface + composition.</p>'},
+ {q:'Thứ tự khởi tạo khi new một lớp con?',a:'<p>Lần đầu: static của cha, static của con. Mỗi lần new: field và instance block của cha, constructor cha, field và instance block của con, constructor con. Gọi method bị override trong constructor cha sẽ thấy field con chưa khởi tạo (đo thật: name = null).</p>'},
+ {l:'Tầng 2 · Collections và Generics'},
+ {q:'HashMap hoạt động thế nào?',a:'<p>Mảng bucket; hash = hashCode trộn bit cao (<code>h ^ h&gt;&gt;&gt;16</code>), index = <code>(n − 1) &amp; hash</code>. Đụng độ: danh sách liên kết, dài quá 8 và bảng ≥ 64 thì thành cây đỏ-đen. Vượt 0,75 × dung lượng thì gấp đôi và chia lại. get/put trung bình O(1).</p>'},
+ {q:'Vì sao dung lượng HashMap là luỹ thừa của 2?',a:'<p>Để tính vị trí bằng phép AND <code>(n − 1) &amp; hash</code> thay cho phép chia lấy dư, và khi gấp đôi mỗi phần tử chỉ ở lại chỗ cũ hoặc dời đi đúng n vị trí (dựa trên một bit), resize rẻ hơn.</p>'},
+ {q:'hashCode tệ thì HashMap chậm tới mức nào?',a:'<p>Đo thật 20 000 key cùng hashCode: nếu key Comparable, cây sắp được theo compareTo, get chậm ~9 lần (4,8 ms so với 0,52 ms). Nếu không Comparable: 3,2 giây, chậm 6 000 lần. Đây cũng là kiểu tấn công từ chối dịch vụ bằng va chạm hash.</p>'},
+ {q:'HashMap, Hashtable, ConcurrentHashMap, LinkedHashMap, TreeMap?',a:'<p>HashMap: không đồng bộ, cho null. Hashtable: đồng bộ toàn bộ (cũ). ConcurrentHashMap: an toàn đa luồng, khoá theo bucket/CAS, không cho null. LinkedHashMap: giữ thứ tự chèn hoặc truy cập (làm LRU). TreeMap: sắp theo key, O(log n), tìm khoảng.</p>'},
+ {q:'ArrayList hay LinkedList?',trap:1,a:'<p>Gần như luôn ArrayList. Đo thật 100 000 phần tử: get ngẫu nhiên ArrayList nhanh hơn ~1 000 lần; kể cả chèn vào giữa ArrayList vẫn nhanh hơn 15 lần vì LinkedList phải đi tới vị trí trước. LinkedList chỉ thắng khi chèn đầu, và khi đó ArrayDeque còn tốt hơn.</p>'},
+ {q:'ArrayList tăng kích thước thế nào?',a:'<p>Mặc định 10 (cấp phát ở lần add đầu tiên), đầy thì tạo mảng mới gấp 1,5 lần và chép sang. Biết trước số lượng thì <code>new ArrayList&lt;&gt;(n)</code> hoặc <code>ensureCapacity</code>.</p>'},
+ {q:'ConcurrentModificationException là gì? Xoá khi duyệt thế nào?',a:'<p>Iterator fail-fast so modCount của list với expectedModCount; list bị sửa không qua iterator thì ném lỗi ở lần next() kế tiếp. Không phải đảm bảo: xoá phần tử áp chót thì vòng lặp dừng sớm, không lỗi, bỏ sót phần tử (đo thật). Dùng removeIf, iterator.remove, hoặc tạo list mới.</p>'},
+ {q:'Arrays.asList, List.of, Collections.unmodifiableList khác nhau?',trap:1,a:'<p>Arrays.asList: kích thước cố định, set được, add/remove ném UnsupportedOperationException, phản ánh mảng gốc. List.of: bất biến hoàn toàn, không cho null. unmodifiableList: chỉ là view, list gốc đổi thì view đổi theo (đo thật cả ba).</p>'},
+ {q:'Comparable và Comparator?',a:'<p>Comparable: thứ tự tự nhiên định nghĩa trong class (<code>compareTo</code>). Comparator: thứ tự bên ngoài, nhiều cách sắp: <code>Comparator.comparing(Order::createdAt).reversed().thenComparing(Order::id)</code>. compareTo nên nhất quán với equals.</p>'},
+ {q:'Type erasure là gì? Hệ quả?',a:'<p>Thông tin generic bị xoá sau biên dịch; <code>List&lt;String&gt;</code> và <code>List&lt;Integer&gt;</code> cùng class lúc chạy (đo thật). Không new T(), không instanceof List&lt;String&gt;, không mảng T[]; raw type có thể gây heap pollution và ClassCastException ở chỗ đọc.</p>'},
+ {q:'PECS là gì?',a:'<p>Producer Extends, Consumer Super. <code>? extends T</code> để đọc ra T, không add được (javac: Integer cannot be converted to CAP#1). <code>? super T</code> để add T, đọc ra chỉ là Object. Ví dụ: <code>copy(List&lt;? super T&gt; dest, List&lt;? extends T&gt; src)</code>.</p>'},
+ {q:'List<Integer> có phải là List<Number> không?',trap:1,a:'<p>Không. Generics bất biến: javac báo <code>ArrayList&lt;Integer&gt; cannot be converted to List&lt;Number&gt;</code>. Nếu được phép, ta sẽ add Double vào một list Integer. Dùng <code>List&lt;? extends Number&gt;</code>.</p>'},
+ {q:'Viết equals/hashCode cho JPA entity cần lưu ý gì?',trap:1,a:'<p>Id tự sinh là null trước khi persist, nên hashCode theo id thay đổi sau khi lưu và entity trong HashSet bị lạc. Cách phổ biến: equals so theo id (khác null), hashCode trả hằng số theo class; hoặc dùng khoá nghiệp vụ bất biến. Không dùng Lombok @Data cho entity: nó đưa quan hệ lazy vào equals/hashCode/toString, gây truy vấn thừa hoặc vòng lặp vô hạn.</p>'},
+ {l:'Tầng 3 · Exception, Java hiện đại, thực chiến'},
+ {q:'Checked và unchecked exception?',a:'<p>Checked (Exception không thuộc RuntimeException): bắt buộc catch hoặc khai báo throws, cho lỗi có thể phục hồi do môi trường (IOException). Unchecked (RuntimeException): lỗi lập trình hoặc nghiệp vụ, không bắt buộc. Spring rollback mặc định chỉ với unchecked.</p>'},
+ {q:'finally có luôn chạy không? return trong finally thì sao?',trap:1,a:'<p>Chạy trong gần như mọi trường hợp, trừ System.exit, JVM chết, luồng bị giết. return trong finally ghi đè giá trị trả về và nuốt exception đang bay (đo thật: try return 1 finally return 2 → 2). Giá trị primitive đã chốt trước finally (return x, finally x = 99 → 1), còn object thì vẫn bị sửa được.</p>'},
+ {q:'try-with-resources hoạt động thế nào?',a:'<p>Tài nguyên implement AutoCloseable được đóng tự động theo thứ tự ngược khi khối kết thúc. Nếu cả thân và close đều ném lỗi, lỗi của thân là lỗi chính, lỗi khi đóng nằm trong getSuppressed() (đo thật).</p>'},
+ {q:'Exception có tốn kém không?',a:'<p>Phần đắt là chụp stack trace. Đo thật: 1,7 µs mỗi lần ném từ độ sâu 10; không stack trace 0,58 µs; trả mã lỗi 0,015 µs. Không dùng exception làm luồng điều khiển cho việc chạy rất thường xuyên; lỗi thật thì vẫn ném.</p>'},
+ {q:'Stream lười (lazy) nghĩa là gì?',a:'<p>Thao tác trung gian chỉ dựng đường ống, chạy khi có thao tác kết thúc; từng phần tử đi hết đường ống; limit/findFirst dừng sớm. Đo thật: filter → map → limit(2) trên 5 tên chỉ xét 3 tên đầu. Stream chỉ dùng được một lần.</p>'},
+ {q:'Stream có chậm hơn vòng for không? parallel stream thì sao?',a:'<p>Với stream primitive, gần như không (đo thật IntStream 10 ms, for 19 ms trên 10 triệu phần tử). Boxing mới tốn (Stream&lt;Integer&gt; 30 ms). parallel dùng ForkJoinPool.commonPool chung toàn JVM, có chi phí chia việc; chỉ có lợi khi dữ liệu lớn, tính toán nặng, không chặn I/O.</p>'},
+ {q:'map và flatMap khác nhau?',a:'<p>map biến mỗi phần tử thành một phần tử. flatMap biến mỗi phần tử thành một stream rồi trải phẳng: <code>orders.stream().flatMap(o -&gt; o.items().stream())</code> ra stream của mọi item.</p>'},
+ {q:'Dùng Optional thế nào cho đúng?',a:'<p>Làm kiểu trả về cho "có thể không có". Không làm field, tham số, hay bọc collection. orElseGet thay cho orElse khi giá trị mặc định tốn công tính. Không gọi get() khi chưa kiểm tra; dùng map, orElseThrow.</p>'},
+ {q:'Record là gì? Dùng làm entity JPA được không?',a:'<p>Class bất biến gọn, tự sinh constructor, getter, equals, hashCode, toString. Hợp cho DTO, key, giá trị trả về. Không hợp làm entity JPA vì entity cần constructor rỗng, field sửa được, proxy lazy.</p>'},
+ {q:'Java 17/21 có gì bạn đã dùng?',a:'<p>Record, text block, switch expression, pattern matching cho instanceof và switch, sealed interface (switch bị javac kiểm tra phủ đủ nhánh, đo thật), sequenced collections, virtual thread. Nói cụ thể chỗ bạn dùng trong dự án.</p>'},
+ {q:'Dynamic proxy là gì? Liên quan gì tới Spring?',a:'<p>Tạo lúc chạy một object implement interface, chuyển mọi lời gọi tới InvocationHandler (đo thật: $Proxy0 in BEGIN/COMMIT quanh method). Spring dùng JDK proxy hoặc CGLIB để làm @Transactional, @Cacheable, @Async; gọi nội bộ this.method() không qua proxy nên annotation không có tác dụng.</p>'},
+ {q:'Vì sao không dùng double cho tiền?',trap:1,a:'<p>Nhị phân không biểu diễn chính xác 0,1: đo thật 0.1 + 0.2 = 0.30000000000000004, 100 × 1.1 = 110.00000000000001, (int)(1.15 × 100) = 114. Dùng BigDecimal tạo từ String, so bằng compareTo, chia luôn có scale và RoundingMode; hoặc long theo đơn vị nhỏ nhất (yên).</p>'},
+ {q:'Instant, LocalDateTime, ZonedDateTime dùng khi nào?',a:'<p>Instant cho thời điểm tuyệt đối (lưu DB, log). ZonedDateTime khi cần lịch theo khu vực (đầu ngày theo Tokyo). LocalDate/LocalDateTime cho giá trị không gắn múi giờ (ngày sinh, giờ mở cửa). Đo thật: 2026-10-13T16:30Z là ngày 14 ở Tokyo nhưng ngày 13 ở UTC.</p>'},
+ {q:'Job "lấy dữ liệu ngày hôm qua" chạy trên server UTC cho người dùng Nhật, cần lưu ý gì?',a:'<p>Tính "hôm qua" theo Asia/Tokyo rồi đổi ra khoảng Instant: <code>LocalDate.now(ZoneId.of("Asia/Tokyo")).minusDays(1)</code> → từ 15:00Z hôm trước tới 15:00Z. Dùng múi giờ mặc định UTC sẽ lệch 9 tiếng. Tiêm Clock để test, truy vấn bằng khoảng nửa mở <code>&gt;= start AND &lt; end</code>.</p>'}
+];
+$('#qa').innerHTML=QA.map(x=>x.l?`<div class="lvl">${x.l}</div>`:`<details><summary><span>${x.q}</span>${x.trap?'<span class="trap">bẫy</span>':''}</summary><div class="ans">${x.a}</div></details>`).join('');
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1156 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sổ tay JVM chuyên sâu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sổ tay kỹ thuật hai cột — mục lục dính bên trái, nội dung đọc bên phải; mỗi chương mở bằng khung "Phỏng vấn sẽ hỏi" */
+:root{
+  --bg:#F2F5F9; --surface:#FFFFFF; --sunk:#E7EDF5; --ink:#0E1A2C; --muted:#4F5F77; --line:#D2DBE7;
+  --accent:#1B5BD4; --accent-ink:#FFFFFF; --accent-soft:#DCE7FB;
+  --s1:#1D5FD6; --s2:#C2620A; --s3:#8A3FA8;
+  --eden:#2F6FE0; --surv:#0F8FB3; --old:#3A3F9E; --dead:#9AA7B8;
+  --ok:#17845A; --ok-soft:#D9F1E6; --warn:#A86A00; --warn-soft:#FBEBCB; --bad:#C23434; --bad-soft:#F9DDDD;
+  --code-bg:#0F1A2B; --code-ink:#D6E2F2; --code-dim:#7F93AE; --code-hl:#8EC1FF; --code-str:#9FD8B8; --code-warn:#FFB4A8;
+  --f-ui:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0A111D; --surface:#101A2A; --sunk:#0D1624; --ink:#E2E9F4; --muted:#93A3BB; --line:#223149;
+  --accent:#5B96F5; --accent-ink:#081120; --accent-soft:#15284A;
+  --s1:#4A86E8; --s2:#CC7222; --s3:#A963C4;
+  --eden:#4A86E8; --surv:#2AA8C9; --old:#7A7FE0; --dead:#4D5B70;
+  --ok:#3FBF8A; --ok-soft:#10301F; --warn:#E0A33A; --warn-soft:#33270E; --bad:#F06A6A; --bad-soft:#3A1717;
+  --code-bg:#060C16; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0A111D; --surface:#101A2A; --sunk:#0D1624; --ink:#E2E9F4; --muted:#93A3BB; --line:#223149;
+  --accent:#5B96F5; --accent-ink:#081120; --accent-soft:#15284A;
+  --s1:#4A86E8; --s2:#CC7222; --s3:#A963C4;
+  --eden:#4A86E8; --surv:#2AA8C9; --old:#7A7FE0; --dead:#4D5B70;
+  --ok:#3FBF8A; --ok-soft:#10301F; --warn:#E0A33A; --warn-soft:#33270E; --bad:#F06A6A; --bad-soft:#3A1717;
+  --code-bg:#060C16; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:16px;line-height:1.65}
+a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+:not(pre)>code{background:var(--sunk);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+h1,h2,h3,h4{margin:0;text-wrap:balance;line-height:1.25}
+p{margin:0}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.shell{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:24px 80px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px}
+@media (max-width:980px){.shell{grid-template-columns:1fr;gap:0}}
+
+/* mục lục */
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:4px}
+.toc .brand{font-weight:800;font-size:1rem;letter-spacing:-.01em;margin-bottom:12px}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.toc a{display:flex;gap:10px;text-decoration:none;color:var(--muted);font-size:.86rem;padding:5px 8px;border-radius:6px;line-height:1.35}
+.toc a span{font-family:var(--f-mono);font-size:.74rem;min-width:18px;color:var(--muted);padding-top:2px}
+.toc a:hover{background:var(--sunk);color:var(--ink)}
+.toc a.on{background:var(--accent-soft);color:var(--ink);font-weight:600}
+@media (max-width:980px){
+  .toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;max-height:none;background:var(--bg);margin-inline:-20px;padding:10px 20px;border-bottom:1px solid var(--line)}
+  .toc .brand{display:none}
+  .toc ol{flex-direction:row;overflow-x:auto;gap:4px;scrollbar-width:none}
+  .toc a{white-space:nowrap;font-size:.8rem}
+}
+
+main{min-width:0;display:flex;flex-direction:column;gap:64px}
+.hero{display:flex;flex-direction:column;gap:14px;padding-top:8px}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.hero h1{font-size:clamp(2rem,4.6vw,3.1rem);font-weight:800;letter-spacing:-.025em}
+.hero .lede{font-size:1.08rem;color:var(--muted);max-width:66ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.facts span{font-family:var(--f-mono);font-size:.76rem;background:var(--surface);border:1px solid var(--line);padding:4px 10px;border-radius:999px;color:var(--muted)}
+
+section.ch{display:flex;flex-direction:column;gap:20px;scroll-margin-top:72px}
+.ch-head{display:flex;flex-direction:column;gap:6px;border-top:2px solid var(--ink);padding-top:14px}
+.ch-head h2{font-size:clamp(1.45rem,2.6vw,1.9rem);font-weight:800;letter-spacing:-.015em}
+.ch-head p{color:var(--muted);max-width:68ch}
+h3{font-size:1.12rem;font-weight:700;margin-top:6px}
+h4{font-size:.98rem;font-weight:700}
+.prose{display:flex;flex-direction:column;gap:12px;max-width:72ch}
+.prose ul,.prose ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+
+.ask{background:var(--accent-soft);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.ask b{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.ask ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:3px}
+.callout{border-left:3px solid var(--accent);padding:10px 14px;background:var(--surface);border-radius:0 8px 8px 0;max-width:76ch}
+.callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-color:var(--bad);background:var(--bad-soft)}
+.callout.ok{border-color:var(--ok);background:var(--ok-soft)}
+.callout b.t{display:block;margin-bottom:2px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+
+pre.code{background:var(--code-bg);color:var(--code-ink);border-radius:var(--r);padding:14px 16px;overflow-x:auto;font-family:var(--f-mono);font-size:.8rem;line-height:1.6;margin:0;max-width:100%}
+pre.code .c{color:var(--code-dim)} pre.code .h{color:var(--code-hl);font-weight:600} pre.code .s{color:var(--code-str)} pre.code .w{color:var(--code-warn);font-weight:600}
+.real{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--ok);font-weight:600;letter-spacing:.03em}
+.real::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.cap{font-size:.84rem;color:var(--muted);max-width:76ch}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--sunk)}
+td.n{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td code{white-space:nowrap}
+
+/* kiến trúc */
+.arch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.arch{grid-template-columns:1fr}}
+.arch .blk{border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.arch .blk h4{font-size:.9rem}
+.arch .blk p{font-size:.84rem;color:var(--muted)}
+.arch .lane{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--f-mono);font-size:.8rem}
+.arch .lane span{background:var(--sunk);padding:5px 10px;border-radius:6px}
+.arch .lane i{color:var(--muted);font-style:normal}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill.shared{background:var(--accent-soft);color:var(--accent)}
+
+/* vùng nhớ tương tác */
+.mem{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px}
+.mem>*{min-width:0}
+@media (max-width:860px){.mem{grid-template-columns:1fr}}
+@media (max-width:520px){.areas{grid-template-columns:1fr}}
+.area{min-width:0}
+.chip{overflow-wrap:anywhere}
+.codelines{background:var(--code-bg);border-radius:var(--r);padding:10px 0;font-family:var(--f-mono);font-size:.8rem;overflow-x:auto}
+.codelines button{display:block;width:100%;text-align:left;background:transparent;border:0;color:var(--code-ink);padding:4px 14px;white-space:pre;font-family:inherit;font-size:inherit;border-left:3px solid transparent}
+.codelines button:hover{background:#ffffff0d}
+.codelines button.on{background:#5b96f526;border-left-color:var(--code-hl)}
+.codelines .ln{color:var(--code-dim);margin-right:12px}
+.areas{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.area{border:1px dashed var(--line);border-radius:8px;padding:10px;min-height:96px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.area.heap{grid-column:1/-1}
+.area h4{font-size:.82rem;display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.area .items{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:.74rem;padding:3px 8px;border-radius:6px;background:var(--sunk);border:1px solid var(--line);transition:background-color .3s,border-color .3s}
+.chip.new{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.chip.gone{text-decoration:line-through;opacity:.5}
+.memnote{margin-top:10px;font-size:.9rem}
+
+/* object layout */
+.objrow{display:flex;flex-wrap:wrap;gap:3px;align-items:stretch;font-family:var(--f-mono);font-size:.72rem}
+.objrow div{padding:6px 8px;border-radius:4px;display:flex;flex-direction:column;justify-content:center;min-height:44px}
+.objrow .hdr{background:var(--accent);color:var(--accent-ink)}
+.objrow .kl{background:var(--s3);color:#fff}
+.objrow .fld{background:var(--sunk);border:1px solid var(--line)}
+.objrow .pad{background:repeating-linear-gradient(45deg,var(--sunk),var(--sunk) 4px,var(--surface) 4px,var(--surface) 8px);border:1px dashed var(--line);color:var(--muted)}
+.objrow small{opacity:.85}
+.objrow div{min-width:58px}
+
+/* GC simulator */
+.sim{display:flex;flex-direction:column;gap:14px}
+.sim-ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 13px;font-weight:500;font-size:.88rem}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.sim-ctrl label{font-size:.86rem;color:var(--muted);display:flex;gap:6px;align-items:center}
+.sim-ctrl input[type=range]{width:110px;accent-color:var(--accent)}
+.heapviz{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
+.heapviz .old{grid-column:1/-1}
+@media (max-width:640px){.heapviz{grid-template-columns:1fr 1fr}.heapviz .eden{grid-column:1/-1}}
+.gen{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);min-width:0}
+.gen h4{font-size:.8rem;display:flex;justify-content:space-between;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.gen h4 small{font-family:var(--f-mono);color:var(--muted);font-weight:400}
+.gen.to h4::after{content:"đích copy kế tiếp";font-size:.68rem;font-weight:500;color:var(--surv)}
+.cells{display:grid;gap:4px}
+.eden .cells{grid-template-columns:repeat(8,minmax(0,1fr))}
+.surv .cells{grid-template-columns:repeat(4,minmax(0,1fr))}
+.old .cells{grid-template-columns:repeat(16,minmax(0,1fr))}
+@media (max-width:640px){.old .cells{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.cell{aspect-ratio:1;border-radius:4px;background:var(--sunk);display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:.66rem;color:#fff;font-weight:600;transition:background-color .25s,transform .25s;max-width:100%}
+.cell.e{background:var(--eden)} .cell.s{background:var(--surv)} .cell.o{background:var(--old)}
+.cell.lt{box-shadow:inset 0 0 0 2px var(--warn)}
+.cell.dead{background:var(--dead);color:transparent}
+.cell.dying{background:var(--bad);transform:scale(.8)}
+.sim-stats{display:flex;flex-wrap:wrap;gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:110px}
+.stat b{display:block;font-family:var(--f-mono);font-size:1.15rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.74rem;color:var(--muted)}
+.simlog{background:var(--code-bg);color:var(--code-ink);font-family:var(--f-mono);font-size:.76rem;border-radius:8px;padding:10px 12px;height:150px;overflow:auto;display:flex;flex-direction:column;gap:3px}
+.simlog .w{color:var(--code-warn)} .simlog .h{color:var(--code-hl)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.oom{display:none;background:var(--bad-soft);border:1px solid var(--bad);border-radius:8px;padding:10px 12px;font-family:var(--f-mono);font-size:.82rem;color:var(--bad)}
+.oom.show{display:block}
+
+/* G1 regions */
+.regions{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px}
+@media (max-width:640px){.regions{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.rg{aspect-ratio:1;border-radius:3px;font-family:var(--f-mono);font-size:.6rem;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+.rg.E{background:var(--eden)} .rg.S{background:var(--surv)} .rg.O{background:var(--old)} .rg.H{background:var(--s2)} .rg.F{background:var(--sunk);color:var(--muted)}
+.rg.C{outline:2px solid var(--bad);outline-offset:-2px}
+
+/* charts */
+.chart{position:relative;min-width:0}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .grid line{stroke:var(--line);stroke-width:1}
+.chart .ax text,.chart text.ax{fill:var(--muted);font-family:var(--f-mono);font-size:10.5px}
+.chart text.lbl{font-family:var(--f-ui);font-size:11.5px;font-weight:600}
+.chart text.val{fill:var(--ink);font-family:var(--f-mono);font-size:11px}
+.chart .hit{fill:transparent}
+.chart .xh{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.78rem;box-shadow:0 6px 18px #0b16281f;min-width:150px;z-index:3;display:none}
+.tip .tt{font-weight:700;margin-bottom:3px}
+.tip .tr{display:flex;justify-content:space-between;gap:12px;font-family:var(--f-mono);font-size:.74rem}
+.tip .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.chart-legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+.chart-title{font-weight:700;font-size:.95rem;margin-bottom:2px}
+
+/* container calc */
+.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px}
+@media (max-width:860px){.calc{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.82rem;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.field label output{font-family:var(--f-mono);font-weight:600;color:var(--accent)}
+.field input[type=range]{width:100%;accent-color:var(--accent)}
+.field small{color:var(--muted);font-size:.76rem}
+.fields{display:flex;flex-direction:column;gap:12px}
+.budget{display:flex;flex-direction:column;gap:12px}
+.bar{position:relative;height:38px;border-radius:6px;background:var(--sunk);overflow:visible;display:flex}
+.bar .seg{height:100%;border-right:2px solid var(--surface);transition:width .3s}
+.bar .seg:first-child{border-radius:6px 0 0 6px}
+.bar .limit{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink)}
+.bar .limit span{position:absolute;top:-20px;transform:translateX(-50%);font-family:var(--f-mono);font-size:.7rem;white-space:nowrap;color:var(--ink)}
+.brows{display:flex;flex-direction:column;gap:4px;font-size:.84rem}
+.brows div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:3px}
+.brows i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.brows b{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.verdict{border-radius:8px;padding:10px 12px;font-weight:600;font-size:.9rem;display:flex;gap:8px;align-items:flex-start}
+.verdict.ok{background:var(--ok-soft);color:var(--ok)} .verdict.warn{background:var(--warn-soft);color:var(--warn)} .verdict.bad{background:var(--bad-soft);color:var(--bad)}
+.verdict span{color:var(--ink);font-weight:400}
+
+/* playbooks */
+.pb{display:flex;flex-direction:column;gap:12px}
+.pb .sym{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sev{font-family:var(--f-mono);font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.04em}
+.sev.bad{background:var(--bad-soft);color:var(--bad)} .sev.warn{background:var(--warn-soft);color:var(--warn)}
+.steps{counter-reset:s;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px}
+.steps li::before{content:counter(s);font-family:var(--f-mono);font-size:.74rem;font-weight:700;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-top:2px}
+
+/* gc log annotate */
+.logline{font-family:var(--f-mono);font-size:.8rem;background:var(--code-bg);color:var(--code-ink);border-radius:8px;padding:12px 14px;overflow-x:auto;white-space:nowrap}
+.logline span{border-bottom:2px solid;padding-bottom:1px}
+.logline .a1{border-color:var(--s1)} .logline .a2{border-color:var(--surv)} .logline .a3{border-color:var(--s2)} .logline .a4{border-color:var(--s3)} .logline .a5{border-color:var(--ok)}
+.anno{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;font-size:.84rem}
+.anno div{border-top:3px solid;padding-top:6px}
+
+/* Q&A */
+.qa{display:flex;flex-direction:column;gap:8px}
+.qa details{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.qa summary{cursor:pointer;padding:12px 14px;font-weight:600;list-style:none;display:flex;gap:10px;align-items:flex-start}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{content:"+";font-family:var(--f-mono);color:var(--accent);font-weight:700;width:14px;flex:none}
+.qa details[open] summary::before{content:"−"}
+.qa .ans{padding:0 16px 14px 38px;display:flex;flex-direction:column;gap:8px;font-size:.94rem}
+.qa .ans ul{margin:0;padding-left:20px}
+.lvl{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:10px;font-weight:700}
+.trap{font-family:var(--f-mono);font-size:.66rem;background:var(--warn-soft);color:var(--warn);padding:1px 6px;border-radius:4px;margin-left:auto;flex:none;align-self:center}
+.foot{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="toc" aria-label="Mục lục">
+  <div class="brand">Sổ tay JVM</div>
+  <ol id="toc">
+    <li><a href="#map"><span>00</span>Bản đồ và cách học</a></li>
+    <li><a href="#arch"><span>01</span>Kiến trúc JVM</a></li>
+    <li><a href="#memory"><span>02</span>Các vùng nhớ</a></li>
+    <li><a href="#object"><span>03</span>Một object nặng bao nhiêu</a></li>
+    <li><a href="#gc"><span>04</span>GC hoạt động thế nào</a></li>
+    <li><a href="#sim"><span>05</span>Mô phỏng GC</a></li>
+    <li><a href="#collectors"><span>06</span>Các bộ GC và số đo thật</a></li>
+    <li><a href="#jit"><span>07</span>JIT và warm-up</a></li>
+    <li><a href="#flags"><span>08</span>Tham số tuning</a></li>
+    <li><a href="#container"><span>09</span>JVM trong Docker/ECS</a></li>
+    <li><a href="#gclog"><span>10</span>Đọc GC log</a></li>
+    <li><a href="#incidents"><span>11</span>Xử lý sự cố</a></li>
+    <li><a href="#spring"><span>12</span>Lỗi bộ nhớ trong Spring Boot</a></li>
+    <li><a href="#monitor"><span>13</span>Giám sát production</a></li>
+    <li><a href="#interview"><span>14</span>Câu hỏi phỏng vấn</a></li>
+    <li><a href="#lab"><span>15</span>Lab tự làm và cách kể</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero" id="top">
+  <div class="eyebrow">Java 21 · HotSpot · Spring Boot</div>
+  <h1>Sổ tay JVM chuyên sâu</h1>
+  <p class="lede">Từ kiến trúc, bộ nhớ, GC, JIT đến cách xử lý OOM, memory leak, deadlock, CPU 100% và chạy Java trong container. Mọi log và con số có nhãn <span class="real">ĐO THẬT</span> đều lấy từ các chương trình mình đã chạy trên OpenJDK 21, máy 2 vCPU, để bạn thấy JVM thật sự trả về gì.</p>
+  <div class="facts"><span>OpenJDK 21.0.12</span><span>G1 mặc định</span><span>2 vCPU · 8 GB RAM</span><span>15 chương</span><span>32 câu hỏi phỏng vấn</span></div>
+</header>
+
+<!-- 00 -->
+<section class="ch" id="map">
+  <div class="ch-head"><div class="eyebrow">Chương 00</div><h2>Bản đồ và cách học</h2>
+    <p>Chữ "JVM Optimization" trong CV mở ra bốn tầng câu hỏi. Interviewer thường đi từ trên xuống, dừng ở tầng bạn bắt đầu lúng túng.</p></div>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Tầng</th><th>Họ kiểm tra</th><th>Chương</th></tr></thead>
+    <tbody>
+      <tr><td><b>1. Kiến thức nền</b></td><td>Vùng nhớ, heap/stack, GC cơ bản, Young/Old</td><td>01 – 05</td></tr>
+      <tr><td><b>2. Hiểu cơ chế</b></td><td>Chọn GC, JIT, tham số, vì sao một tham số có tác dụng</td><td>06 – 08</td></tr>
+      <tr><td><b>3. Thực chiến</b></td><td>Đọc log, heap dump, thread dump, OOM, leak, container bị kill</td><td>09 – 13</td></tr>
+      <tr><td><b>4. Câu chuyện của bạn</b></td><td>"Kể một lần bạn tối ưu JVM": bối cảnh, đo gì, sửa gì, kết quả</td><td>15</td></tr>
+    </tbody></table></div>
+  <div class="callout warn"><b class="t">Nguyên tắc của người làm lâu năm</b>Tối ưu JVM luôn theo thứ tự <b>đo → tìm nguyên nhân → sửa code → mới chỉnh tham số</b>. Phần lớn sự cố bộ nhớ trong thực tế nằm ở code (load cả bảng, cache không giới hạn, hàng đợi vô hạn), không nằm ở cờ <code>-XX</code>. Ứng viên nào trả lời "em tăng <code>-Xmx</code>" ngay từ đầu thường bị đánh giá thấp.</div>
+</section>
+
+<!-- 01 -->
+<section class="ch" id="arch">
+  <div class="ch-head"><div class="eyebrow">Chương 01</div><h2>Kiến trúc JVM</h2>
+    <p>JVM là một chương trình C++ đọc bytecode và biến nó thành lệnh máy. Nó có ba khối lớn.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>JDK, JRE, JVM khác nhau thế nào?</li><li>Vì sao Java "viết một lần, chạy mọi nơi"?</li><li>Class được nạp vào JVM ra sao?</li></ul></div>
+  <div class="arch">
+    <div class="lane"><span>OrderService.java</span><i>→ javac →</i><span>OrderService.class (bytecode)</span><i>→ JVM →</i><span>lệnh máy x86 / ARM</span></div>
+    <div class="blk"><h4>1. Class Loader Subsystem</h4><p><b>Loading</b> đọc file .class. <b>Linking</b> kiểm tra bytecode, cấp chỗ cho biến static, nối tham chiếu. <b>Initialization</b> chạy khối <code>static {}</code>.</p><p>Ba loader theo cha-con: Bootstrap → Platform → Application. Cơ chế <b>parent delegation</b>: hỏi cha trước, nên không ai tự viết đè được <code>java.lang.String</code>.</p></div>
+    <div class="blk"><h4>2. Runtime Data Areas</h4><p>Bộ nhớ khi chạy: <b>Heap</b>, <b>Metaspace</b>, <b>Code cache</b> dùng chung; mỗi thread có <b>Stack</b>, <b>PC register</b>, <b>Native stack</b> riêng. Chương 02 đi sâu.</p></div>
+    <div class="blk"><h4>3. Execution Engine</h4><p><b>Interpreter</b> chạy từng lệnh bytecode, khởi động nhanh nhưng chậm. <b>JIT</b> (C1, C2) dịch đoạn code chạy nhiều thành lệnh máy tối ưu. <b>Garbage Collector</b> dọn heap.</p></div>
+  </div>
+  <div class="prose">
+    <p><b>JDK</b> = JRE + công cụ phát triển (<code>javac</code>, <code>jcmd</code>, <code>jstack</code>, <code>jmap</code>, <code>jfr</code>). <b>JRE</b> = JVM + thư viện chuẩn. Từ Java 11 không còn bản JRE riêng; người ta dùng JDK hoặc tự đóng gói runtime gọn bằng <code>jlink</code>.</p>
+    <p>"Viết một lần chạy mọi nơi" vì <code>javac</code> chỉ tạo bytecode trung gian; mỗi hệ điều hành có JVM riêng dịch bytecode đó thành lệnh máy.</p>
+    <p><b>Lưu ý cho production:</b> image Docker nên dùng JDK đầy đủ (hoặc ít nhất có <code>jcmd</code>), vì khi có sự cố bạn cần công cụ để lấy heap dump, thread dump ngay trong container. Image chỉ có JRE tối giản sẽ khiến bạn "mù" lúc cần nhất.</p>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="ch" id="memory">
+  <div class="ch-head"><div class="eyebrow">Chương 02</div><h2>Các vùng nhớ khi chạy</h2>
+    <p>Bấm từng dòng code bên trái để xem dữ liệu của dòng đó nằm ở vùng nhớ nào.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Vùng nào dùng chung giữa các thread, vùng nào riêng?</li><li><code>Order o = new Order()</code>: biến <code>o</code> và object nằm ở đâu?</li><li>Biến static nằm ở đâu? String pool nằm ở đâu?</li><li>PermGen khác Metaspace thế nào?</li></ul></div>
+  <div class="mem">
+    <div>
+      <div class="codelines" id="codelines" role="list"></div>
+      <p class="memnote" id="memnote"></p>
+    </div>
+    <div class="areas">
+      <div class="area" id="a-stack"><h4>Thread stack (main) <span class="pill">riêng từng thread</span></h4><div class="items"></div></div>
+      <div class="area" id="a-meta"><h4>Metaspace <span class="pill">dùng chung · ngoài heap</span></h4><div class="items"></div></div>
+      <div class="area heap" id="a-heap"><h4>Heap <span class="pill shared">dùng chung · GC quản lý</span></h4><div class="items"></div></div>
+    </div>
+  </div>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Vùng</th><th>Chứa gì</th><th>Phạm vi</th><th>Lỗi khi đầy</th><th>Cờ điều chỉnh</th></tr></thead>
+    <tbody>
+      <tr><td><b>Heap</b></td><td>Mọi object và mảng, String pool (từ Java 7), giá trị biến static (nằm trong object <code>Class</code>)</td><td>Chung</td><td><code>OutOfMemoryError: Java heap space</code></td><td><code>-Xms -Xmx</code>, <code>MaxRAMPercentage</code></td></tr>
+      <tr><td><b>Stack</b></td><td>Mỗi lần gọi hàm là một frame: biến cục bộ kiểu nguyên thuỷ, tham chiếu, giá trị trả về</td><td>Riêng thread</td><td><code>StackOverflowError</code> (đệ quy sâu)</td><td><code>-Xss</code> (mặc định 1 MB)</td></tr>
+      <tr><td><b>Metaspace</b></td><td>Thông tin class: tên, method, bytecode, hằng số</td><td>Chung, bộ nhớ native</td><td><code>OutOfMemoryError: Metaspace</code></td><td><code>-XX:MaxMetaspaceSize</code> (mặc định không giới hạn)</td></tr>
+      <tr><td><b>Code cache</b></td><td>Mã máy do JIT sinh ra</td><td>Chung, native</td><td>JIT ngừng biên dịch, app chậm hẳn</td><td><code>-XX:ReservedCodeCacheSize</code> (240 MB)</td></tr>
+      <tr><td><b>Direct memory</b></td><td><code>ByteBuffer.allocateDirect</code>, Netty, NIO</td><td>Chung, native</td><td><code>OutOfMemoryError: Direct buffer memory</code></td><td><code>-XX:MaxDirectMemorySize</code></td></tr>
+      <tr><td><b>PC register, native stack</b></td><td>Vị trí lệnh đang chạy; stack cho code C/C++ (JNI)</td><td>Riêng thread</td><td>Hiếm</td><td></td></tr>
+    </tbody></table></div>
+  <div class="prose">
+    <h3>PermGen → Metaspace (Java 8)</h3>
+    <p>Trước Java 8, thông tin class nằm trong <b>PermGen</b>, một phần của heap có kích thước cố định, rất hay gặp <code>OutOfMemoryError: PermGen space</code> khi redeploy ứng dụng nhiều lần. Java 8 bỏ PermGen, chuyển sang <b>Metaspace</b> nằm ở bộ nhớ native và tự giãn. Đổi lại, nếu có rò rỉ class (ClassLoader leak) thì Metaspace phình mãi, nên trên production vẫn nên đặt <code>MaxMetaspaceSize</code>.</p>
+    <h3>Câu bẫy kinh điển</h3>
+    <pre class="code"><span class="h">String</span> a = <span class="s">"loc"</span>;              <span class="c">// lấy từ String pool</span>
+<span class="h">String</span> b = <span class="s">"loc"</span>;              <span class="c">// cùng object trong pool</span>
+<span class="h">String</span> c = <span class="h">new</span> String(<span class="s">"loc"</span>);  <span class="c">// object MỚI trên heap</span>
+a == b      <span class="c">// true  : cùng tham chiếu</span>
+a == c      <span class="c">// false : khác object</span>
+a == c.intern() <span class="c">// true : intern() trả về bản trong pool</span></pre>
+  </div>
+</section>
+
+<!-- 03 -->
+<section class="ch" id="object">
+  <div class="ch-head"><div class="eyebrow">Chương 03</div><h2>Một object nặng bao nhiêu byte</h2>
+    <p>Hiểu chương này để đọc được heap dump và giải thích vì sao <code>List&lt;Integer&gt;</code> tốn bộ nhớ gấp nhiều lần <code>int[]</code>.</p></div>
+  <div class="prose"><p>Trên JVM 64-bit với heap dưới 32 GB (mặc định bật <b>compressed oops</b>), mỗi object gồm:</p></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:14px">
+    <div><h4 style="margin-bottom:6px">Object <code>OrderDto(long id, String customer, byte[] payload)</code> = 32 byte</h4>
+      <div class="objrow"><div class="hdr" style="flex:8">mark word<small>8 byte · hash, tuổi GC, lock</small></div><div class="kl" style="flex:4">klass<small>4 byte</small></div><div class="fld" style="flex:8">long id<small>8 byte</small></div><div class="fld" style="flex:4">customer<small>4 byte ref</small></div><div class="fld" style="flex:4">payload<small>4 byte ref</small></div><div class="pad" style="flex:4">padding<small>4 byte</small></div></div></div>
+    <div><h4 style="margin-bottom:6px"><code>Integer</code> = 16 byte, trong khi <code>int</code> chỉ 4 byte</h4>
+      <div class="objrow" style="max-width:60%"><div class="hdr" style="flex:8">mark<small>8</small></div><div class="kl" style="flex:4">klass<small>4</small></div><div class="fld" style="flex:4">int value<small>4</small></div></div></div>
+    <p class="cap">Object luôn được làm tròn lên bội số của 8 byte. Mark word chứa <b>tuổi GC chỉ dùng 4 bit</b>, nên một object sống sót tối đa 15 lần Minor GC trước khi bắt buộc lên Old. Đó là lý do <code>MaxTenuringThreshold</code> tối đa là 15.</p>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Kiểm chứng bằng <code>jcmd GC.class_histogram</code></h4>
+      <p class="cap" style="margin-bottom:8px">Lấy tổng byte chia số instance trong histogram của chương trình LeakApp:</p>
+      <div class="tblwrap"><table><thead><tr><th>Class</th><th>Byte / object</th></tr></thead><tbody>
+        <tr><td><code>LeakApp$OrderDto</code></td><td class="n">2 297 600 ÷ 71 800 = 32</td></tr>
+        <tr><td><code>HashMap$Node</code></td><td class="n">2 330 112 ÷ 72 816 = 32</td></tr>
+        <tr><td><code>String</code></td><td class="n">1 915 032 ÷ 79 793 = 24</td></tr>
+        <tr><td><code>Long</code></td><td class="n">1 726 272 ÷ 71 928 = 24</td></tr>
+      </tbody></table></div></div>
+    <div class="card"><h4 style="margin-bottom:6px">Một triệu số nguyên tốn bao nhiêu?</h4>
+      <div class="tblwrap"><table><thead><tr><th>Cách lưu</th><th>Bộ nhớ</th></tr></thead><tbody>
+        <tr><td><code>int[1_000_000]</code></td><td class="n">≈ 4 MB</td></tr>
+        <tr><td><code>ArrayList&lt;Integer&gt;</code></td><td class="n">≈ 20 MB</td></tr>
+        <tr><td><code>HashMap&lt;Long, Long&gt;</code></td><td class="n">≈ 88 MB</td></tr>
+      </tbody></table></div>
+      <p class="cap" style="margin-top:8px">ArrayList: 4 byte tham chiếu + 16 byte Integer cho mỗi phần tử. HashMap: Node 32 + key Long 24 + value Long 24 + ô trong mảng bucket. Số Integer từ −128 đến 127 được cache sẵn nên không tốn thêm.</p></div>
+  </div>
+  <div class="callout"><b class="t">Shallow size và retained size</b><b>Shallow</b> là kích thước của riêng object đó (OrderDto = 32 byte). <b>Retained</b> là toàn bộ bộ nhớ sẽ được giải phóng nếu object đó bị xoá, gồm cả những gì chỉ nó giữ (OrderDto + String customer + mảng 1 KB payload ≈ 1,1 KB). Khi tìm leak trong heap dump, luôn sắp xếp theo <b>retained size</b>: một <code>HashMap</code> shallow 48 byte có thể đang giữ 1 GB.</div>
+</section>
+
+<!-- 04 -->
+<section class="ch" id="gc">
+  <div class="ch-head"><div class="eyebrow">Chương 04</div><h2>Garbage Collection hoạt động thế nào</h2>
+    <p>GC không tìm rác. Nó tìm những gì <b>còn sống</b>, mọi thứ còn lại là rác.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>GC biết object nào là rác bằng cách nào? GC roots gồm những gì?</li><li>Vì sao chia Young và Old? Minor, Major, Full GC khác nhau ra sao?</li><li>Stop-the-world là gì? Vì sao có GC rồi mà Java vẫn bị memory leak?</li></ul></div>
+  <div class="grid2">
+    <div class="card prose"><h4>1. Reachability: đi từ GC roots</h4>
+      <p>GC bắt đầu từ các <b>GC roots</b> rồi lần theo mọi tham chiếu. Object nào không có đường đi tới là rác.</p>
+      <ul><li>Biến cục bộ và tham số trên stack của các thread đang chạy</li><li>Biến static của các class đã nạp</li><li>Monitor đang bị <code>synchronized</code> giữ</li><li>Tham chiếu từ JNI, thread đang sống</li></ul>
+      <p>Java không đếm tham chiếu (reference counting), nên hai object trỏ vòng vào nhau mà không ai từ root trỏ tới vẫn bị dọn bình thường.</p></div>
+    <div class="card prose"><h4>2. Ba kiểu dọn</h4>
+      <ul><li><b>Mark–Sweep:</b> đánh dấu object sống, xoá phần còn lại. Nhanh nhưng để lại lỗ hổng (phân mảnh).</li>
+      <li><b>Mark–Compact:</b> đánh dấu rồi dồn object sống về một phía. Hết phân mảnh nhưng tốn thời gian di chuyển. Dùng cho Old.</li>
+      <li><b>Copying:</b> copy object sống sang vùng trống, bỏ nguyên vùng cũ. Chi phí tỉ lệ với số object <b>sống</b>, không phụ thuộc lượng rác. Dùng cho Young.</li></ul></div>
+  </div>
+  <div class="prose">
+    <h3>3. Giả thuyết thế hệ (generational hypothesis)</h3>
+    <p>Quan sát thực tế: <b>phần lớn object chết rất trẻ</b> (DTO của một request, biến tạm trong vòng lặp), số ít sống rất lâu (cache, bean của Spring). Vì vậy heap chia làm hai:</p>
+    <ul>
+      <li><b>Young Generation</b> = Eden + Survivor S0 + Survivor S1. Object mới sinh ở Eden. Dọn thường xuyên bằng <b>copying</b>, rẻ vì đa số đã chết.</li>
+      <li><b>Old Generation</b>: object sống sót đủ số lần Minor GC (tuổi ≥ <code>MaxTenuringThreshold</code>) được <b>promote</b> lên đây. Dọn ít hơn và đắt hơn.</li>
+    </ul>
+    <div class="tblwrap"><table><thead><tr><th>Loại GC</th><th>Dọn vùng nào</th><th>Khi nào xảy ra</th><th>Chi phí</th></tr></thead><tbody>
+      <tr><td><b>Minor GC</b> (Young GC)</td><td>Young</td><td>Eden đầy (allocation failure)</td><td>Thấp, vài ms đến vài chục ms</td></tr>
+      <tr><td><b>Major GC</b></td><td>Old</td><td>Old gần đầy</td><td>Cao; G1 và ZGC làm phần lớn song song với app</td></tr>
+      <tr><td><b>Full GC</b></td><td>Toàn bộ heap và Metaspace</td><td>Hết chỗ promote, <code>System.gc()</code>, Metaspace đầy</td><td>Rất cao, dừng toàn bộ app. Với G1, thấy Full GC là dấu hiệu có vấn đề</td></tr>
+    </tbody></table></div>
+    <h3>4. Những chi tiết làm nên tốc độ</h3>
+    <ul>
+      <li><b>TLAB</b> (Thread-Local Allocation Buffer): mỗi thread được cấp riêng một mẩu Eden. Cấp phát object chỉ là tăng một con trỏ, không cần khoá, nhanh như cấp phát trên stack trong C.</li>
+      <li><b>Card table / Remembered set</b>: ghi lại những chỗ Old đang trỏ sang Young, để Minor GC không phải quét toàn bộ Old. Mỗi lần gán tham chiếu, JVM chèn thêm một đoạn code nhỏ gọi là <b>write barrier</b> để cập nhật bảng này.</li>
+      <li><b>Stop-the-world và safepoint</b>: một số pha GC cần dừng tất cả thread của app. JVM chỉ dừng được thread khi thread chạm tới <b>safepoint</b> (cuối vòng lặp, lời gọi hàm). Một vòng lặp đếm rất dài không có safepoint có thể khiến cả hệ thống chờ (time-to-safepoint).</li>
+    </ul>
+    <h3>5. Vì sao có GC vẫn bị memory leak?</h3>
+    <p>GC chỉ dọn object <b>không còn ai tham chiếu</b>. Memory leak trong Java là object <b>vẫn còn được tham chiếu nhưng không bao giờ dùng lại</b>: một <code>static Map</code> làm cache không xoá, listener đăng ký mà không huỷ, <code>ThreadLocal</code> trong thread pool không <code>remove()</code>. Với GC, chúng vẫn "sống".</p>
+  </div>
+</section>
+
+<!-- 05 -->
+<section class="ch" id="sim">
+  <div class="ch-head"><div class="eyebrow">Chương 05</div><h2>Mô phỏng GC theo thế hệ</h2>
+    <p>Bấm "Chạy ứng dụng" để app liên tục tạo object. Eden đầy thì Minor GC tự chạy. Bật "Memory leak" để xem Old đầy dần rồi dẫn tới OutOfMemoryError.</p></div>
+  <div class="card sim">
+    <div class="sim-ctrl">
+      <button class="btn primary" type="button" id="sim-run">Chạy ứng dụng</button>
+      <button class="btn" type="button" id="sim-alloc">Tạo 1 object</button>
+      <button class="btn" type="button" id="sim-minor">Minor GC</button>
+      <button class="btn" type="button" id="sim-full">Full GC</button>
+      <button class="btn danger" type="button" id="sim-leak" aria-pressed="false">Memory leak: tắt</button>
+      <button class="btn" type="button" id="sim-reset">Làm lại</button>
+      <label for="sim-tenure">Tuổi lên Old <input type="range" id="sim-tenure" min="1" max="6" value="3"><output id="sim-tenure-v" class="mono">3</output></label>
+    </div>
+    <div class="legend"><span><i style="background:var(--eden)"></i>Eden</span><span><i style="background:var(--surv)"></i>Survivor</span><span><i style="background:var(--old)"></i>Old</span><span><i style="background:var(--dead)"></i>Đã chết, chờ GC dọn</span><span><i style="background:var(--bad)"></i>Đang bị dọn</span><span><i style="box-shadow:inset 0 0 0 2px var(--warn);background:var(--sunk)"></i>Object bị leak (luôn được tham chiếu)</span></div>
+    <div class="heapviz">
+      <div class="gen eden"><h4>Eden <small id="eden-c"></small></h4><div class="cells" id="c-eden"></div></div>
+      <div class="gen surv" id="g-s0"><h4>S0 <small id="s0-c"></small></h4><div class="cells" id="c-s0"></div></div>
+      <div class="gen surv" id="g-s1"><h4>S1 <small id="s1-c"></small></h4><div class="cells" id="c-s1"></div></div>
+      <div class="gen old"><h4>Old Generation <small id="old-c"></small></h4><div class="cells" id="c-old"></div></div>
+    </div>
+    <div class="oom" id="sim-oom" role="alert">java.lang.OutOfMemoryError: Java heap space — Full GC xong vẫn không còn chỗ trong Old để promote. Ứng dụng dừng.</div>
+    <div class="sim-stats">
+      <div class="stat"><b id="st-minor">0</b><span>Minor GC</span></div>
+      <div class="stat"><b id="st-full">0</b><span>Full GC</span></div>
+      <div class="stat"><b id="st-prom">0</b><span>Object đã lên Old</span></div>
+      <div class="stat"><b id="st-pause">0</b><span>ms dừng (mô phỏng)</span></div>
+    </div>
+    <div class="simlog" id="simlog" aria-live="polite"></div>
+    <p class="cap">Số trong ô là tuổi (số lần sống sót qua Minor GC). Tỉ lệ object trong mô phỏng: khoảng 80% chết ngay sau vài lần tạo object khác, 15% sống vừa, 5% sống lâu. Thời gian dừng chỉ để so sánh tương đối: Minor GC tốn theo số object sống phải copy, Full GC tốn theo cả vùng Old.</p>
+  </div>
+  <div class="callout"><b class="t">Điều cần nhìn ra khi chơi</b>Minor GC xong, Eden luôn trống hoàn toàn và chỉ một Survivor có dữ liệu; hai Survivor đổi vai sau mỗi lần. Khi bật leak, đáy của Old sau mỗi Full GC <b>cao dần</b>: đó chính là hình dạng của memory leak trên biểu đồ giám sát, giống hệt số đo thật ở chương 11.</div>
+</section>
+
+<!-- 06 -->
+<section class="ch" id="collectors">
+  <div class="ch-head"><div class="eyebrow">Chương 06</div><h2>Các bộ GC và số đo thật</h2>
+    <p>Không có GC tốt nhất. Mỗi bộ GC chọn một điểm trong tam giác <b>throughput · độ trễ (pause) · bộ nhớ</b>.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Java đang có những GC nào? Mặc định là gì?</li><li>G1 hoạt động thế nào? Humongous object là gì?</li><li>ZGC làm sao dừng dưới 1 ms? Khi nào chọn Parallel thay vì G1?</li></ul></div>
+  <div class="tblwrap"><table>
+    <thead><tr><th>GC</th><th>Cờ</th><th>Ý tưởng</th><th>Hợp với</th></tr></thead>
+    <tbody>
+      <tr><td><b>Serial</b></td><td><code>-XX:+UseSerialGC</code></td><td>Một thread GC, dừng toàn bộ app</td><td>App nhỏ, container 1 CPU. JVM <b>tự chọn</b> Serial khi thấy ít hơn 2 CPU hoặc dưới khoảng 1792 MB RAM</td></tr>
+      <tr><td><b>Parallel</b></td><td><code>-XX:+UseParallelGC</code></td><td>Nhiều thread GC, vẫn dừng toàn bộ, tối đa throughput</td><td>Batch job, xử lý dữ liệu, không quan tâm độ trễ từng request</td></tr>
+      <tr><td><b>G1</b> <span class="pill shared">mặc định từ Java 9</span></td><td><code>-XX:+UseG1GC</code></td><td>Chia heap thành region, ưu tiên dọn region nhiều rác trước, cố giữ pause dưới mục tiêu (200 ms)</td><td>Hầu hết web service, heap vài GB đến vài chục GB</td></tr>
+      <tr><td><b>ZGC</b></td><td><code>-XX:+UseZGC</code> (+ <code>-XX:+ZGenerational</code> ở Java 21)</td><td>Làm gần như mọi việc song song với app, pause dưới 1 ms bất kể heap lớn cỡ nào</td><td>API cần độ trễ thấp, heap rất lớn</td></tr>
+      <tr><td><b>Shenandoah</b></td><td><code>-XX:+UseShenandoahGC</code></td><td>Cũng nén heap song song, do Red Hat phát triển</td><td>Tương tự ZGC; có sẵn trong nhiều bản OpenJDK</td></tr>
+    </tbody></table></div>
+  <h3>Số đo thật: cùng một chương trình, bốn bộ GC</h3>
+  <p class="cap"><span class="real">ĐO THẬT</span> Chương trình <code>GcBench</code> giữ khoảng 200 MB object sống lâu, liên tục tạo 60 triệu mảng 256 byte và thay thế ngẫu nhiên object cũ. Heap 512 MB, máy 2 vCPU, chạy một lần mỗi GC. Đây là tải cực nặng cho GC, chỉ dùng để thấy sự khác biệt về hình dạng, không phải điểm benchmark chính thức.</p>
+  <div class="grid2">
+    <div class="card"><div class="chart-title">Lần dừng lâu nhất</div><p class="cap">mili giây, thang log</p><div class="chart" id="ch-maxpause"></div></div>
+    <div class="card"><div class="chart-title">Thời gian chạy xong</div><p class="cap">mili giây, càng ngắn càng tốt</p><div class="chart" id="ch-elapsed"></div></div>
+  </div>
+  <div class="tblwrap"><table>
+    <thead><tr><th>GC</th><th>Số lần dừng</th><th>Trung vị (ms)</th><th>p99 (ms)</th><th>Dài nhất (ms)</th><th>Tổng dừng (ms)</th><th>Chạy xong (ms)</th></tr></thead>
+    <tbody id="bench-rows"></tbody></table></div>
+  <div class="prose">
+    <p><b>Đọc kết quả:</b> Parallel xong nhanh nhất vì dồn toàn lực vào throughput. ZGC dừng lâu nhất chỉ 0,17 ms, nhanh hơn Serial hơn 800 lần, nhưng tổng thời gian chạy không nhanh hơn vì nó lấy CPU để làm việc song song với app (trên máy chỉ 2 vCPU thì càng rõ). G1 nằm giữa. Đây chính là tam giác đánh đổi: <b>muốn pause thấp thì trả bằng CPU và bộ nhớ</b>.</p>
+  </div>
+  <h3>G1 nhìn từ bên trong</h3>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px">
+    <div class="regions" id="regions" aria-label="Minh hoạ heap G1 chia thành các region"></div>
+    <div class="legend"><span><i style="background:var(--eden)"></i>E: Eden</span><span><i style="background:var(--surv)"></i>S: Survivor</span><span><i style="background:var(--old)"></i>O: Old</span><span><i style="background:var(--s2)"></i>H: Humongous</span><span><i style="background:var(--sunk);border:1px solid var(--line)"></i>Trống</span><span><i style="background:var(--sunk);outline:2px solid var(--bad);outline-offset:-2px"></i>Được chọn dọn trong lần Mixed GC tới</span></div>
+    <div class="prose">
+      <ul>
+        <li>Heap chia thành nhiều <b>region</b> bằng nhau (1 đến 32 MB). Máy thật trong thí nghiệm: <code>region size 1024K</code>. Một region có thể là Eden lúc này, lúc khác là Old.</li>
+        <li><b>Young GC</b>: copy object sống từ các region Eden/Survivor sang region trống.</li>
+        <li>Khi Old chiếm quá ngưỡng (mặc định 45% heap, <code>InitiatingHeapOccupancyPercent</code>), G1 chạy <b>concurrent marking</b> song song với app để biết region Old nào nhiều rác.</li>
+        <li>Sau đó là các lần <b>Mixed GC</b>: dọn Young cộng thêm vài region Old nhiều rác nhất. Đó là nghĩa của chữ "Garbage First".</li>
+        <li><b>Humongous</b>: object lớn hơn nửa region (ví dụ mảng 600 KB khi region 1 MB) được cấp nguyên các region liền nhau. Tạo nhiều object lớn kiểu này (đọc cả file vào <code>byte[]</code>) dễ gây phân mảnh và Full GC.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout"><b class="t">ZGC dừng dưới 1 ms bằng cách nào?</b>ZGC di chuyển object <b>trong lúc app vẫn chạy</b>. Nó gắn thêm vài bit trạng thái vào chính con trỏ (colored pointers) và chèn <b>load barrier</b>: mỗi khi app đọc một tham chiếu, barrier kiểm tra object đã bị dời chưa, nếu rồi thì sửa con trỏ ngay tại chỗ. Các pha dừng chỉ còn quét root nên rất ngắn. Java 21 có ZGC thế hệ (<code>-XX:+ZGenerational</code>), Java 23 bật mặc định, Java 24 bỏ hẳn bản không thế hệ.</div>
+</section>
+
+<!-- 07 -->
+<section class="ch" id="jit">
+  <div class="ch-head"><div class="eyebrow">Chương 07</div><h2>JIT, warm-up và escape analysis</h2>
+    <p>Vì sao request đầu tiên sau khi deploy luôn chậm, và vì sao code Java chạy lâu lại nhanh ngang C++.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>JIT là gì? C1 và C2 khác nhau ra sao?</li><li>Vì sao app mới khởi động chậm? Xử lý thế nào?</li><li>Escape analysis là gì?</li></ul></div>
+  <div class="prose">
+    <p><b>Tiered compilation</b> (mặc định): code bắt đầu chạy bằng <b>interpreter</b>. Method được gọi vài trăm lần thì <b>C1</b> biên dịch nhanh, tối ưu nhẹ, kèm đếm thống kê. Gọi tới vài nghìn lần thì <b>C2</b> biên dịch lại, tối ưu mạnh dựa trên thống kê đã thu: inline method, bỏ kiểm tra thừa, cuộn vòng lặp. Nếu giả định của C2 sai (ví dụ một interface bỗng có class triển khai mới), JVM <b>deoptimize</b> và quay về bản chậm hơn.</p>
+  </div>
+  <div class="card">
+    <span class="real">ĐO THẬT</span>
+    <div class="chart-title" style="margin-top:6px">Thời gian mỗi lần gọi hàm <code>price()</code> theo thời gian</div>
+    <p class="cap">nano giây / lần gọi, thang log; mỗi đợt 20 000 lần gọi</p>
+    <div class="chart-legend" id="lg-warm"></div>
+    <div class="chart" id="ch-warm"></div>
+  </div>
+  <div class="prose">
+    <p>Với JIT đầy đủ, hàm chạy <b>110 ns</b> ở đợt đầu, xuống <b>7 ns</b> từ đợt thứ 6: nhanh gấp khoảng 15 lần. Chỉ thông dịch (<code>-Xint</code>) thì đứng mãi ở khoảng 370 ns, chậm hơn 50 lần. Các gai nhọn hiếm hoi ở đợt 10 và 28 là nhiễu do GC hoặc hệ điều hành lập lịch, thường gặp khi đo micro-benchmark không dùng JMH.</p>
+    <p>Nhật ký biên dịch thật (<code>-XX:+PrintCompilation</code>), cột thứ ba là tầng biên dịch:</p>
+  </div>
+  <pre class="code"><span class="c">// thời điểm(ms) id tầng  method</span>
+33    9       <span class="h">3</span>       WarmUp::price (44 bytes)                    <span class="c">// C1 có đếm thống kê</span>
+33   10       <span class="h">4</span>       WarmUp::price (44 bytes)                    <span class="c">// C2, bản tối ưu</span>
+36    9       3       WarmUp::price (44 bytes)   <span class="w">made not entrant</span>  <span class="c">// bỏ bản C1, chuyển hẳn sang C2</span></pre>
+  <div class="grid2">
+    <div class="card prose"><h4>Xử lý warm-up trên production</h4>
+      <ul><li>Cấu hình <b>readiness probe</b> / health check của ECS hoặc load balancer chỉ nhận traffic khi app đã sẵn sàng; có thể tự gọi vài API quan trọng lúc khởi động (warm-up endpoint).</li>
+      <li>Deploy kiểu rolling, tăng traffic từ từ (slow start trên ALB).</li>
+      <li>Java 21+: <b>CDS / AppCDS</b> giảm thời gian nạp class. Spring Boot 3.3+ hỗ trợ CDS; CRaC và GraalVM native image là lựa chọn mạnh hơn nhưng phức tạp.</li></ul></div>
+    <div class="card prose"><h4>Escape analysis <span class="real">ĐO THẬT</span></h4>
+      <p>Nếu C2 chứng minh được object không "thoát" ra khỏi method, nó không cấp phát object trên heap mà tách thành các biến cục bộ (scalar replacement). Hàm tạo 500 triệu <code>new Point(x, y)</code>:</p>
+      <div class="tblwrap"><table><thead><tr><th>Chế độ</th><th>Số lần GC</th><th>Thời gian</th></tr></thead><tbody>
+        <tr><td>Mặc định (bật)</td><td class="n">0</td><td class="n">321 ms</td></tr>
+        <tr><td><code>-XX:-DoEscapeAnalysis</code></td><td class="n">150</td><td class="n">1 757 ms</td></tr>
+      </tbody></table></div>
+      <p class="cap">Bài học: object ngắn hạn, nhỏ, không thoát khỏi method gần như miễn phí. Đừng "tối ưu" bằng cách tự dùng lại object (object pool) cho những trường hợp này.</p></div>
+  </div>
+</section>
+
+<!-- 08 -->
+<section class="ch" id="flags">
+  <div class="ch-head"><div class="eyebrow">Chương 08</div><h2>Tham số tuning nên biết</h2>
+    <p>Giá trị mặc định ở cột thứ ba được lấy thật từ <code>java -XX:+PrintFlagsFinal</code> trên Java 21.</p></div>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Cờ</th><th>Tác dụng</th><th>Mặc định</th><th>Khi nào chỉnh</th></tr></thead>
+    <tbody>
+      <tr><td><code>-Xms</code> / <code>-Xmx</code></td><td>Heap ban đầu / tối đa</td><td>1/64 và 1/4 RAM</td><td>Server cố định: đặt bằng nhau để JVM không phải co giãn heap, tránh khựng và thấy lỗi thiếu RAM ngay lúc khởi động</td></tr>
+      <tr><td><code>-XX:MaxRAMPercentage</code></td><td>Heap tối đa theo % RAM container</td><td class="n">25%</td><td>Container: thường 60–75%. Ưu tiên cờ này hơn <code>-Xmx</code> cứng, để đổi kích thước task không phải sửa cờ</td></tr>
+      <tr><td><code>-XX:MaxGCPauseMillis</code></td><td>Mục tiêu pause của G1</td><td class="n">200</td><td>Giảm khi cần độ trễ thấp; đặt quá thấp khiến G1 GC liên tục, giảm throughput</td></tr>
+      <tr><td><code>-XX:InitiatingHeapOccupancyPercent</code></td><td>Old chiếm bao nhiêu % thì G1 bắt đầu concurrent marking</td><td class="n">45</td><td>Hay bị Full GC vì marking không kịp: hạ xuống</td></tr>
+      <tr><td><code>-XX:MaxTenuringThreshold</code></td><td>Số lần sống sót trước khi lên Old</td><td class="n">15</td><td>Hiếm khi cần chỉnh với G1</td></tr>
+      <tr><td><code>-Xss</code></td><td>Kích thước stack mỗi thread</td><td class="n">1 MB</td><td>Rất nhiều thread: giảm (512k). Đệ quy sâu: tăng</td></tr>
+      <tr><td><code>-XX:MaxMetaspaceSize</code></td><td>Giới hạn Metaspace</td><td>không giới hạn</td><td>Production nên đặt (256m) để leak class lộ ra thành lỗi rõ ràng</td></tr>
+      <tr><td><code>-XX:MaxDirectMemorySize</code></td><td>Giới hạn direct buffer</td><td>bằng <code>-Xmx</code></td><td>App dùng Netty, WebFlux, NIO nhiều</td></tr>
+      <tr><td><code>-XX:+HeapDumpOnOutOfMemoryError</code><br><code>-XX:HeapDumpPath=/dumps</code></td><td>Tự lưu heap dump khi OOM</td><td>tắt</td><td><b>Luôn bật</b> trên production, trỏ tới ổ có đủ chỗ (file dump to bằng heap đang dùng)</td></tr>
+      <tr><td><code>-XX:+ExitOnOutOfMemoryError</code></td><td>Thoát ngay khi OOM</td><td>tắt</td><td>Container: để orchestrator khởi động lại task thay vì app ở trạng thái nửa sống nửa chết</td></tr>
+      <tr><td><code>-Xlog:gc*:file=/logs/gc.log:time,uptime:filecount=5,filesize=20m</code></td><td>Ghi GC log có xoay vòng</td><td>tắt</td><td>Nên bật trên production, chi phí rất nhỏ</td></tr>
+      <tr><td><code>-XX:+UseStringDeduplication</code></td><td>G1 gộp các String trùng nội dung</td><td>tắt</td><td>Heap dump cho thấy rất nhiều String trùng</td></tr>
+    </tbody></table></div>
+  <div class="callout bad"><b class="t">Những cờ không nên dùng nữa</b><code>-XX:PermSize</code>, <code>-XX:MaxPermSize</code> (đã bỏ từ Java 8), <code>-XX:+UseConcMarkSweepGC</code> (CMS đã bị xoá ở Java 14), <code>-XX:+PrintGCDetails</code> (thay bằng <code>-Xlog:gc*</code> từ Java 9). Nhắc tới mấy cờ này cho Java 17/21 là dấu hiệu kiến thức cũ.</div>
+  <h3>Cấu hình mẫu cho một Spring Boot API trên ECS</h3>
+  <pre class="code">JAVA_TOOL_OPTIONS="
+  <span class="h">-XX:MaxRAMPercentage=70</span>            <span class="c"># heap = 70% RAM của task</span>
+  -XX:+UseG1GC                        <span class="c"># ghi rõ, phòng task 1 vCPU bị chọn Serial</span>
+  -XX:MaxMetaspaceSize=256m
+  -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps
+  -XX:+ExitOnOutOfMemoryError
+  -Xlog:gc*:file=/logs/gc.log:time,uptime:filecount=5,filesize=20m"</pre>
+</section>
+
+<!-- 09 -->
+<section class="ch" id="container">
+  <div class="ch-head"><div class="eyebrow">Chương 09</div><h2>JVM trong Docker và ECS</h2>
+    <p>Lỗi phổ biến nhất khi chạy Java trong container: đặt heap bằng đúng RAM của container. Heap chỉ là một phần bộ nhớ JVM dùng.</p></div>
+  <div class="ask"><b>Phỏng vấn sẽ hỏi</b><ul><li>Container 2 GB thì đặt <code>-Xmx2g</code> được không?</li><li>Container bị kill với exit code 137 nghĩa là gì?</li><li>JVM có biết giới hạn RAM của container không?</li></ul></div>
+  <div class="prose">
+    <p>Từ Java 10 (và 8u191), JVM đọc giới hạn cgroup của container (<code>UseContainerSupport</code> bật mặc định), nên "RAM" trong mọi phép tính bên dưới là RAM của container, không phải của máy chủ.</p>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Heap tối đa JVM tự chọn</h4>
+      <div class="tblwrap"><table><thead><tr><th>RAM</th><th>Mặc định (25%)</th><th>MaxRAMPercentage=75</th></tr></thead><tbody>
+        <tr><td class="n">512 MB</td><td class="n">128 MB</td><td class="n">384 MB</td></tr>
+        <tr><td class="n">1 GB</td><td class="n">256 MB</td><td class="n">768 MB</td></tr>
+        <tr><td class="n">2 GB</td><td class="n">512 MB</td><td class="n">1 536 MB</td></tr>
+        <tr><td class="n">4 GB</td><td class="n">1 024 MB</td><td class="n">3 072 MB</td></tr>
+      </tbody></table></div>
+      <p class="cap" style="margin-top:8px">Không đặt gì thì task 2 GB chỉ dùng 512 MB heap, lãng phí 75% tiền RAM.</p></div>
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">JVM tự đổi GC theo số CPU</h4>
+      <pre class="code" style="font-size:.74rem">$ java -XX:ActiveProcessorCount=1 -Xlog:gc -version
+[0.004s][info][gc] Using <span class="w">Serial</span>
+$ java -XX:ActiveProcessorCount=2 -Xlog:gc -version
+[0.004s][info][gc] Using <span class="h">G1</span></pre>
+      <p class="cap" style="margin-top:8px">Task ECS 1 vCPU (1024 CPU units) sẽ âm thầm chạy <b>Serial GC</b>, mỗi lần GC dừng cả app. Ghi rõ <code>-XX:+UseG1GC</code> nếu muốn G1.</p></div>
+  </div>
+  <h3>Máy tính ngân sách bộ nhớ</h3>
+  <p class="cap">Kéo các thanh để xem tổng bộ nhớ JVM so với giới hạn container. Các con số khác heap là ước lượng cho một Spring Boot API cỡ vừa; đo thật bằng Native Memory Tracking ở bên dưới.</p>
+  <div class="card calc">
+    <div class="fields">
+      <div class="field"><label for="f-ram">RAM container <output id="o-ram"></output></label><input type="range" id="f-ram" min="512" max="8192" step="256" value="2048"><small>Memory của task definition ECS / limit của Docker</small></div>
+      <div class="field"><label for="f-pct">MaxRAMPercentage <output id="o-pct"></output></label><input type="range" id="f-pct" min="25" max="100" step="5" value="75"><small>Heap = RAM × %</small></div>
+      <div class="field"><label for="f-thr">Số thread <output id="o-thr"></output></label><input type="range" id="f-thr" min="20" max="800" step="10" value="250"><small>Tomcat mặc định tối đa 200 + HikariCP + scheduler + GC + JIT</small></div>
+      <div class="field"><label for="f-meta">Metaspace <output id="o-meta"></output></label><input type="range" id="f-meta" min="60" max="400" step="10" value="150"><small>Spring Boot vừa: 100–200 MB</small></div>
+      <div class="field"><label for="f-dir">Direct buffer, Netty, thư viện native <output id="o-dir"></output></label><input type="range" id="f-dir" min="0" max="512" step="16" value="64"></div>
+    </div>
+    <div class="budget">
+      <div class="bar" id="b-bar"></div>
+      <div class="brows" id="b-rows"></div>
+      <div class="verdict" id="b-verdict"></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="real">ĐO THẬT</span><h4 style="margin:6px 0">Native Memory Tracking với heap 256 MB</h4>
+      <pre class="code" style="font-size:.74rem">$ java -Xmx256m -XX:NativeMemoryTracking=summary ...
+$ jcmd &lt;pid&gt; VM.native_memory summary scale=MB
+Total: reserved=1666MB, <span class="h">committed=322MB</span>
+Java Heap  (reserved=256MB, committed=256MB)
+GC         (reserved=42MB,  <span class="w">committed=42MB</span>)
+Code       (reserved=242MB, committed=7MB)
+Shared class space (committed=13MB)
+Thread     (reserved=19MB,  committed=1MB)</pre>
+      <p class="cap" style="margin-top:8px">Heap 256 MB nhưng JVM đã cam kết 322 MB. Riêng cấu trúc dữ liệu của G1 (remembered set, card table, bitmap đánh dấu) chiếm 42 MB, khoảng 16% heap. App thật có nhiều thread và class hơn thì phần ngoài heap còn lớn hơn.</p></div>
+    <div class="card prose"><h4>Exit code 137 = bị hệ điều hành giết</h4>
+      <p>137 = 128 + 9 (SIGKILL). Tổng bộ nhớ của tiến trình vượt giới hạn container, kernel OOM killer giết luôn, <b>không có OutOfMemoryError, không có heap dump, log dừng đột ngột</b>. Trên ECS lý do dừng task thường ghi <code>OutOfMemoryError: Container killed due to memory usage</code>.</p>
+      <p>Phân biệt hai loại:</p>
+      <ul><li><b>Java OOM</b>: heap đầy, JVM ném <code>OutOfMemoryError</code>, có stack trace và heap dump nếu đã bật cờ.</li>
+      <li><b>Container OOMKilled</b>: heap có thể còn trống, nhưng heap + phần ngoài heap vượt giới hạn. Cách sửa: giảm <code>MaxRAMPercentage</code>, giảm số thread, hoặc tăng RAM task.</li></ul></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="ch" id="gclog">
+  <div class="ch-head"><div class="eyebrow">Chương 10</div><h2>Đọc GC log</h2>
+    <p>Kỹ năng phân biệt người đã làm thật. Mọi dòng dưới đây là log thật của G1 từ thí nghiệm.</p></div>
+  <div class="logline"><span class="a1">[0.539s]</span>[info][gc] <span class="a2">GC(0)</span> <span class="a3">Pause Young (Normal) (G1 Evacuation Pause)</span> <span class="a4">7M-&gt;6M(128M)</span> <span class="a5">4.213ms</span></div>
+  <div class="anno">
+    <div style="border-color:var(--s1)"><b>0.539s</b><br>thời điểm tính từ lúc JVM khởi động</div>
+    <div style="border-color:var(--surv)"><b>GC(0)</b><br>số thứ tự lần GC</div>
+    <div style="border-color:var(--s2)"><b>Pause Young (Normal)</b><br>loại pause và lý do: Eden đầy</div>
+    <div style="border-color:var(--s3)"><b>7M-&gt;6M(128M)</b><br>heap trước → sau GC (tổng heap đã cấp)</div>
+    <div style="border-color:var(--ok)"><b>4.213ms</b><br>thời gian app bị dừng</div>
+  </div>
+  <h3>Một chu kỳ G1 đầy đủ <span class="real">ĐO THẬT</span></h3>
+  <pre class="code">[7.509s] GC(15) Pause Young (Concurrent Start) 82M-&gt;79M   7.695ms  <span class="c">// Old vượt ngưỡng → bắt đầu đánh dấu song song</span>
+[7.516s] GC(16) Pause Remark                   79M-&gt;<span class="h">33M</span>   1.433ms  <span class="c">// kết thúc đánh dấu, region toàn rác được trả ngay</span>
+[7.521s] GC(16) Pause Cleanup                  33M-&gt;33M   0.133ms
+[8.731s] GC(17) Pause Young (Prepare Mixed)    47M-&gt;47M   6.267ms
+[10.854s] GC(18) Pause Young (Mixed)           71M-&gt;65M   7.740ms  <span class="c">// dọn Young + vài region Old nhiều rác</span>
+
+<span class="c">// Còn đây là ứng dụng bị leak, ngay trước khi chết:</span>
+[12.080s] GC(30) <span class="w">Pause Full (G1 Compaction Pause) 127M-&gt;127M(128M) 49.590ms</span>
+[12.119s] GC(33) <span class="w">Pause Full (G1 Compaction Pause) 127M-&gt;127M(128M) 37.046ms</span>
+[12.162s] GC(34) <span class="w">Pause Full (G1 Compaction Pause) 127M-&gt;127M(128M) 42.846ms</span></pre>
+  <div class="grid2">
+    <div class="callout ok"><b class="t">Dấu hiệu khoẻ mạnh</b>Chủ yếu là Pause Young vài ms đến vài chục ms. Heap sau Remark hoặc Mixed GC quay về một đáy ổn định (ở đây khoảng 27–35 MB). Không có Pause Full.</div>
+    <div class="callout bad"><b class="t">Dấu hiệu bệnh</b><ul style="margin:4px 0 0;padding-left:18px"><li><b>Pause Full</b> xuất hiện với G1</li><li>Trước → sau gần bằng nhau (<code>127M-&gt;127M</code>): GC không thu hồi được gì</li><li>Đáy heap sau mỗi chu kỳ tăng dần: memory leak</li><li><code>to-space exhausted</code> / <code>Evacuation Failure</code>: hết chỗ để copy</li><li><code>Humongous Allocation</code> xuất hiện dày</li></ul></div>
+  </div>
+  <p class="cap">Công cụ đọc GC log trực quan: GCeasy (gceasy.io), GCViewer. Upload log là có biểu đồ pause, throughput, đáy heap. Lưu ý không upload log của khách hàng lên dịch vụ ngoài nếu hợp đồng không cho phép.</p>
+</section>
+
+<!-- 11 -->
+<section class="ch" id="incidents">
+  <div class="ch-head"><div class="eyebrow">Chương 11</div><h2>Xử lý sự cố: các quy trình chuẩn</h2>
+    <p>Mỗi sự cố có cùng khung: triệu chứng → lệnh lấy bằng chứng → đọc bằng chứng → nguyên nhân → cách sửa. Log trong chương này là output thật.</p></div>
+
+  <div class="card pb">
+    <div class="sym"><span class="sev bad">SỰ CỐ 1</span><h3 style="margin:0">OutOfMemoryError: Java heap space và memory leak</h3></div>
+    <pre class="code">$ java -Xmx128m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=leak.hprof LeakApp
+<span class="w">java.lang.OutOfMemoryError: Java heap space</span>
+Dumping heap to leak.hprof ...
+Heap dump file created [143506558 bytes in 0.092 secs]</pre>
+    <div class="card" style="background:var(--bg)">
+      <span class="real">ĐO THẬT</span>
+      <div class="chart-title" style="margin-top:6px">Heap còn lại sau mỗi lần GC</div>
+      <p class="cap">MB, heap tối đa 128 MB; cùng một ứng dụng, chỉ khác cache có giới hạn hay không</p>
+      <div class="chart-legend" id="lg-saw"></div>
+      <div class="chart" id="ch-saw"></div>
+      <p class="cap" style="margin-top:6px">Bản có giới hạn (chỉ giữ 20 000 đơn gần nhất) dao động nhưng luôn quay về đáy khoảng 30 MB. Bản leak không có đáy: mỗi lần GC xong lại cao hơn, đến 12 giây thì đầy 127/128 MB, Full GC liên tục rồi chết.</p>
+    </div>
+    <h4>Quy trình</h4>
+    <ol class="steps">
+      <li><div>Xem loại OOM trong log: <code>Java heap space</code> (heap), <code>GC overhead limit exceeded</code> (Parallel GC: hơn 98% thời gian dành cho GC mà thu hồi dưới 2%), <code>Metaspace</code>, <code>Direct buffer memory</code>, <code>unable to create native thread</code>. Mỗi loại một hướng xử lý.</div></li>
+      <li><div>Lấy bằng chứng. Nếu đã bật <code>HeapDumpOnOutOfMemoryError</code> thì có sẵn file. Nếu app còn sống mà heap tăng dần, chụp <b>histogram hai lần cách nhau vài phút</b> để xem class nào tăng:
+        <pre class="code" style="margin-top:6px">$ jcmd &lt;pid&gt; GC.class_histogram | head
+<span class="c">  # t = 2s</span>
+   1:   50473   23079848  [B
+   2:   22216     710912  java.util.HashMap$Node
+   4:   21200     678400  <span class="h">LeakApp$OrderDto</span>
+<span class="c">  # t = 7s</span>
+   1:  151673   77323048  [B
+   2:   72816    2330112  java.util.HashMap$Node
+   3:   71800    2297600  <span class="w">LeakApp$OrderDto</span>      <span class="c">← tăng 3,4 lần, cùng nhịp với HashMap$Node</span></pre>
+        Cần heap dump đầy đủ: <code>jcmd &lt;pid&gt; GC.heap_dump /dumps/heap.hprof</code>.</div></li>
+      <li><div>Mở heap dump bằng <b>Eclipse MAT</b>: báo cáo <b>Leak Suspects</b>, rồi <b>Dominator Tree</b> sắp theo retained size. Chọn object to nhất, dùng "Path to GC Roots" để biết <b>ai đang giữ nó</b>. Ở ví dụ này đường đi là <code>LeakApp.CACHE</code> (static) → <code>HashMap</code> → hàng chục nghìn <code>OrderDto</code>.</div></li>
+      <li><div>Sửa nguyên nhân trong code: giới hạn cache (Caffeine <code>maximumSize</code>, <code>expireAfterWrite</code>), phân trang thay vì load hết, xoá listener, gọi <code>ThreadLocal.remove()</code>. Chỉ tăng <code>-Xmx</code> khi đã chứng minh app <b>cần</b> nhiều bộ nhớ hơn (dữ liệu sống thật sự lớn) chứ không phải đang rò.</div></li>
+      <li><div>Kiểm chứng: chạy lại tải (K6), theo dõi đáy heap sau GC trong vài giờ đứng yên.</div></li>
+    </ol>
+    <div class="callout warn"><b class="t">Lưu ý khi lấy heap dump trên production</b>Lấy dump làm app dừng vài giây đến vài chục giây (heap càng lớn càng lâu), file to bằng heap đang dùng, và <b>chứa dữ liệu thật của người dùng</b> (email, số điện thoại, token). Hãy rút instance khỏi load balancer trước khi dump, lưu file ở nơi được bảo vệ và xoá sau khi phân tích.</div>
+  </div>
+
+  <div class="card pb">
+    <div class="sym"><span class="sev bad">SỰ CỐ 2</span><h3 style="margin:0">Deadlock: request treo mãi, CPU thấp</h3></div>
+    <pre class="code">$ jstack &lt;pid&gt;        <span class="c"># hoặc: jcmd &lt;pid&gt; Thread.print</span>
+<span class="w">Found one Java-level deadlock:</span>
+"transfer-A-to-B":
+  waiting to lock monitor 0x00007f4330050920 (object 0x00000000a8518228, a java.lang.Object),
+  which is held by "transfer-B-to-A"
+"transfer-B-to-A":
+  waiting to lock monitor 0x00007f432c0015b0 (object 0x00000000a8518218, a java.lang.Object),
+  which is held by "transfer-A-to-B"
+
+"transfer-A-to-B":
+	at Deadlock.transfer(<span class="h">Deadlock.java:11</span>)
+	- waiting to lock &lt;0x00000000a8518228&gt;
+	- locked &lt;0x00000000a8518218&gt;
+<span class="w">Found 1 deadlock.</span></pre>
+    <ol class="steps">
+      <li><div>Chụp thread dump <b>2–3 lần cách nhau 5–10 giây</b>. Thread đứng yên ở cùng một chỗ qua các lần chụp mới là thread kẹt thật.</div></li>
+      <li><div>JVM tự phát hiện deadlock của <code>synchronized</code> và <code>ReentrantLock</code>, in ra ở cuối dump như trên, kèm số dòng code.</div></li>
+      <li><div>Cách sửa: luôn lấy khoá theo <b>cùng một thứ tự</b> (ví dụ theo id tài khoản nhỏ trước), dùng <code>tryLock(timeout)</code>, giảm phạm vi khoá. Ở tầng DB: đặt lock timeout, khoá các dòng theo thứ tự id.</div></li>
+    </ol>
+    <div class="callout"><b class="t">Treo nhưng không phải deadlock</b>Thường gặp hơn deadlock: tất cả thread Tomcat đang <code>WAITING</code> ở <code>HikariPool.getConnection</code> (hết connection DB), hoặc kẹt ở gọi HTTP sang dịch vụ khác không đặt timeout. Thread dump cho thấy ngay hàng trăm thread cùng đứng ở một dòng.</div>
+  </div>
+
+  <div class="card pb">
+    <div class="sym"><span class="sev warn">SỰ CỐ 3</span><h3 style="margin:0">CPU 100%</h3></div>
+    <pre class="code">$ top -H -p &lt;pid&gt;          <span class="c"># -H: hiển thị từng thread</span>
+  PID USER   %CPU  TIME+    COMMAND
+  <span class="w">561</span> root   <span class="w">99.9</span>  0:03.12  price-cal+
+  545 root    0.0  0:00.00  GC Thread+
+
+$ jstack &lt;pid&gt; | grep -A3 '"price-calculator"'
+"price-calculator" #18 [<span class="h">561</span>] cpu=3627.61ms elapsed=3.68s nid=<span class="h">561</span> runnable
+   java.lang.Thread.State: RUNNABLE
+	at HotLoop.lambda$main$0(<span class="h">HotLoop.java:3</span>)</pre>
+    <ol class="steps">
+      <li><div><code>top -H</code> tìm thread ăn CPU, lấy số thread id (561).</div></li>
+      <li><div>Tìm thread đó trong thread dump. <b>Chi tiết ít người biết:</b> Java 8 và 11 in <code>nid=0x231</code> dạng hex, nên phải <code>printf '%x' 561</code> rồi tìm. Java 21 in thẳng <code>[561]</code> và <code>nid=561</code> dạng thập phân, kèm luôn <code>cpu=</code> mỗi thread, như output thật ở trên.</div></li>
+      <li><div>Nếu thread ăn CPU là <code>GC Thread</code> chứ không phải thread của app: heap gần đầy, GC chạy liên tục. Quay về quy trình sự cố 1.</div></li>
+      <li><div>Nguyên nhân hay gặp: vòng lặp vô hạn, regex tệ (catastrophic backtracking), serialize JSON object rất lớn, <code>HashMap</code> dùng đồng thời không đồng bộ.</div></li>
+    </ol>
+  </div>
+
+  <div class="grid2">
+    <div class="card pb"><div class="sym"><span class="sev warn">SỰ CỐ 4</span><h4 style="margin:0">Pause GC dài, API thỉnh thoảng chậm vọt</h4></div>
+      <ol class="steps">
+        <li><div>Đối chiếu thời điểm request chậm với GC log hoặc metric <code>jvm.gc.pause</code>.</div></li>
+        <li><div>Có Pause Full: tìm vì sao (leak, humongous, marking không kịp).</div></li>
+        <li><div>Pause Young dài: Young quá lớn hoặc quá nhiều object sống; xem lại <code>MaxGCPauseMillis</code>.</div></li>
+        <li><div>Pause ngắn nhưng chậm vẫn chậm: có thể là time-to-safepoint, hoặc không phải lỗi GC (DB, mạng).</div></li>
+        <li><div>Cần độ trễ thấp ổn định: thử ZGC, đo lại bằng K6.</div></li>
+      </ol></div>
+    <div class="card pb"><div class="sym"><span class="sev bad">SỰ CỐ 5</span><h4 style="margin:0">Container bị kill (137), không có log lỗi</h4></div>
+      <ol class="steps">
+        <li><div>Xem lý do dừng task trên ECS / <code>docker inspect</code> → <code>OOMKilled: true</code>.</div></li>
+        <li><div>So <code>-Xmx</code> thực tế (<code>jcmd &lt;pid&gt; VM.flags</code>) với RAM task.</div></li>
+        <li><div>Bật <code>-XX:NativeMemoryTracking=summary</code> xem phần ngoài heap (thread, metaspace, direct).</div></li>
+        <li><div>Sửa: <code>MaxRAMPercentage</code> 60–75, giới hạn thread pool, đặt <code>MaxMetaspaceSize</code>, <code>MaxDirectMemorySize</code>.</div></li>
+      </ol></div>
+    <div class="card pb"><div class="sym"><span class="sev warn">SỰ CỐ 6</span><h4 style="margin:0">OutOfMemoryError: Metaspace</h4></div>
+      <p>Class được tạo mãi không được giải phóng: redeploy nhiều lần trên Tomcat (ClassLoader leak), thư viện sinh class động (CGLIB proxy, Groovy script, biểu thức được biên dịch lại mỗi request). Xem số class bằng <code>jcmd &lt;pid&gt; VM.classloader_stats</code> hoặc <code>jstat -class &lt;pid&gt;</code>.</p></div>
+    <div class="card pb"><div class="sym"><span class="sev warn">SỰ CỐ 7</span><h4 style="margin:0">unable to create native thread</h4></div>
+      <p>Không phải heap đầy. Tiến trình đã tạo quá nhiều thread (mỗi thread cần stack riêng ngoài heap) hoặc chạm giới hạn của hệ điều hành. Thường do tạo <code>new Thread()</code> mỗi request hoặc thread pool không giới hạn. Đếm: <code>jcmd &lt;pid&gt; Thread.print | grep -c '^"'</code>.</p></div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="ch" id="spring">
+  <div class="ch-head"><div class="eyebrow">Chương 12</div><h2>Lỗi bộ nhớ hay gặp trong Spring Boot</h2>
+    <p>Đây là chỗ "tối ưu JVM" thật sự diễn ra trong đa số dự án: sửa code, không phải sửa cờ.</p></div>
+  <div class="grid2">
+    <div class="card prose"><h4>1. Load cả bảng vào bộ nhớ</h4>
+      <p>Export CSV, batch gửi mail, báo cáo cuối ngày gọi <code>findAll()</code> trên bảng vài triệu dòng.</p>
+<pre class="code"><span class="c">// Sai: 2 triệu entity nằm cùng lúc trên heap</span>
+List&lt;LogMileage&gt; all = repo.findByDate(yesterday);
+
+<span class="c">// Đúng: đọc từng trang, xử lý xong mới đọc tiếp</span>
+Pageable p = PageRequest.of(0, 1000, Sort.by("id"));
+Slice&lt;LogMileage&gt; s;
+do {
+  s = repo.findByDate(yesterday, p);
+  process(s.getContent());
+  p = s.nextPageable();
+} while (s.hasNext());</pre>
+      <p>Bảng rất lớn thì phân trang theo <b>id lớn hơn id cuối</b> (keyset) thay vì <code>OFFSET</code>, vì OFFSET càng về sau càng chậm.</p></div>
+    <div class="card prose"><h4>2. Persistence context phình to trong batch</h4>
+      <p>Mọi entity JPA đọc hoặc lưu trong một transaction đều được Hibernate giữ lại (first-level cache) cho tới khi transaction kết thúc.</p>
+<pre class="code">for (int i = 0; i &lt; orders.size(); i++) {
+  em.persist(orders.get(i));
+  if (i % 500 == 0) {
+    em.flush();   <span class="c">// đẩy xuống DB</span>
+    em.clear();   <span class="c">// thả các entity khỏi bộ nhớ</span>
+  }
+}</pre>
+      <p>Kèm <code>spring.jpa.properties.hibernate.jdbc.batch_size=500</code> để insert theo lô.</p></div>
+    <div class="card prose"><h4>3. Cache không giới hạn</h4>
+<pre class="code"><span class="c">// Sai: lớn mãi, không bao giờ xoá</span>
+static final Map&lt;Long, Product&gt; CACHE = new ConcurrentHashMap&lt;&gt;();
+
+<span class="c">// Đúng: Caffeine có giới hạn và hết hạn</span>
+Cache&lt;Long, Product&gt; cache = Caffeine.newBuilder()
+    .maximumSize(10_000)
+    .expireAfterWrite(Duration.ofMinutes(10))
+    .recordStats()
+    .build();</pre>
+      <p>Với <code>@Cacheable</code>: <code>spring.cache.caffeine.spec=maximumSize=10000,expireAfterWrite=10m</code>.</p></div>
+    <div class="card prose"><h4>4. Hàng đợi vô hạn của thread pool</h4>
+      <p><code>Executors.newFixedThreadPool(10)</code> dùng <code>LinkedBlockingQueue</code> <b>không giới hạn</b>. Tải tăng đột biến, task xếp hàng trên heap tới khi OOM. Pool mặc định cho <code>@Async</code> của Spring Boot cũng có <code>queue-capacity</code> không giới hạn.</p>
+<pre class="code">spring.task.execution.pool.core-size=8
+spring.task.execution.pool.max-size=16
+spring.task.execution.pool.queue-capacity=500</pre>
+      <p>Kèm chính sách khi đầy hàng đợi (<code>CallerRunsPolicy</code> hoặc từ chối có kiểm soát).</p></div>
+    <div class="card prose"><h4>5. ThreadLocal trong thread pool</h4>
+      <p>Thread của Tomcat được dùng lại cho request sau. Không xoá thì dữ liệu của request trước (user, tenant) còn nằm đó: vừa leak bộ nhớ, vừa có thể lộ dữ liệu sang người khác.</p>
+<pre class="code">try {
+  CurrentUser.set(user);
+  chain.doFilter(req, res);
+} finally {
+  CurrentUser.remove();   <span class="c">// bắt buộc</span>
+}</pre></div>
+    <div class="card prose"><h4>6. Đọc cả file hoặc response vào bộ nhớ</h4>
+      <p><code>Files.readAllBytes</code>, <code>MultipartFile.getBytes()</code> với file 200 MB tạo object humongous trong G1. Dùng stream: <code>InputStream</code> đẩy thẳng sang S3 (<code>RequestBody.fromInputStream</code>), <code>StreamingResponseBody</code> khi export.</p>
+      <p>Cũng như vậy với log: <code>log.debug("data=" + bigObject)</code> vẫn tạo chuỗi lớn kể cả khi tắt debug. Dùng <code>log.debug("data={}", bigObject)</code>.</p></div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="ch" id="monitor">
+  <div class="ch-head"><div class="eyebrow">Chương 13</div><h2>Giám sát JVM trên production</h2>
+    <p>Không đo thì không tối ưu được. Spring Boot Actuator + Micrometer có sẵn các chỉ số JVM.</p></div>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Metric Micrometer</th><th>Ý nghĩa</th><th>Cảnh báo khi</th></tr></thead>
+    <tbody>
+      <tr><td><code>jvm.memory.used{area=heap}</code></td><td>Heap đang dùng</td><td>Đáy sau GC tăng đều nhiều giờ</td></tr>
+      <tr><td><code>jvm.gc.live.data.size</code></td><td>Lượng dữ liệu sống sau GC (đáy)</td><td>Vượt 70–80% heap tối đa</td></tr>
+      <tr><td><code>jvm.gc.pause</code></td><td>Số lần và thời gian dừng</td><td>p99 vượt ngân sách độ trễ, xuất hiện Full GC</td></tr>
+      <tr><td><code>jvm.gc.memory.promoted</code></td><td>Tốc độ object lên Old</td><td>Tăng đột ngột: object sống lâu hơn dự kiến</td></tr>
+      <tr><td><code>jvm.threads.live</code>, <code>jvm.threads.states</code></td><td>Số thread theo trạng thái</td><td>Tăng mãi, hoặc nhiều BLOCKED</td></tr>
+      <tr><td><code>jvm.classes.loaded</code></td><td>Số class đã nạp</td><td>Tăng mãi: leak Metaspace</td></tr>
+      <tr><td><code>hikaricp.connections.pending</code></td><td>Request chờ connection DB</td><td>Lớn hơn 0 kéo dài</td></tr>
+    </tbody></table></div>
+  <div class="grid2">
+    <div class="card prose"><h4>Java Flight Recorder: hộp đen của JVM</h4>
+      <p>Có sẵn trong JDK, chi phí khoảng 1%, bật được ngay trên production mà không cần khởi động lại.</p>
+<pre class="code">$ jcmd &lt;pid&gt; JFR.start duration=120s filename=/tmp/rec.jfr
+$ jfr print --events jdk.GarbageCollection /tmp/rec.jfr
+$ jfr summary /tmp/rec.jfr</pre>
+      <p>Mở file bằng JDK Mission Control để xem method nào cấp phát nhiều nhất, khoá nào bị tranh chấp, GC pause, I/O.</p></div>
+    <div class="card prose"><h4>Bộ lệnh <code>jcmd</code> nên thuộc</h4>
+<pre class="code">jcmd                          <span class="c"># liệt kê tiến trình Java</span>
+jcmd &lt;pid&gt; VM.flags           <span class="c"># cờ đang dùng thật</span>
+jcmd &lt;pid&gt; GC.heap_info       <span class="c"># tình trạng heap</span>
+jcmd &lt;pid&gt; GC.class_histogram <span class="c"># đếm object theo class</span>
+jcmd &lt;pid&gt; GC.heap_dump f.hprof
+jcmd &lt;pid&gt; Thread.print       <span class="c"># thread dump</span>
+jcmd &lt;pid&gt; VM.native_memory summary</pre>
+      <p>Output thật của <code>GC.heap_info</code> với heap 128 MB:</p>
+<pre class="code"> garbage-first heap   total 131072K, used 87497K
+  region size 1024K, 2 young (2048K), 0 survivors (0K)
+ Metaspace       used 195K, committed 384K</pre></div>
+  </div>
+</section>
+
+<!-- 14 -->
+<section class="ch" id="interview">
+  <div class="ch-head"><div class="eyebrow">Chương 14</div><h2>32 câu hỏi phỏng vấn và cách trả lời</h2>
+    <p>Bấm vào câu hỏi để xem câu trả lời. Thử tự trả lời thành tiếng trước khi mở. Nhãn "bẫy" là câu hay bị trả lời sai.</p></div>
+  <div class="qa" id="qa"></div>
+</section>
+
+<!-- 15 -->
+<section class="ch" id="lab">
+  <div class="ch-head"><div class="eyebrow">Chương 15</div><h2>Lab tự làm và cách kể khi phỏng vấn</h2>
+    <p>Cách chắc chắn nhất để trả lời câu "kể một lần bạn tối ưu JVM" là đã thực sự làm. Lab dưới đây mất khoảng hai buổi tối và cho bạn một câu chuyện thật.</p></div>
+  <div class="card pb">
+    <h3 style="margin:0">Lab: tự gây và tự sửa memory leak trong Spring Boot</h3>
+    <ol class="steps">
+      <li><div>Tạo project Spring Boot 3 có Actuator, một API <code>GET /orders/{id}</code> lưu kết quả vào <code>static Map</code> không giới hạn (cố ý gây leak).</div></li>
+      <li><div>Chạy bằng Docker với giới hạn nhỏ: <code>docker run -m 512m -e JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=70 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps -Xlog:gc*:file=/dumps/gc.log" ...</code></div></li>
+      <li><div>Bắn tải bằng K6 với id ngẫu nhiên. Mở <code>/actuator/metrics/jvm.memory.used</code> theo dõi đáy heap tăng dần.</div></li>
+      <li><div>Chụp <code>jcmd GC.class_histogram</code> hai lần, rồi chờ OOM, lấy heap dump. Mở bằng Eclipse MAT, chụp màn hình Leak Suspects và Path to GC Roots.</div></li>
+      <li><div>Sửa bằng Caffeine có <code>maximumSize</code>. Chạy lại K6 cùng kịch bản, so sánh biểu đồ heap và p95 latency trước và sau.</div></li>
+      <li><div>Thử thêm: đặt <code>-m 512m</code> nhưng <code>-Xmx512m</code> để thấy container bị kill 137, rồi sửa bằng <code>MaxRAMPercentage</code>. Thử <code>--cpus=1</code> để thấy JVM tự chọn Serial GC.</div></li>
+      <li><div>Đẩy code, ảnh MAT, GC log và kết quả K6 lên GitHub kèm README. Đây là bằng chứng cụ thể khi được hỏi.</div></li>
+    </ol>
+  </div>
+  <div class="grid2">
+    <div class="card prose"><h4>Cách kể theo STAR (sau khi làm lab)</h4>
+      <p><b>S:</b> "Em muốn hiểu sâu cách xử lý sự cố bộ nhớ nên tự dựng lại một lỗi rất hay gặp: cache không giới hạn trong Spring Boot, chạy trong container 512 MB."</p>
+      <p><b>T:</b> "Mục tiêu là tìm được nguyên nhân chỉ bằng công cụ của JVM, không đoán."</p>
+      <p><b>A:</b> "Em theo dõi đáy heap sau GC qua Actuator thấy tăng đều, chụp histogram hai lần thấy class X tăng cùng nhịp HashMap$Node, lấy heap dump mở bằng MAT, Path to GC Roots chỉ ra field static. Em thay bằng Caffeine có maximumSize và expireAfterWrite."</p>
+      <p><b>R:</b> "Chạy lại K6 cùng kịch bản, đáy heap ổn định quanh N MB thay vì OOM sau M phút. Em cũng gặp trường hợp container bị kill 137 khi đặt Xmx bằng RAM container và sửa bằng MaxRAMPercentage."</p>
+      <p class="cap">Thay N, M bằng số bạn đo được. Nói rõ đây là lab tự làm; interviewer đánh giá cao sự chủ động và độ chính xác của quy trình.</p></div>
+    <div class="card prose"><h4>Cách ghi trong CV cho đúng với kinh nghiệm</h4>
+      <p>Thay <code>JVM Optimization</code> bằng một trong các cách sau, tuỳ bạn đã làm tới đâu:</p>
+      <ul>
+        <li><b>Chưa làm lab:</b> <code>JVM fundamentals (memory model, garbage collection)</code></li>
+        <li><b>Đã làm lab:</b> <code>JVM troubleshooting: GC log, heap dump and thread dump analysis</code></li>
+        <li><b>Đã xử lý sự cố thật trong dự án:</b> giữ <code>JVM tuning</code> và viết hẳn một bullet trong phần dự án, có số liệu.</li>
+      </ul>
+      <p>Ở dự án thật, bạn vẫn có những chỗ chạm tới chủ đề này để kể: job đọc <code>log_mileage</code> cả ngày (đọc theo trang hay load hết?), task ECS cấu hình bao nhiêu RAM và CPU (có đang vô tình chạy Serial GC?), cache từ khoá hot nằm ở Redis thay vì heap. Hỏi lại team cấu hình thật để nói cho chính xác.</p></div>
+  </div>
+  <p class="foot">Môi trường đo: OpenJDK 21.0.12 (Ubuntu build), HotSpot 64-bit, 2 vCPU, 8 GB RAM. Các chương trình thí nghiệm: LeakApp, HealthyApp, Deadlock, HotLoop, GcBench, WarmUp, Escape. Số liệu chạy một lần, dùng để minh hoạ hình dạng và mức chênh lệch, không phải benchmark chính thức.</p>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ===== mục lục: tô sáng chương đang đọc ===== */
+const links=$$('#toc a');const secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));const on=links.find(l=>l.classList.contains('on'));if(on&&innerWidth<980)on.scrollIntoView({block:'nearest',inline:'center'});}});},{rootMargin:'-30% 0px -60% 0px'});
+secs.forEach(s=>s&&io.observe(s));
+
+/* ===== chương 02: code → vùng nhớ ===== */
+const LINES=[
+ {t:'public class OrderService {',st:[],me:['class OrderService: tên, method, bytecode'],hp:['java.lang.Class (OrderService)'],n:'Khi class được nạp lần đầu, thông tin của nó (method, bytecode, hằng số) vào Metaspace. JVM cũng tạo một object java.lang.Class tương ứng trên heap.'},
+ {t:'  static Map<Long,Order> CACHE = new HashMap<>();',st:[],me:['class HashMap','class Order'],hp:['HashMap (CACHE trỏ tới)'],n:'Giá trị biến static nằm trong object Class trên heap (từ Java 8), không còn ở PermGen. Vì static sống suốt đời ứng dụng, mọi thứ CACHE trỏ tới không bao giờ bị GC dọn. Đây là nguồn memory leak số một.'},
+ {t:'  Order find(long id) {',st:['frame find()','id = 42 (long, 8 byte)'],me:[],hp:[],n:'Mỗi lần gọi method, JVM đẩy một frame lên stack của thread hiện tại. Biến kiểu nguyên thuỷ như long id nằm thẳng trong frame, không tạo object.'},
+ {t:'    Order o = new Order(id, "Loc");',st:['o → (tham chiếu 4 byte)'],me:[],hp:['Order#1','"Loc" (String pool)'],n:'new Order cấp phát object trên heap (trong TLAB của thread, thuộc Eden). Biến o trên stack chỉ giữ tham chiếu. Chuỗi hằng "Loc" nằm trong String pool, cũng thuộc heap.'},
+ {t:'    CACHE.put(id, o);',st:[],me:[],hp:['Long 42 (autobox)','HashMap$Node'],n:'put tạo thêm một HashMap$Node (32 byte) và tự động đổi long sang Long (24 byte). Lúc này Order#1 có hai đường đi tới: từ biến o trên stack và từ CACHE.'},
+ {t:'    return o;',st:[],me:[],hp:[],n:'Method kết thúc: frame bị gỡ khỏi stack, biến o biến mất. Nhưng Order#1 vẫn còn sống vì CACHE (static, là GC root) đang giữ. GC sẽ không bao giờ dọn nó.',pop:true},
+ {t:'  }',st:[],me:[],hp:[],n:'Nếu không có dòng CACHE.put, sau khi return thì Order#1 không còn ai trỏ tới và sẽ bị dọn ở lần Minor GC tới, rất có thể khi còn ở Eden.'},
+ {t:'}',st:[],me:[],hp:[],n:'Tóm lại: stack chứa frame và biến cục bộ, heap chứa object, Metaspace chứa định nghĩa class. Tham chiếu từ static và từ stack là GC root.'}
+];
+let curLine=-1;
+function showLine(i){
+  curLine=i;
+  $$('#codelines button').forEach((b,k)=>b.classList.toggle('on',k===i));
+  const acc={st:[],me:[],hp:[]};let popped=false;
+  for(let k=0;k<=i;k++){const L=LINES[k];if(L.pop)popped=true;acc.st.push(...L.st.map(x=>({x,k,pop:popped&&false})));acc.me.push(...L.me.map(x=>({x,k})));acc.hp.push(...L.hp.map(x=>({x,k})));}
+  const stackGone=i>=5;
+  const fill=(id,arr,gone)=>{$(id+' .items').innerHTML=arr.length?arr.map(o=>`<span class="chip${o.k===i?' new':''}${gone?' gone':''}">${esc(o.x)}</span>`).join(''):'<span class="cap">trống</span>';};
+  fill('#a-stack',acc.st,stackGone);fill('#a-meta',acc.me,false);fill('#a-heap',acc.hp,false);
+  $('#memnote').textContent=LINES[i].n;
+}
+$('#codelines').innerHTML=LINES.map((L,i)=>`<button type="button" role="listitem"><span class="ln">${i+1}</span>${esc(L.t)}</button>`).join('');
+$('#codelines').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;showLine([...b.parentNode.children].indexOf(b));});
+showLine(3);
+
+/* ===== chương 05: mô phỏng GC ===== */
+const CAP={eden:24,s:8,old:32};
+const S={t:0,id:0,eden:[],s0:[],s1:[],from:'s0',old:[],leak:false,tenure:3,minor:0,full:0,prom:0,pause:0,oom:false,timer:null};
+function newObj(){S.id++;const r=Math.random();let life;
+  if(S.leak&&r<0.25)life=Infinity; else if(r<0.80)life=2+Math.floor(Math.random()*10); else if(r<0.95)life=30+Math.floor(Math.random()*60); else life=400+Math.floor(Math.random()*400);
+  return {id:S.id,born:S.t,life,age:0,leak:S.leak&&life===Infinity};}
+const alive=o=>S.t-o.born<o.life;
+function log(msg,cls){const d=document.createElement('div');if(cls)d.className=cls;d.textContent=msg;const l=$('#simlog');l.appendChild(d);while(l.children.length>80)l.firstChild.remove();l.scrollTop=l.scrollHeight;}
+function alloc(){ if(S.oom)return false;
+  if(S.eden.length>=CAP.eden){ if(!minorGC())return false; }
+  S.t++;S.eden.push(newObj());return true;}
+function minorGC(){
+  const from=S[S.from],toKey=S.from==='s0'?'s1':'s0',to=S[toKey];
+  const liveE=S.eden.filter(alive),liveS=from.filter(alive);
+  const dead=S.eden.length+from.length-liveE.length-liveS.length;
+  let copied=0,promoted=0;const toOld=[];
+  for(const o of [...liveS,...liveE]){o.age++;
+    if(o.age>=S.tenure||to.length>=CAP.s){toOld.push(o);} else {to.push(o);copied++;}}
+  S.eden=[];S[S.from]=[];S.from=toKey;
+  S.minor++;const p=1+copied*0.4+toOld.length*0.6;S.pause+=p;
+  for(const o of toOld){ if(S.old.length>=CAP.old){ if(!fullGC(true)){ S.oom=true; stop(); $('#sim-oom').classList.add('show'); log('java.lang.OutOfMemoryError: Java heap space','w'); render(); return false;} }
+    S.old.push(o);promoted++;S.prom++;}
+  log(`Minor GC #${S.minor}: bỏ ${dead} object chết, copy ${copied} sang ${toKey.toUpperCase()}, promote ${promoted} lên Old (${p.toFixed(1)} ms)`,promoted?'h':'');
+  return true;}
+function fullGC(auto){
+  const before=S.old.length; S.old=S.old.filter(alive); const freed=before-S.old.length;
+  S.full++;const p=8+before*1.5;S.pause+=p;
+  log(`${auto?'Old đầy → ':''}Full GC #${S.full}: dừng toàn bộ app, thu hồi ${freed}/${before} ô của Old (${p.toFixed(0)} ms)`,'w');
+  return S.old.length<CAP.old;}
+function cells(arr,cap,cls){let h='';for(let i=0;i<cap;i++){const o=arr[i];if(!o){h+='<div class="cell"></div>';continue;}const d=!alive(o);h+=`<div class="cell ${d?'dead':cls}${o.leak&&!d?' lt':''}" title="object #${o.id}, tuổi ${o.age}${d?', đã chết':''}">${d?'':o.age}</div>`;}return h;}
+function render(){
+  $('#c-eden').innerHTML=cells(S.eden,CAP.eden,'e');$('#c-s0').innerHTML=cells(S.s0,CAP.s,'s');$('#c-s1').innerHTML=cells(S.s1,CAP.s,'s');$('#c-old').innerHTML=cells(S.old,CAP.old,'o');
+  $('#eden-c').textContent=`${S.eden.length}/${CAP.eden}`;$('#s0-c').textContent=`${S.s0.length}/${CAP.s}`;$('#s1-c').textContent=`${S.s1.length}/${CAP.s}`;$('#old-c').textContent=`${S.old.length}/${CAP.old}`;
+  $('#g-s0').classList.toggle('to',S.from==='s1');$('#g-s1').classList.toggle('to',S.from==='s0');
+  $('#st-minor').textContent=S.minor;$('#st-full').textContent=S.full;$('#st-prom').textContent=S.prom;$('#st-pause').textContent=Math.round(S.pause);}
+function flashThen(fn){ if(RM){fn();render();return;}
+  $$('#c-eden .cell.dead, #c-s0 .cell.dead, #c-s1 .cell.dead').forEach(c=>c.classList.add('dying'));
+  setTimeout(()=>{fn();render();},260);}
+function stop(){clearInterval(S.timer);S.timer=null;$('#sim-run').textContent='Chạy ứng dụng';}
+$('#sim-run').addEventListener('click',()=>{ if(S.timer){stop();return;} if(S.oom)return;
+  $('#sim-run').textContent='Tạm dừng';
+  S.timer=setInterval(()=>{ if(S.eden.length>=CAP.eden){ clearInterval(S.timer); flashThen(()=>{ if(minorGC()&&!S.oom){ S.timer=setInterval(tick,RM?400:180);} }); return;} alloc();render();},RM?400:180);
+  function tick(){ if(S.eden.length>=CAP.eden){ clearInterval(S.timer); flashThen(()=>{ if(minorGC()&&!S.oom){ S.timer=setInterval(tick,RM?400:180);} }); return;} alloc();render(); }
+});
+$('#sim-alloc').addEventListener('click',()=>{alloc();render();});
+$('#sim-minor').addEventListener('click',()=>{ if(S.oom)return; flashThen(()=>minorGC()); });
+$('#sim-full').addEventListener('click',()=>{ if(S.oom)return; if(!RM)$$('#c-old .cell.dead').forEach(c=>c.classList.add('dying')); setTimeout(()=>{fullGC(false);render();},RM?0:260); });
+$('#sim-leak').addEventListener('click',e=>{S.leak=!S.leak;e.currentTarget.setAttribute('aria-pressed',S.leak);e.currentTarget.textContent='Memory leak: '+(S.leak?'bật':'tắt');log(S.leak?'Bật leak: 25% object mới được thêm vào một static Map và không bao giờ bị xoá.':'Tắt leak: object mới có vòng đời bình thường.');});
+$('#sim-tenure').addEventListener('input',e=>{S.tenure=+e.target.value;$('#sim-tenure-v').textContent=S.tenure;});
+function simReset(){stop();Object.assign(S,{t:0,id:0,eden:[],s0:[],s1:[],from:'s0',old:[],minor:0,full:0,prom:0,pause:0,oom:false});$('#sim-oom').classList.remove('show');$('#simlog').innerHTML='';
+  // trạng thái ban đầu: đã chạy một lúc
+  for(let i=0;i<70;i++)alloc(); log('Ứng dụng đã chạy một lúc. Bấm "Chạy ứng dụng" để tiếp tục.');render();}
+$('#sim-reset').addEventListener('click',simReset);
+simReset();
+
+/* ===== G1 regions minh hoạ ===== */
+(function(){const pat='EEOOFSOOHHHFOEEOOOFEOOSFFOEOOFHHOOEEFOOOFFEOSOOFEEOFOOFFOOEOFFOE';const cand=new Set([4,13,24,31,44,52]);
+ $('#regions').innerHTML=[...pat].map((c,i)=>`<div class="rg ${c}${cand.has(i)&&c==='O'?' C':''}" title="${({E:'Eden',S:'Survivor',O:'Old',H:'Humongous',F:'Trống'})[c]}">${c==='F'?'':c}</div>`).join('');})();
+
+/* ===== biểu đồ ===== */
+const SVGNS='http://www.w3.org/2000/svg';
+function el(tag,attrs,parent){const e=document.createElementNS(SVGNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function tipShow(box,html,x,y){let t=box.querySelector('.tip');if(!t){t=document.createElement('div');t.className='tip';box.appendChild(t);}t.innerHTML=html;t.style.display='block';const bw=box.clientWidth;const tw=t.offsetWidth;let left=x+14;if(left+tw>bw)left=x-tw-14;if(left<0)left=0;t.style.left=left+'px';t.style.top=Math.max(0,y-10)+'px';}
+function tipHide(box){const t=box.querySelector('.tip');if(t)t.style.display='none';}
+function fmtN(v){return v>=100?Math.round(v).toLocaleString('vi-VN'):(v>=1?(+v.toFixed(2)).toLocaleString('vi-VN'):(+v.toFixed(3)).toLocaleString('vi-VN'));}
+
+function hbar(id,rows,opt){
+  const box=$(id);box.innerHTML='';const W=480,rowH=34,padL=74,padR=64,top=6;const H=top+rows.length*rowH+24;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':opt.aria},box);
+  const iw=W-padL-padR;let sx;
+  if(opt.log){const lo=Math.log10(opt.min),hi=Math.log10(opt.max);sx=v=>padL+(Math.log10(Math.max(v,opt.min))-lo)/(hi-lo)*iw;}
+  else sx=v=>padL+v/opt.max*iw;
+  const g=el('g',{class:'grid'},svg);const ax=el('g',{class:'ax'},svg);
+  for(const t of opt.ticks){const x=sx(t);el('line',{x1:x,x2:x,y1:top,y2:H-22},g);const tx=el('text',{x,y:H-6,'text-anchor':'middle'},ax);tx.textContent=t.toLocaleString('vi-VN');}
+  rows.forEach((r,i)=>{const y=top+i*rowH+8,h=rowH-16;
+    const lb=el('text',{x:padL-8,y:y+h/2+4,'text-anchor':'end',class:'lbl'},svg);lb.textContent=r.name;lb.setAttribute('fill',css('--ink'));
+    const x0=opt.log?sx(opt.min):padL,x1=sx(r.v);const w=Math.max(2,x1-x0);
+    const rr=Math.min(4,w/2);el('path',{d:`M${x0},${y} H${x0+w-rr} Q${x0+w},${y} ${x0+w},${y+rr} V${y+h-rr} Q${x0+w},${y+h} ${x0+w-rr},${y+h} H${x0} Z`,fill:css('--s1')},svg);
+    const vt=el('text',{x:x0+w+6,y:y+h/2+4,class:'val'},svg);vt.textContent=fmtN(r.v);
+    const hit=el('rect',{x:0,y:top+i*rowH,width:W,height:rowH,class:'hit'},svg);
+    hit.addEventListener('mousemove',ev=>{const b=box.getBoundingClientRect();tipShow(box,`<div class="tt">${esc(r.name)}</div>${r.tip}`,ev.clientX-b.left,ev.clientY-b.top);});
+    hit.addEventListener('mouseleave',()=>tipHide(box));});
+}
+function lineChart(id,series,opt){
+  const box=$(id);box.innerHTML='';const W=720,H=opt.h||280,padL=46,padR=16,top=10,bot=30;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':opt.aria},box);
+  const iw=W-padL-padR,ih=H-top-bot;
+  const sx=v=>padL+(v-opt.xmin)/(opt.xmax-opt.xmin)*iw;
+  let sy;if(opt.log){const lo=Math.log10(opt.ymin),hi=Math.log10(opt.ymax);sy=v=>top+ih-(Math.log10(Math.max(v,opt.ymin))-lo)/(hi-lo)*ih;}else sy=v=>top+ih-(v-opt.ymin)/(opt.ymax-opt.ymin)*ih;
+  const g=el('g',{class:'grid'},svg),ax=el('g',{class:'ax'},svg);
+  for(const t of opt.yt){const y=sy(t);el('line',{x1:padL,x2:W-padR,y1:y,y2:y},g);const tx=el('text',{x:padL-6,y:y+4,'text-anchor':'end'},ax);tx.textContent=t.toLocaleString('vi-VN');}
+  for(const t of opt.xt){const x=sx(t);const tx=el('text',{x,y:H-10,'text-anchor':'middle'},ax);tx.textContent=(opt.xf?opt.xf(t):t);}
+  if(opt.ref){const y=sy(opt.ref.v);el('line',{x1:padL,x2:W-padR,y1:y,y2:y,stroke:css('--bad'),'stroke-width':1,'stroke-dasharray':'5 4'},svg);const tx=el('text',{x:W-padR,y:y-5,'text-anchor':'end',class:'ax'},svg);tx.textContent=opt.ref.label;tx.setAttribute('fill',css('--bad'));}
+  for(const s of series){const d=s.pts.map((p,i)=>(i?'L':'M')+sx(p[0]).toFixed(1)+','+sy(p[1]).toFixed(1)).join(' ');
+    el('path',{d,fill:'none',stroke:css(s.color),'stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'},svg);
+    const last=s.pts[s.pts.length-1];el('circle',{cx:sx(last[0]),cy:sy(last[1]),r:4,fill:css(s.color),stroke:css('--surface'),'stroke-width':2},svg);}
+  const xh=el('line',{class:'xh',y1:top,y2:top+ih,x1:0,x2:0,visibility:'hidden'},svg);
+  const dots=series.map(s=>el('circle',{r:4,fill:css(s.color),stroke:css('--surface'),'stroke-width':2,cx:0,cy:0,visibility:'hidden'},svg));
+  const hit=el('rect',{x:padL,y:top,width:iw,height:ih,class:'hit'},svg);
+  hit.addEventListener('mousemove',ev=>{const b=svg.getBoundingClientRect();const px=(ev.clientX-b.left)/b.width*W;const xv=opt.xmin+(px-padL)/iw*(opt.xmax-opt.xmin);
+    let rows='';series.forEach((s,k)=>{let best=s.pts[0];for(const p of s.pts)if(Math.abs(p[0]-xv)<Math.abs(best[0]-xv))best=p;
+      if(opt.maxGap&&Math.abs(best[0]-xv)>opt.maxGap){dots[k].setAttribute('visibility','hidden');return;}
+      dots[k].setAttribute('visibility','visible');
+      dots[k].setAttribute('cx',sx(best[0]));dots[k].setAttribute('cy',sy(best[1]));rows+=`<div class="tr"><span><i class="sw" style="background:${css(s.color)}"></i>${esc(s.name)}</span><b>${fmtN(best[1])} ${opt.unit}</b></div>`;});
+    xh.setAttribute('x1',px);xh.setAttribute('x2',px);xh.setAttribute('visibility','visible');
+    const bx=box.getBoundingClientRect();tipShow(box,`<div class="tt">${opt.xf?opt.xf(Math.round(xv*10)/10):Math.round(xv)}</div>${rows||'<span class="cap">không có điểm đo gần đây</span>'}`,ev.clientX-bx.left,ev.clientY-bx.top);});
+  hit.addEventListener('mouseleave',()=>{tipHide(box);xh.setAttribute('visibility','hidden');dots.forEach(d=>d.setAttribute('visibility','hidden'));});
+}
+function legend(id,series){$(id).innerHTML=series.map(s=>`<span><i style="background:${css(s.color)}"></i>${esc(s.name)}</span>`).join('');}
+
+const BENCH={"Serial":{"elapsed":6311,"count":88,"total":5140.6,"max":142.18,"median":43.583,"p99":140.29},"Parallel":{"elapsed":4335,"count":122,"total":3232.6,"max":105.08,"median":17.212,"p99":60.97},"G1":{"elapsed":6060,"count":214,"total":4506.7,"max":91.18,"median":15.159,"p99":76.74},"ZGC":{"elapsed":6309,"count":484,"total":6.2,"max":0.17,"median":0.012,"p99":0.04}};
+const SAW={"leak":[[0.54,6],[0.97,11],[1.44,17],[2.16,25],[2.29,25],[3.35,37],[4.62,52],[6.24,71],[7.49,83],[8.67,96],[8.7,97],[8.72,97],[9.4,105],[9.94,111],[10.22,115],[10.26,117],[10.28,118],[10.69,124],[10.95,127],[11.01,122],[11.36,126],[11.45,126],[11.54,127],[11.61,127],[11.67,126],[11.77,127],[11.82,127],[11.89,127],[11.99,127],[12.03,127],[12.08,127],[12.08,127],[12.12,127],[12.16,127]],"healthy":[[0.53,6],[0.98,11],[1.41,16],[2.11,25],[3.08,35],[4.33,48],[5.92,64],[7.51,79],[7.52,33],[7.52,33],[8.73,47],[10.85,65],[12.52,82],[12.53,29],[12.54,29],[13.68,39],[16.04,59],[17.81,75],[19.13,90],[19.14,35],[19.14,35],[20.09,45],[22.29,61],[24.03,77],[24.04,27],[24.05,27],[25.35,42],[27.63,62],[29.41,79],[29.41,28],[29.42,28]]};
+const WARM={def:[110,28,27,29,33,7,7,7,7,9,144,7,8,7,7,9,7,7,8,7,8,7,7,7,7,7,8,7,203,9],c1:[224,122,115,106,94,96,94,96,93,98,93,103,93,95,94,96,94,80,68,69,69,68,71,68,68,69,68,70,69,69],xint:[372,368,377,377,377,371,370,385,375,375,375,375,521,409,532,356,349,353,345,349,366,369,369,381,414,465,395,446,416,385]};
+
+function drawCharts(){
+  const order=['Serial','Parallel','G1','ZGC'];
+  hbar('#ch-maxpause',order.map(k=>({name:k,v:BENCH[k].max,tip:`<div class="tr"><span>Dài nhất</span><b>${fmtN(BENCH[k].max)} ms</b></div><div class="tr"><span>p99</span><b>${fmtN(BENCH[k].p99)} ms</b></div><div class="tr"><span>Trung vị</span><b>${fmtN(BENCH[k].median)} ms</b></div>`})),{log:true,min:0.1,max:1000,ticks:[0.1,1,10,100,1000],aria:'Lần dừng lâu nhất của từng GC, thang log'});
+  hbar('#ch-elapsed',order.map(k=>({name:k,v:BENCH[k].elapsed,tip:`<div class="tr"><span>Chạy xong</span><b>${fmtN(BENCH[k].elapsed)} ms</b></div><div class="tr"><span>Tổng dừng</span><b>${fmtN(BENCH[k].total)} ms</b></div>`})),{max:7000,ticks:[0,2000,4000,6000],aria:'Thời gian chạy xong của từng GC'});
+  const ws=[{name:'Mặc định: interpreter → C1 → C2',color:'--s1',pts:WARM.def.map((v,i)=>[i,v])},{name:'Chỉ C1 (-XX:TieredStopAtLevel=1)',color:'--s2',pts:WARM.c1.map((v,i)=>[i,v])},{name:'Chỉ thông dịch (-Xint)',color:'--s3',pts:WARM.xint.map((v,i)=>[i,v])}];
+  legend('#lg-warm',ws);
+  lineChart('#ch-warm',ws,{xmin:0,xmax:29,ymin:5,ymax:600,log:true,yt:[5,10,50,100,500],xt:[0,5,10,15,20,25,29],xf:v=>'đợt '+v,unit:'ns',aria:'Thời gian mỗi lần gọi hàm giảm dần khi JIT biên dịch'});
+  const ss=[{name:'Cache không giới hạn (leak)',color:'--s2',pts:SAW.leak},{name:'Cache giới hạn 20 000 phần tử',color:'--s1',pts:SAW.healthy}];
+  legend('#lg-saw',ss);
+  lineChart('#ch-saw',ss,{xmin:0,xmax:30,ymin:0,ymax:140,yt:[0,32,64,96,128],xt:[0,5,10,15,20,25,30],xf:v=>v+' s',unit:'MB',maxGap:1.5,ref:{v:128,label:'heap tối đa 128 MB'},aria:'Heap sau mỗi lần GC: bản leak tăng đến đầy, bản có giới hạn dao động quanh một đáy'});
+  $('#bench-rows').innerHTML=order.map(k=>{const b=BENCH[k];return `<tr><td><b>${k}</b></td><td class="n">${b.count}</td><td class="n">${fmtN(b.median)}</td><td class="n">${fmtN(b.p99)}</td><td class="n">${fmtN(b.max)}</td><td class="n">${fmtN(b.total)}</td><td class="n">${fmtN(b.elapsed)}</td></tr>`;}).join('');
+}
+drawCharts();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{drawCharts();calc();});
+new MutationObserver(()=>{drawCharts();calc();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+/* ===== chương 09: máy tính ngân sách ===== */
+function calc(){
+  const ram=+$('#f-ram').value,pct=+$('#f-pct').value,thr=+$('#f-thr').value,meta=+$('#f-meta').value,dir=+$('#f-dir').value;
+  $('#o-ram').textContent=ram.toLocaleString('vi-VN')+' MB';$('#o-pct').textContent=pct+'%';$('#o-thr').textContent=thr;$('#o-meta').textContent=meta+' MB';$('#o-dir').textContent=dir+' MB';
+  const heap=Math.round(ram*pct/100);const gc=Math.round(heap*0.15);const ths=Math.round(thr*0.5);const code=48;
+  const parts=[{n:'Heap',v:heap,c:'--s1'},{n:"Cấu trúc của GC (~15% heap)",v:gc,c:"--surv"},{n:'Metaspace + class',v:meta,c:'--s3'},{n:`Stack của ${thr} thread (~0,5 MB đã dùng mỗi thread)`,v:ths,c:'--old'},{n:'Code cache (JIT)',v:code,c:'--s2'},{n:'Direct buffer, native',v:dir,c:'--dead'}];
+  const total=parts.reduce((a,p)=>a+p.v,0);const scale=Math.max(total,ram)*1.04;
+  $('#b-bar').innerHTML=parts.map(p=>`<div class="seg" style="width:${p.v/scale*100}%;background:${css(p.c)}" title="${esc(p.n)}: ${p.v} MB"></div>`).join('')+`<div class="limit" style="left:${ram/scale*100}%"><span>giới hạn ${ram} MB</span></div>`;
+  $('#b-rows').innerHTML=parts.map(p=>`<div><span><i style="background:${css(p.c)}"></i>${esc(p.n)}</span><b>${p.v.toLocaleString('vi-VN')} MB</b></div>`).join('')+`<div style="border:0;font-weight:700"><span>Tổng ước tính</span><b>${total.toLocaleString('vi-VN')} MB</b></div>`;
+  const ratio=total/ram;const v=$('#b-verdict');
+  if(ratio>1){v.className='verdict bad';v.innerHTML=`Vượt ${Math.round(total-ram)} MB. <span>Container sẽ bị kill với exit code 137 khi heap dùng gần hết, không có OutOfMemoryError hay heap dump. Giảm MaxRAMPercentage hoặc số thread.</span>`;}
+  else if(ratio>0.9){v.className='verdict warn';v.innerHTML=`Sát giới hạn (${Math.round(ratio*100)}%). <span>Còn quá ít khoảng đệm; một đợt tải cao hoặc thêm thư viện là có thể bị kill. Nên giữ tổng dưới khoảng 85–90% RAM.</span>`;}
+  else if(pct<50){v.className='verdict warn';v.innerHTML=`An toàn nhưng lãng phí. <span>Heap chỉ ${heap} MB trên ${ram} MB RAM; có thể tăng MaxRAMPercentage để tận dụng tiền đã trả cho RAM.</span>`;}
+  else{v.className='verdict ok';v.innerHTML=`Ổn (${Math.round(ratio*100)}% RAM). <span>Còn khoảng ${Math.round(ram-total)} MB cho những phần khó ước lượng như malloc của thư viện native và page cache.</span>`;}
+}
+['#f-ram','#f-pct','#f-thr','#f-meta','#f-dir'].forEach(s=>$(s).addEventListener('input',calc));
+calc();
+
+/* ===== chương 14: câu hỏi phỏng vấn ===== */
+const QA=[
+ {l:'Tầng 1 · Kiến thức nền'},
+ {q:'JDK, JRE và JVM khác nhau thế nào?',a:'<p>JVM là máy ảo chạy bytecode. JRE gồm JVM và thư viện chuẩn để chạy chương trình. JDK gồm JRE và công cụ phát triển, chẩn đoán như <code>javac</code>, <code>jcmd</code>, <code>jstack</code>, <code>jfr</code>. Từ Java 11 không còn bản JRE phát hành riêng.</p>'},
+ {q:'JVM chia bộ nhớ thành những vùng nào? Vùng nào dùng chung?',a:'<p>Dùng chung giữa các thread: Heap, Metaspace, Code cache. Riêng từng thread: Stack, PC register, Native stack. Heap do GC quản lý, Metaspace và Code cache nằm ở bộ nhớ native.</p>'},
+ {q:'Heap và Stack khác nhau thế nào? StackOverflowError khác OutOfMemoryError ra sao?',a:'<p>Stack chứa frame của từng lần gọi method: biến cục bộ nguyên thuỷ và tham chiếu, tự giải phóng khi method kết thúc, rất nhanh. Heap chứa object, sống tới khi không còn tham chiếu và được GC dọn.</p><p>StackOverflowError: một thread gọi lồng quá sâu (thường là đệ quy không điểm dừng). OutOfMemoryError: một vùng nhớ dùng chung (heap, metaspace, direct) hết chỗ.</p>'},
+ {q:'Biến static nằm ở đâu? String pool nằm ở đâu?',trap:1,a:'<p>Từ Java 8, <b>giá trị</b> biến static nằm trong object <code>java.lang.Class</code> trên heap, còn định nghĩa class nằm ở Metaspace. String pool nằm trên heap từ Java 7 (trước đó ở PermGen). Nhiều người trả lời "static nằm trong Metaspace", đó là câu trả lời sai.</p>'},
+ {q:'PermGen và Metaspace khác nhau thế nào?',a:'<p>PermGen (đến Java 7) là một phần heap, kích thước cố định, hay gây <code>OutOfMemoryError: PermGen space</code>. Metaspace (từ Java 8) nằm ở bộ nhớ native và tự giãn theo nhu cầu. Vì tự giãn nên leak class có thể ăn hết RAM, do đó nên đặt <code>MaxMetaspaceSize</code>.</p>'},
+ {q:'GC biết object nào là rác bằng cách nào? GC roots gồm gì?',a:'<p>GC đi từ GC roots theo các tham chiếu, đánh dấu object đến được là sống, còn lại là rác. GC roots gồm: biến cục bộ và tham số trên stack của các thread đang chạy, biến static, monitor đang bị khoá, tham chiếu JNI. Java không dùng đếm tham chiếu nên tham chiếu vòng không gây leak.</p>'},
+ {q:'Vì sao heap chia thành Young và Old?',a:'<p>Dựa trên giả thuyết thế hệ: phần lớn object chết rất trẻ. Dọn riêng Young thường xuyên bằng thuật toán copying chỉ tốn công theo số object sống (rất ít), nên rẻ. Object sống lâu được chuyển lên Old và dọn ít hơn.</p>'},
+ {q:'Minor GC, Major GC và Full GC khác nhau thế nào?',a:'<p>Minor GC dọn Young, xảy ra khi Eden đầy, nhanh. Major GC dọn Old. Full GC dọn toàn bộ heap (và Metaspace), dừng toàn bộ app, chậm nhất. Với G1 hoặc ZGC, việc xuất hiện Full GC là dấu hiệu có vấn đề cần điều tra.</p>'},
+ {q:'Khi nào object được chuyển lên Old?',a:'<ul><li>Tuổi đạt <code>MaxTenuringThreshold</code> (mặc định 15; JVM có thể tự hạ ngưỡng).</li><li>Survivor không đủ chỗ chứa object sống sót (premature promotion).</li><li>Object quá lớn được cấp phát thẳng vào Old (với G1 là humongous region).</li></ul>'},
+ {q:'Java có GC thì có bị memory leak không?',trap:1,a:'<p>Có. Leak trong Java là object vẫn được tham chiếu nhưng không bao giờ dùng lại, nên GC không dọn. Ví dụ: <code>static Map</code> làm cache không giới hạn, listener đăng ký không huỷ, <code>ThreadLocal</code> trong thread pool không <code>remove()</code>, ClassLoader leak khi redeploy.</p>'},
+ {q:'Có nên gọi System.gc() hoặc dùng finalize()?',a:'<p>Không. <code>System.gc()</code> chỉ là gợi ý và thường gây Full GC không cần thiết. <code>finalize()</code> đã bị đánh dấu deprecated, chạy không đảm bảo thời điểm và làm object sống lâu hơn. Giải phóng tài nguyên bằng <code>try-with-resources</code> hoặc <code>Cleaner</code>.</p>'},
+ {l:'Tầng 2 · Thực chiến'},
+ {q:'Java hiện có những bộ GC nào? Chọn thế nào?',a:'<p>Serial (một thread, app nhỏ), Parallel (throughput, batch), G1 (mặc định từ Java 9, cân bằng, hợp hầu hết web service), ZGC và Shenandoah (pause dưới 1 ms, heap lớn, cần độ trễ thấp). Chọn theo ưu tiên: throughput, độ trễ hay bộ nhớ; rồi đo bằng tải thật, không chọn theo cảm tính.</p>'},
+ {q:'Bạn đặt -Xms và -Xmx thế nào? Vì sao hay đặt bằng nhau?',a:'<p>Trên server chạy một ứng dụng, đặt bằng nhau để JVM cấp đủ heap ngay từ đầu, không phải co giãn heap khi chạy (gây pause và Full GC không cần thiết), và lỗi thiếu RAM lộ ra ngay lúc khởi động. Trong container nên dùng <code>MaxRAMPercentage</code> thay cho giá trị cứng.</p>'},
+ {q:'Gặp OutOfMemoryError: Java heap space, bạn xử lý thế nào?',a:'<ol><li>Xác định loại OOM trong log.</li><li>Lấy heap dump (đã bật <code>HeapDumpOnOutOfMemoryError</code>, hoặc <code>jcmd GC.heap_dump</code>); nếu app còn sống thì chụp <code>GC.class_histogram</code> hai lần để xem class nào tăng.</li><li>Mở bằng Eclipse MAT: Leak Suspects, Dominator Tree theo retained size, Path to GC Roots để biết ai giữ object.</li><li>Sửa nguyên nhân trong code (giới hạn cache, phân trang, xoá listener).</li><li>Kiểm chứng bằng tải và theo dõi đáy heap. Chỉ tăng heap khi chứng minh được dữ liệu sống thật sự cần.</li></ol>'},
+ {q:'Shallow size và retained size khác nhau thế nào?',a:'<p>Shallow là kích thước của riêng object. Retained là toàn bộ bộ nhớ được giải phóng nếu object đó biến mất, gồm cả những object chỉ nó giữ. Tìm leak thì sắp xếp theo retained size.</p>'},
+ {q:'Ứng dụng ăn 100% CPU, bạn làm gì?',a:'<p><code>top -H -p &lt;pid&gt;</code> tìm thread ăn CPU, lấy thread id. Chụp <code>jstack</code> hoặc <code>jcmd Thread.print</code>, tìm thread đó (Java 8/11 phải đổi id sang hex vì <code>nid</code> in dạng hex; Java 21 in thập phân và có cả <code>cpu=</code>). Xem stack trace chỉ tới dòng code. Nếu thread nóng là <code>GC Thread</code> thì vấn đề là heap gần đầy.</p>'},
+ {q:'Phát hiện và tránh deadlock thế nào?',a:'<p>Thread dump tự báo <code>Found one Java-level deadlock</code> kèm các thread và khoá liên quan. Tránh bằng cách lấy khoá theo cùng thứ tự, dùng <code>tryLock</code> có timeout, thu hẹp phạm vi khoá, tránh gọi hàm bên ngoài khi đang giữ khoá.</p>'},
+ {q:'Đọc GC log thế nào? Dấu hiệu bất thường là gì?',a:'<p>Mỗi dòng có thời điểm, loại pause, heap trước → sau và thời gian dừng. Bất thường: xuất hiện Pause Full với G1; trước và sau gần bằng nhau; đáy heap sau mỗi chu kỳ tăng dần; <code>to-space exhausted</code>; nhiều humongous allocation; pause vượt mục tiêu thường xuyên.</p>'},
+ {q:'JIT là gì? Vì sao app mới khởi động chậm?',a:'<p>Code ban đầu chạy bằng interpreter. Method chạy nhiều được C1 rồi C2 biên dịch thành lệnh máy tối ưu dựa trên thống kê thực tế. Lúc mới khởi động chưa có code biên dịch và class chưa nạp hết nên chậm. Xử lý: readiness probe, warm-up endpoint, tăng traffic từ từ, CDS.</p>'},
+ {q:'Escape analysis là gì?',a:'<p>C2 phân tích object có thoát khỏi method hay không. Nếu không, nó có thể bỏ hẳn việc cấp phát trên heap (scalar replacement) và bỏ khoá không cần thiết. Thí nghiệm thật: tắt escape analysis làm 500 triệu object nhỏ gây 150 lần GC và chậm hơn 5 lần.</p>'},
+ {q:'Bạn theo dõi JVM trên production bằng gì?',a:'<p>Spring Boot Actuator + Micrometer đẩy về Prometheus/Grafana hoặc CloudWatch: <code>jvm.memory.used</code>, <code>jvm.gc.pause</code>, <code>jvm.gc.live.data.size</code>, <code>jvm.threads.states</code>. Bật GC log có xoay vòng. Khi điều tra sâu dùng Java Flight Recorder.</p>'},
+ {q:'Chạy Java trong Docker/ECS cần lưu ý gì?',a:'<ul><li>Dùng <code>MaxRAMPercentage</code> (60–75%) thay vì để mặc định 25% hay đặt <code>-Xmx</code> bằng RAM container.</li><li>Chừa chỗ cho phần ngoài heap: thread stack, Metaspace, code cache, cấu trúc GC, direct buffer.</li><li>Task 1 vCPU khiến JVM tự chọn Serial GC; ghi rõ GC nếu cần.</li><li>Bật <code>ExitOnOutOfMemoryError</code>, heap dump ra volume.</li><li>Image nên có <code>jcmd</code> để chẩn đoán.</li></ul>'},
+ {q:'Container bị dừng với exit code 137 nghĩa là gì?',a:'<p>137 = 128 + 9, tiến trình bị SIGKILL, thường do kernel OOM killer vì tổng bộ nhớ vượt giới hạn container. Khác Java OOM ở chỗ không có stack trace, không có heap dump. Sửa bằng cách giảm heap theo phần trăm, giới hạn thread và các vùng native, hoặc tăng RAM.</p>'},
+ {q:'Thread pool có thể gây OutOfMemoryError không?',trap:1,a:'<p>Có. <code>Executors.newFixedThreadPool</code> dùng hàng đợi không giới hạn: tải tăng thì task xếp hàng trên heap tới khi OOM. <code>newCachedThreadPool</code> tạo thread không giới hạn, dẫn tới <code>unable to create native thread</code>. Dùng <code>ThreadPoolExecutor</code> với hàng đợi có giới hạn và chính sách từ chối.</p>'},
+ {l:'Tầng 3 · Senior và câu bẫy'},
+ {q:'OOM thì tăng -Xmx là xong phải không?',trap:1,a:'<p>Không. Nếu là leak thì tăng heap chỉ làm chậm thời điểm chết và mỗi lần Full GC càng lâu. Phải tìm nguyên nhân bằng histogram và heap dump trước. Chỉ tăng khi chứng minh lượng dữ liệu sống thực sự lớn hơn heap hiện tại.</p>'},
+ {q:'Container 2 GB, đặt -Xmx2g được không?',trap:1,a:'<p>Không. JVM còn dùng bộ nhớ ngoài heap: thread stack, Metaspace, code cache, cấu trúc của GC (đo thật: khoảng 16% heap với G1), direct buffer. Tổng vượt 2 GB thì container bị kill 137. Thường đặt heap 60–75% RAM.</p>'},
+ {q:'G1 hoạt động chi tiết thế nào?',a:'<p>Heap chia thành region bằng nhau, mỗi region đóng vai Eden, Survivor, Old hoặc Humongous. Young GC copy object sống khỏi region Young. Khi Old vượt ngưỡng (IHOP 45%), G1 đánh dấu song song để biết region nào nhiều rác, rồi chạy Mixed GC dọn Young cùng vài region Old nhiều rác nhất, trong giới hạn <code>MaxGCPauseMillis</code>. Remembered set ghi lại tham chiếu từ region khác vào để không phải quét cả heap. Object lớn hơn nửa region là humongous.</p>'},
+ {q:'ZGC làm sao giữ pause dưới 1 ms?',a:'<p>ZGC đánh dấu và di chuyển object song song với app. Nó dùng colored pointers (bit trạng thái trong con trỏ) và load barrier: khi app đọc một tham chiếu, barrier kiểm tra và sửa con trỏ nếu object đã bị dời. Các pha dừng chỉ quét root nên không phụ thuộc kích thước heap. Đánh đổi: tốn thêm CPU và bộ nhớ. Đo thật: pause dài nhất 0,17 ms so với 142 ms của Serial.</p>'},
+ {q:'Safepoint là gì? Vì sao liên quan tới độ trễ?',a:'<p>Safepoint là điểm trong code mà tại đó trạng thái thread đã rõ ràng để JVM dừng nó an toàn (cuối vòng lặp, lời gọi hàm). Các pha stop-the-world phải chờ <b>mọi</b> thread chạm safepoint. Một thread chạy vòng lặp dài không có safepoint khiến cả app chờ, dù GC log báo pause rất ngắn. Bật <code>-Xlog:safepoint</code> để thấy time-to-safepoint.</p>'},
+ {q:'Vì sao MaxTenuringThreshold tối đa là 15?',a:'<p>Tuổi GC của object được lưu trong mark word của header chỉ bằng 4 bit, nên giá trị lớn nhất là 15.</p>'},
+ {q:'Virtual thread (Java 21) ảnh hưởng tới bộ nhớ thế nào?',a:'<p>Virtual thread không có stack cố định 1 MB như platform thread; stack của nó được lưu thành object trên heap và co giãn theo nhu cầu, nên tạo hàng triệu virtual thread được. Đổi lại heap phải chịu thêm phần này, và cần chú ý pinning khi dùng <code>synchronized</code> quanh I/O (Java 21–23).</p>'},
+ {q:'Kể một lần bạn tối ưu JVM.',a:'<p>Kể theo STAR với số liệu: bối cảnh và triệu chứng, công cụ đã dùng để đo (GC log, histogram, heap dump, metric), nguyên nhân tìm được, cách sửa, kết quả đo lại. Chỉ kể việc bạn thực sự làm. Nếu chưa gặp sự cố thật, hãy kể lab tự dựng ở chương 15 và nói rõ đó là lab; câu chuyện trung thực, chi tiết luôn thắng câu chuyện bịa.</p>'}
+];
+$('#qa').innerHTML=QA.map(x=>x.l?`<div class="lvl">${x.l}</div>`:`<details><summary><span>${x.q}</span>${x.trap?'<span class="trap">bẫy</span>':''}</summary><div class="ans">${x.a}</div></details>`).join('');
+})();
+</script>
+</body>
+</html>

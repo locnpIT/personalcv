@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sân chơi Redis Sorted Set</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: bàn làm việc — kịch bản ở trên, console bên trái, bảng xếp hạng bên phải; bên dưới là "ruột" Redis (hash table + skip list) */
+:root{
+  --bg:#F2F3EF; --surface:#FFFFFF; --sunk:#E9EBE6; --ink:#171B1F; --muted:#5A626A; --line:#D7DBD5;
+  --accent:#C33128; --accent-soft:#F7DDD9; --path:#0C766B; --path-soft:#D2EDE8;
+  --term:#14181C; --term-ink:#D8E1E5; --term-dim:#7D8B94; --term-ok:#86D9CA; --term-err:#FF8F85; --term-java:#E8C27A;
+  --f-ui:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1214; --surface:#171B1F; --sunk:#12161A; --ink:#E5E9EC; --muted:#9AA3AB; --line:#2A3137;
+  --accent:#FF6A5F; --accent-soft:#3B1F1C; --path:#3ECDBA; --path-soft:#12322E;
+  --term:#0A0D0F; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0F1214; --surface:#171B1F; --sunk:#12161A; --ink:#E5E9EC; --muted:#9AA3AB; --line:#2A3137;
+  --accent:#FF6A5F; --accent-soft:#3B1F1C; --path:#3ECDBA; --path-soft:#12322E;
+  --term:#0A0D0F; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 56px;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h1{font-size:clamp(1.6rem,3.2vw,2.2rem);font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.05rem;font-weight:700}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lede{color:var(--muted);max-width:68ch;margin:6px 0 0}
+code,.mono{font-family:var(--f-mono)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.hint{color:var(--muted);font-size:.85rem}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--path);outline-offset:2px}
+
+/* Kịch bản */
+.story{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}
+.clock{font-family:var(--f-mono);font-weight:600;font-size:1.25rem;background:var(--sunk);border-radius:8px;padding:8px 12px;font-variant-numeric:tabular-nums}
+.story h3{font-size:1rem}
+.story .cmdline{display:inline-block;margin-top:4px;font-family:var(--f-mono);font-size:.85rem;background:var(--sunk);padding:3px 8px;border-radius:6px;word-break:break-word}
+.story p{margin:4px 0 0;color:var(--muted);font-size:.88rem}
+.story-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 14px;font-weight:500}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:default}
+.dots{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap}
+.dots i{width:18px;height:4px;border-radius:2px;background:var(--line)}
+.dots i.done{background:var(--accent)}
+@media (max-width:720px){.story{grid-template-columns:1fr}.story-btns{justify-content:flex-start}}
+
+/* Lưới chính */
+.main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:22px}
+@media (max-width:900px){.main{grid-template-columns:1fr}}
+
+/* Console */
+.term{background:var(--term);color:var(--term-ink);border-radius:var(--r);display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.term-top{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #ffffff14;font-family:var(--f-mono);font-size:.78rem;color:var(--term-dim)}
+.log{font-family:var(--f-mono);font-size:.82rem;padding:12px 14px;height:340px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.log .p{color:var(--term-dim)} .log .p b{color:var(--term-ink);font-weight:600}
+.log .o{color:var(--term-ok);white-space:pre-wrap;word-break:break-word}
+.log .o.err{color:var(--term-err)}
+.log .j{color:var(--term-java);white-space:pre-wrap;word-break:break-word;opacity:.9}
+.cmdform{display:flex;gap:8px;padding:10px 14px;border-top:1px solid #ffffff14;align-items:center}
+.cmdform label{font-family:var(--f-mono);font-size:.82rem;color:var(--term-dim);white-space:nowrap}
+.cmdform input{flex:1;min-width:0;background:transparent;border:0;color:var(--term-ink);font-family:var(--f-mono);font-size:.9rem;padding:6px 0}
+.cmdform input::placeholder{color:#5d6a72}
+.cmdform button{background:#ffffff14;border:0;color:var(--term-ink);border-radius:6px;padding:6px 12px;font-family:var(--f-mono);font-size:.8rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 14px}
+.chips button{font-family:var(--f-mono);font-size:.74rem;background:transparent;border:1px solid #ffffff22;color:var(--term-ink);border-radius:999px;padding:4px 10px}
+.chips button:hover{border-color:var(--term-ok);color:var(--term-ok)}
+
+/* Bảng xếp hạng */
+.keys{display:flex;gap:6px;flex-wrap:wrap}
+.keys button{font-family:var(--f-mono);font-size:.78rem;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:6px;padding:3px 9px}
+.keys button[aria-pressed="true"]{border-color:var(--ink);color:var(--ink);font-weight:600}
+.colhead{display:grid;grid-template-columns:74px minmax(0,1fr) minmax(60px,1.2fr) 56px;gap:10px;font-size:.72rem;color:var(--muted);font-family:var(--f-mono);padding:0 10px 6px;letter-spacing:.03em}
+.colhead span:last-child{text-align:right}
+.board{position:relative;transition:height .35s ease}
+.row{position:absolute;left:0;right:0;height:40px;display:grid;grid-template-columns:74px minmax(0,1fr) minmax(60px,1.2fr) 56px;gap:10px;align-items:center;padding:0 10px;border-radius:8px;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .3s,background-color .3s}
+.row .rk{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.row .rk b{font-size:1rem;color:var(--ink);margin-right:4px}
+.row .mem{font-family:var(--f-mono);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .bar{height:10px;background:var(--sunk);border-radius:5px;overflow:hidden}
+.row .bar i{display:block;height:100%;background:var(--accent);border-radius:5px;transition:width .45s cubic-bezier(.2,.8,.2,1)}
+.row .sc{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.row.hit{background:var(--path-soft)}
+.row.hit .bar i{background:var(--path)}
+.row.new{opacity:0}
+.row.gone{opacity:0}
+.row.flash{animation:flash 1s ease}
+@keyframes flash{0%{background:var(--accent-soft)}100%{background:transparent}}
+.empty{color:var(--muted);font-size:.9rem;padding:18px 10px;margin:0}
+.dir{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);padding:6px 10px 0;font-family:var(--f-mono)}
+
+.explain{margin-top:14px;border-top:1px dashed var(--line);padding-top:12px}
+.explain h3{font-size:.9rem;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.explain h3 code{font-size:.8rem;background:var(--sunk);padding:2px 6px;border-radius:5px;font-weight:400;word-break:break-word}
+.explain ol{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:.9rem}
+.explain .java{margin-top:10px;font-family:var(--f-mono);font-size:.78rem;background:var(--sunk);border-radius:6px;padding:8px 10px;overflow-x:auto;white-space:pre}
+.explain .java span{color:var(--muted)}
+
+/* Ruột Redis */
+.inside{display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
+.buckets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.buckets{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.bk{border:1px solid var(--line);border-radius:8px;padding:8px;min-height:64px;background:var(--surface);transition:border-color .3s,background-color .3s;min-width:0}
+.bk .lbl{font-family:var(--f-mono);font-size:.7rem;color:var(--muted)}
+.bk .ch{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.bk .ch span{font-family:var(--f-mono);font-size:.76rem;background:var(--sunk);border-radius:5px;padding:2px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bk.on{border-color:var(--path);background:var(--path-soft)}
+.bk.on .ch span.t{background:var(--path);color:var(--surface)}
+.skipwrap{overflow-x:auto;padding-bottom:4px}
+.skip svg{display:block}
+.skip .e{stroke:var(--muted);stroke-width:1.3;fill:none}
+.skip .e.on{stroke:var(--path);stroke-width:2.6}
+.skip .v{stroke:var(--path);stroke-width:2.6;stroke-dasharray:4 3}
+.skip .nd{fill:var(--surface);stroke:var(--ink);stroke-width:1.2}
+.skip .nd.tg{fill:var(--path-soft);stroke:var(--path);stroke-width:2}
+.skip .hd{fill:var(--sunk);stroke:var(--muted);stroke-width:1}
+.skip .nil{fill:var(--sunk);stroke:var(--muted);stroke-width:1;stroke-dasharray:3 2}
+.skip text{font-family:var(--f-mono);font-size:11px;fill:var(--ink)}
+.skip text.dim{fill:var(--muted);font-size:10px}
+.skip text.b{font-weight:600}
+.ah{fill:var(--muted)} .ahp{fill:var(--path)}
+.caption{font-size:.88rem;color:var(--muted);margin:10px 0 0;max-width:80ch}
+.caption b{color:var(--ink)}
+.note{font-size:.82rem;color:var(--muted);background:var(--sunk);border-radius:8px;padding:8px 12px;margin-top:12px}
+
+/* Bảng tra cứu */
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.88rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.74rem;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+td code{font-size:.8rem}
+td.cx{font-family:var(--f-mono);white-space:nowrap}
+@media (prefers-reduced-motion: reduce){ .row,.row .bar i,.board{transition:none} .row.flash{animation:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Redis · kiểu dữ liệu ZSET</div>
+    <h1>Sân chơi Sorted Set</h1>
+    <p class="lede">Gõ lệnh Redis hoặc chạy từng bước kịch bản "từ khoá hot trong một ngày". Bảng xếp hạng tự sắp xếp lại, và phần dưới cho thấy Redis lưu dữ liệu bên trong ra sao.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="story-h">
+    <div class="panel-head"><h2 id="story-h">Kịch bản: một ngày của hot words</h2><span class="hint" id="story-count"></span></div>
+    <div class="story" id="story"></div>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+  </section>
+
+  <div class="main">
+    <section class="term" aria-label="Console Redis">
+      <div class="term-top"><span>redis-cli</span><span>127.0.0.1:6379</span></div>
+      <div class="log" id="log" aria-live="polite"></div>
+      <form class="cmdform" id="cmdform" autocomplete="off">
+        <label for="cmd">&gt;</label>
+        <input id="cmd" name="cmd" placeholder='ZINCRBY hotwords 1 ipad' spellcheck="false">
+        <button type="submit">Chạy</button>
+      </form>
+      <div class="chips" id="chips"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="board-h">
+      <div class="panel-head">
+        <h2 id="board-h">Bảng xếp hạng</h2>
+        <div class="keys" id="keys"></div>
+      </div>
+      <div class="colhead"><span>ZREVRANK</span><span>member</span><span></span><span>score</span></div>
+      <div class="board" id="board"></div>
+      <div class="dir" id="dir"><span>↑ điểm cao (ZREVRANGE bắt đầu ở đây)</span><span>điểm thấp ↓</span></div>
+      <div class="explain" id="explain"></div>
+    </section>
+  </div>
+
+  <section class="panel inside" aria-labelledby="in-h">
+    <div>
+      <div class="panel-head"><h2 id="in-h">Bên trong Redis: hai cấu trúc chạy song song</h2></div>
+      <h3 style="font-size:.95rem;margin-bottom:4px">1. Hash table: tra <code>member → score</code> trong O(1)</h3>
+      <p class="caption" style="margin:0 0 10px">Mỗi member được băm vào một ô (bucket). <code>ZSCORE</code> chỉ cần tính hash là tới thẳng ô, không phải duyệt gì. Đây cũng là lý do member không thể trùng.</p>
+      <div class="buckets" id="buckets"></div>
+    </div>
+    <div>
+      <h3 style="font-size:.95rem;margin-bottom:4px">2. Skip list: giữ thứ tự theo score, tìm và chèn trong O(log N)</h3>
+      <p class="caption" style="margin:0 0 10px">Tầng 1 là danh sách liên kết đầy đủ, sắp tăng dần. Các tầng trên là "đường cao tốc" bỏ qua nhiều phần tử. Đường màu xanh là đường Redis đi để tìm phần tử vừa thao tác.</p>
+      <div class="skipwrap"><div class="skip" id="skip"></div></div>
+      <p class="caption" id="skipcap"></p>
+      <div class="note">Thực tế khi tập còn nhỏ (dưới 128 phần tử, member ngắn), Redis lưu gọn dạng mảng nén <code>listpack</code>; lớn hơn mới chuyển sang hash table + skip list như hình. Kiểm tra bằng <code>OBJECT ENCODING key</code>.</div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="ref-h">
+    <div class="panel-head"><h2 id="ref-h">Bảng tra cứu lệnh</h2><span class="hint">Cột cuối là cách gọi tương ứng trong Spring Data Redis</span></div>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>Lệnh</th><th>Làm gì</th><th>Độ phức tạp</th><th>Spring (<code>opsForZSet()</code>)</th></tr></thead>
+        <tbody>
+          <tr><td><code>ZADD key score member</code></td><td>Thêm, hoặc đổi điểm nếu đã có</td><td class="cx">O(log N)</td><td><code>add(key, member, score)</code></td></tr>
+          <tr><td><code>ZADD key NX score member</code></td><td>Chỉ thêm khi chưa có, không ghi đè</td><td class="cx">O(log N)</td><td><code>addIfAbsent(key, member, score)</code></td></tr>
+          <tr><td><code>ZINCRBY key n member</code></td><td>Cộng thêm n điểm, chưa có thì tự tạo</td><td class="cx">O(log N)</td><td><code>incrementScore(key, member, n)</code></td></tr>
+          <tr><td><code>ZREVRANGE key 0 4 WITHSCORES</code></td><td>Top 5, điểm cao trước</td><td class="cx">O(log N + M)</td><td><code>reverseRangeWithScores(key, 0, 4)</code></td></tr>
+          <tr><td><code>ZRANGE key 0 -1 WITHSCORES</code></td><td>Tất cả, điểm thấp trước</td><td class="cx">O(log N + M)</td><td><code>rangeWithScores(key, 0, -1)</code></td></tr>
+          <tr><td><code>ZRANGEBYSCORE key min max</code></td><td>Lọc theo khoảng điểm (rate limit dùng cái này)</td><td class="cx">O(log N + M)</td><td><code>rangeByScore(key, min, max)</code></td></tr>
+          <tr><td><code>ZSCORE key member</code></td><td>Xem điểm của một member</td><td class="cx">O(1)</td><td><code>score(key, member)</code></td></tr>
+          <tr><td><code>ZREVRANK key member</code></td><td>Hạng tính từ điểm cao, đếm từ 0</td><td class="cx">O(log N)</td><td><code>reverseRank(key, member)</code></td></tr>
+          <tr><td><code>ZREM key member</code></td><td>Xoá một member</td><td class="cx">O(log N)</td><td><code>remove(key, member)</code></td></tr>
+          <tr><td><code>ZCARD key</code></td><td>Đếm số member</td><td class="cx">O(1)</td><td><code>zCard(key)</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const MAXL=4, NB=8, ROWH=46;
+const state={keys:new Map(),current:'hotwords',hits:new Set(),changed:null,pathT:null,hashT:null,last:null,step:0,hist:[],hp:0};
+
+/* ---------- tiện ích ---------- */
+function h1(s){let h=2166136261;for(const c of s){h^=c.codePointAt(0);h=Math.imul(h,16777619);}return h>>>0;}
+function h2(s){let h=5381;for(const c of s){h=(Math.imul(h,33)+c.codePointAt(0))>>>0;}h^=h>>>15;h=Math.imul(h,2246822519)>>>0;h^=h>>>13;return h>>>0;}
+function levelOf(m){let x=h2(m),l=1;while(l<MAXL&&(x&1)){l++;x>>>=1;}return l;}
+function bucketOf(m){return h1(m)%NB;}
+function fmt(n){if(n===Infinity)return'inf';if(n===-Infinity)return'-inf';return String(Math.round(n*1e9)/1e9);}
+function q(s){return '"'+s+'"';}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function cmp(a,b){return a.s-b.s||(a.m<b.m?-1:a.m>b.m?1:0);}
+function getZ(k,create){let z=state.keys.get(k);if(!z&&create){z=new Map();state.keys.set(k,z);}return z;}
+function sorted(z){return [...z].map(([m,s])=>({m,s})).sort(cmp);}
+function parseScore(t){const v=t.toLowerCase();if(v==='+inf'||v==='inf')return Infinity;if(v==='-inf')return -Infinity;if(t.trim()==='')return null;const n=Number(t);return Number.isNaN(n)?null:n;}
+function tokenize(line){const out=[];const re=/"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+)/g;let m;while((m=re.exec(line)))out.push(m[1]??m[2]??m[3]);return out;}
+function sliceIdx(list,s,e){const n=list.length;if(s<0)s=Math.max(n+s,0);if(e<0)e=n+e;if(e>=n)e=n-1;if(s>e||s>=n)return[];return list.slice(s,e+1);}
+function arrOut(sl,ws){if(!sl.length)return['(empty array)'];const o=[];let i=1;for(const e of sl){o.push(`${i++}) ${q(e.m)}`);if(ws)o.push(`${i++}) ${q(fmt(e.s))}`);}return o;}
+function jstr(s){return q(String(s).replace(/"/g,'\\"'));}
+function jnum(n){if(n===Infinity)return'Double.POSITIVE_INFINITY';if(n===-Infinity)return'Double.NEGATIVE_INFINITY';return fmt(n);}
+
+/* ---------- thực thi lệnh ---------- */
+function exec(line){
+  const t=tokenize(line); if(!t.length) return null;
+  const cmd=t[0].toUpperCase(), a=t.slice(1);
+  const R={cmd:line.trim(),out:[],java:'',ex:[],key:null,hits:[],changed:null,pathT:null,hashT:null,err:false};
+  const err=m=>{R.out=['(error) '+m];R.err=true;R.ex=['Redis báo lỗi, dữ liệu không thay đổi.'];return R;};
+  const wrong=()=>err(`ERR wrong number of arguments for '${cmd.toLowerCase()}' command`);
+  switch(cmd){
+  case 'ZADD':{
+    if(a.length<3) return wrong();
+    const key=a[0];let i=1,nx=false,xx=false;
+    while(i<a.length&&/^(NX|XX)$/i.test(a[i])){if(a[i].toUpperCase()==='NX')nx=true;else xx=true;i++;}
+    if(nx&&xx) return err('ERR XX and NX options at the same time are not compatible');
+    const rest=a.slice(i); if(rest.length<2||rest.length%2) return err('ERR syntax error');
+    const pairs=[];for(let j=0;j<rest.length;j+=2){const s=parseScore(rest[j]);if(s===null)return err('ERR value is not a valid float');pairs.push([s,rest[j+1]]);}
+    const z=getZ(key,true);let added=0;
+    for(const [s,m] of pairs){const has=z.has(m);
+      if(nx&&has){R.ex.push(`"${m}" đã có (điểm ${fmt(z.get(m))}) → có NX nên bỏ qua, giữ nguyên điểm.`);continue;}
+      if(xx&&!has){R.ex.push(`"${m}" chưa có → XX chỉ cập nhật phần tử đã có, nên bỏ qua.`);continue;}
+      if(!has){added++;R.ex.push(`"${m}" chưa có → thêm mới với điểm ${fmt(s)}.`);}
+      else R.ex.push(`"${m}" đã có → đổi điểm ${fmt(z.get(m))} thành ${fmt(s)}.`);
+      z.set(m,s);R.pathT=m;R.hashT=m;R.changed=m;}
+    if(!z.size) state.keys.delete(key);
+    R.out=[`(integer) ${added}`];R.key=key;
+    R.ex.push(`Kết quả (integer) ${added} là số phần tử mới được thêm, không tính phần tử chỉ đổi điểm.`);
+    R.ex.push('Mỗi phần tử: hash table ghi member → score, skip list chèn vào đúng chỗ theo điểm. O(log N) cho mỗi phần tử.');
+    R.java=pairs.map(([s,m])=>`redis.opsForZSet().${nx?'addIfAbsent':'add'}(${jstr(key)}, ${jstr(m)}, ${jnum(s)});`).join('\n');
+    break;}
+  case 'ZINCRBY':{
+    if(a.length!==3) return wrong();
+    const [key,incS,m]=a;const inc=parseScore(incS);if(inc===null)return err('ERR value is not a valid float');
+    const z=getZ(key,true);const old=z.get(m);const nv=(old??0)+inc;z.set(m,nv);
+    R.ex.push(old===undefined?`"${m}" chưa có → Redis tự tạo với điểm 0, không cần kiểm tra trước.`:`Tra "${m}" trong hash table (bucket ${bucketOf(m)}): điểm hiện tại là ${fmt(old)}.`);
+    R.ex.push(`Điểm mới: ${fmt(old??0)} + ${fmt(inc)} = ${fmt(nv)}.`);
+    R.ex.push('Skip list gỡ phần tử ra rồi chèn lại đúng vị trí mới: O(log N). Bảng luôn được sắp sẵn, không phải sort lại.');
+    R.out=[q(fmt(nv))];R.key=key;R.pathT=m;R.hashT=m;R.changed=m;
+    R.java=`redis.opsForZSet().incrementScore(${jstr(key)}, ${jstr(m)}, ${jnum(inc)});`;break;}
+  case 'ZRANGE': case 'ZREVRANGE':{
+    if(a.length<3) return wrong();
+    const [key,st,sp,...opts]=a;let ws=false,rev=cmd==='ZREVRANGE';
+    for(const o of opts){const u=o.toUpperCase();if(u==='WITHSCORES')ws=true;else if(u==='REV'&&cmd==='ZRANGE')rev=true;else return err('ERR syntax error');}
+    if(!/^-?\d+$/.test(st)||!/^-?\d+$/.test(sp)) return err('ERR value is not an integer or out of range');
+    const s0=parseInt(st,10),s1=parseInt(sp,10);
+    const z=getZ(key,false);const list=z?sorted(z):[];if(rev)list.reverse();
+    const sl=sliceIdx(list,s0,s1);
+    R.out=arrOut(sl,ws);R.hits=sl.map(e=>e.m);R.key=key;
+    if(!z) R.ex.push(`Key "${key}" chưa tồn tại nên trả về mảng rỗng.`);
+    R.ex.push(rev?'Thứ tự giảm dần: vị trí 0 là điểm cao nhất.':'Thứ tự tăng dần: vị trí 0 là điểm thấp nhất.');
+    R.ex.push(`Lấy vị trí ${s0} → ${s1}${s1<0?` (số âm tính từ cuối, −1 là phần tử cuối cùng)`:''}: ${sl.length} phần tử, đã tô xanh trên bảng.`);
+    if(ws) R.ex.push('WITHSCORES: in kèm điểm, xen kẽ member rồi score.');
+    R.ex.push('Skip list đã sắp sẵn nên Redis chỉ đi tới vị trí bắt đầu rồi đọc tiếp: O(log N + M), M là số phần tử trả về.');
+    R.java=`redis.opsForZSet().${rev?'reverseRange':'range'}${ws?'WithScores':''}(${jstr(key)}, ${s0}, ${s1});`;break;}
+  case 'ZRANGEBYSCORE':{
+    if(a.length<3) return wrong();
+    const [key,mn,mx,...opts]=a;let ws=false;
+    for(const o of opts){if(o.toUpperCase()==='WITHSCORES')ws=true;else return err('ERR syntax error');}
+    const pb=t=>{const ex=t.startsWith('(');const v=parseScore(ex?t.slice(1):t);return v===null?null:{v,ex};};
+    const lo=pb(mn),hi=pb(mx);if(!lo||!hi)return err('ERR min or max is not a float');
+    const z=getZ(key,false);const sl=(z?sorted(z):[]).filter(e=>(lo.ex?e.s>lo.v:e.s>=lo.v)&&(hi.ex?e.s<hi.v:e.s<=hi.v));
+    R.out=arrOut(sl,ws);R.hits=sl.map(e=>e.m);R.key=key;
+    R.ex.push(`Lấy các phần tử có điểm từ ${mn} đến ${mx} (dấu "(" nghĩa là không lấy bằng), thứ tự tăng dần: ${sl.length} phần tử.`);
+    R.ex.push('Rate limit sliding window dùng đúng kiểu lọc này, với score là timestamp của từng request.');
+    R.java=`redis.opsForZSet().rangeByScore${ws?'WithScores':''}(${jstr(key)}, ${jnum(lo.v)}, ${jnum(hi.v)});`;break;}
+  case 'ZSCORE':{
+    if(a.length!==2) return wrong();
+    const [key,m]=a;const z=getZ(key,false);const v=z?.get(m);
+    R.out=[v===undefined?'(nil)':q(fmt(v))];R.key=key;R.hashT=m;
+    R.ex.push(`Tính hash của "${m}" → bucket ${bucketOf(m)}, tới thẳng ô đó: O(1).`);
+    R.ex.push(v===undefined?'Không có member này nên trả về (nil).':`Điểm là ${fmt(v)}. ZSCORE không đi qua skip list.`);
+    R.java=`redis.opsForZSet().score(${jstr(key)}, ${jstr(m)});`;break;}
+  case 'ZRANK': case 'ZREVRANK':{
+    if(a.length!==2) return wrong();
+    const [key,m]=a;const z=getZ(key,false);R.key=key;
+    if(!z||!z.has(m)){R.out=['(nil)'];R.ex.push('Không có member này nên trả về (nil).');}
+    else{const list=sorted(z);let r=list.findIndex(e=>e.m===m);if(cmd==='ZREVRANK')r=list.length-1-r;
+      R.out=[`(integer) ${r}`];R.pathT=m;R.hits=[m];
+      R.ex.push(`"${m}" đứng ở vị trí ${r} ${cmd==='ZREVRANK'?'tính từ điểm cao nhất':'tính từ điểm thấp nhất'} (đếm từ 0, tức hạng ${r+1}).`);
+      R.ex.push('Redis đi theo skip list từ HEAD và cộng dồn số phần tử đã bỏ qua ở mỗi bước nhảy (gọi là span) để ra vị trí: O(log N).');}
+    R.java=`redis.opsForZSet().${cmd==='ZREVRANK'?'reverseRank':'rank'}(${jstr(key)}, ${jstr(m)});`;break;}
+  case 'ZREM':{
+    if(a.length<2) return wrong();
+    const [key,...ms]=a;const z=getZ(key,false);let n=0;
+    for(const m of ms){if(z&&z.delete(m)){n++;R.ex.push(`Xoá "${m}" khỏi cả hash table lẫn skip list.`);}else R.ex.push(`"${m}" không có, bỏ qua.`);}
+    if(z&&!z.size){state.keys.delete(key);R.ex.push('Tập đã rỗng nên Redis xoá luôn key.');}
+    R.out=[`(integer) ${n}`];R.key=key;
+    R.java=`redis.opsForZSet().remove(${jstr(key)}, ${ms.map(jstr).join(', ')});`;break;}
+  case 'ZCARD':{
+    if(a.length!==1) return wrong();
+    const z=getZ(a[0],false);R.out=[`(integer) ${z?z.size:0}`];R.key=a[0];
+    R.ex.push('Redis lưu sẵn số lượng phần tử nên trả về ngay: O(1).');
+    R.java=`redis.opsForZSet().zCard(${jstr(a[0])});`;break;}
+  case 'DEL':{
+    if(a.length<1) return wrong();
+    let n=0;for(const k of a)if(state.keys.delete(k))n++;
+    R.out=[`(integer) ${n}`];R.key=a[0];
+    R.ex.push(n?'Xoá cả key cùng toàn bộ phần tử bên trong.':'Key không tồn tại.');
+    R.java=`redis.delete(${jstr(a[0])});`;break;}
+  case 'FLUSHALL':{
+    state.keys.clear();R.out=['OK'];R.ex.push('Xoá sạch mọi key. Chỉ dùng khi thử nghiệm.');R.java='// không có tương đương nên dùng trong code ứng dụng';break;}
+  case 'HELP':{
+    R.out=['Lệnh hỗ trợ: ZADD [NX|XX], ZINCRBY, ZRANGE [REV], ZREVRANGE, ZRANGEBYSCORE, ZSCORE, ZRANK, ZREVRANK, ZREM, ZCARD, DEL, FLUSHALL'];
+    R.ex.push('Member có khoảng trắng thì đặt trong ngoặc kép, ví dụ "galaxy s26".');break;}
+  default: return err(`ERR unknown command '${t[0]}'. Gõ HELP để xem các lệnh hỗ trợ.`);
+  }
+  return R;
+}
+
+/* ---------- chạy và cập nhật giao diện ---------- */
+function run(line,opts={}){
+  const R=exec(line);if(!R)return;
+  if(R.key&&state.keys.has(R.key))state.current=R.key;
+  else if(!state.keys.has(state.current)){const first=state.keys.keys().next().value;state.current=first??(R.key||state.current);}
+  if(!R.err){state.hits=new Set(R.hits);state.changed=R.changed;state.pathT=R.pathT;state.hashT=R.hashT;}
+  state.last=R;
+  logEntry(R);
+  if(!opts.quiet) render();
+}
+function logEntry(R){
+  const d=document.createElement('div');
+  d.innerHTML=`<div class="p">127.0.0.1:6379&gt; <b>${esc(R.cmd)}</b></div><div class="o${R.err?' err':''}">${esc(R.out.join('\n'))}</div>${R.java?`<div class="j">// Spring: ${esc(R.java)}</div>`:''}`;
+  const log=$('#log');log.appendChild(d);log.scrollTop=log.scrollHeight;
+}
+
+const rows=new Map();
+function renderBoard(){
+  const keysEl=$('#keys');const names=[...state.keys.keys()];
+  if(!names.includes(state.current))names.push(state.current);
+  keysEl.innerHTML=names.map(k=>`<button type="button" aria-pressed="${k===state.current}" data-k="${esc(k)}">${esc(k)}</button>`).join('');
+  const board=$('#board');const z=getZ(state.current,false);
+  const desc=z?sorted(z).reverse():[];
+  const max=Math.max(1,...desc.map(e=>Math.abs(isFinite(e.s)?e.s:0)));
+  const seen=new Set();
+  desc.forEach((e,i)=>{
+    seen.add(e.m);let el=rows.get(e.m);
+    if(!el){el=document.createElement('div');el.className='row new';el.innerHTML='<span class="rk"></span><span class="mem"></span><span class="bar"><i></i></span><span class="sc"></span>';el.style.transform=`translateY(${i*ROWH}px)`;board.appendChild(el);rows.set(e.m,el);requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('new')));}
+    el.classList.remove('gone');
+    el.style.transform=`translateY(${i*ROWH}px)`;
+    el.querySelector('.rk').innerHTML=`<b>${i}</b>`;
+    const mem=el.querySelector('.mem');mem.textContent=e.m;mem.title=e.m;
+    const w=!isFinite(e.s)?(e.s>0?100:0):Math.max(0,e.s)/max*100;
+    el.querySelector('.bar i').style.width=(e.s>0&&w<2?2:w)+'%';
+    el.querySelector('.sc').textContent=fmt(e.s);
+    el.classList.toggle('hit',state.hits.has(e.m));
+    if(state.changed===e.m){el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');}
+  });
+  for(const [m,el] of rows){if(!seen.has(m)){rows.delete(m);el.classList.add('gone');setTimeout(()=>el.remove(),320);}}
+  board.style.height=Math.max(desc.length,0)*ROWH+'px';
+  let empty=board.querySelector('.empty');
+  if(!desc.length){if(!empty){empty=document.createElement('p');empty.className='empty';board.appendChild(empty);}empty.textContent=`Key "${state.current}" chưa có phần tử nào. Thử ZADD ${state.current} 0 iphone hoặc chạy kịch bản từ đầu.`;board.style.height='auto';}
+  else if(empty)empty.remove();
+  $('#dir').hidden=!desc.length;
+}
+function renderExplain(){
+  const R=state.last,el=$('#explain');
+  if(!R){el.innerHTML='<p class="hint">Chạy một lệnh để xem giải thích.</p>';return;}
+  el.innerHTML=`<h3>Chuyện gì vừa xảy ra <code>${esc(R.cmd)}</code></h3><ol>${R.ex.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>${R.java?`<div class="java"><span>// Spring Data Redis</span>\n${esc(R.java)}</div>`:''}`;
+}
+function renderBuckets(){
+  const z=getZ(state.current,false);const bs=Array.from({length:NB},()=>[]);
+  if(z)for(const [m,s] of z)bs[bucketOf(m)].push([m,s]);
+  const tb=state.hashT!=null?bucketOf(state.hashT):-1;
+  $('#buckets').innerHTML=bs.map((b,i)=>`<div class="bk${i===tb?' on':''}"><div class="lbl">bucket ${i}</div><div class="ch">${b.map(([m,s])=>`<span class="${m===state.hashT?'t':''}" title="${esc(m)}">${esc(m)} → ${fmt(s)}</span>`).join('')}</div></div>`).join('');
+}
+function renderSkip(){
+  const z=getZ(state.current,false);const box=$('#skip');const cap=$('#skipcap');
+  if(!z||!z.size){box.innerHTML='<p class="empty">Chưa có phần tử nào để vẽ.</p>';cap.textContent='';return;}
+  const asc=sorted(z);const lv=asc.map(e=>levelOf(e.m));
+  const cols=asc.length+2,COLW=100,BW=70,RH=34,TOP=8;
+  const W=24+cols*COLW,H=TOP+MAXL*RH+40;
+  const X=c=>12+c*COLW,Y=l=>TOP+(MAXL-l)*RH,col=i=>i+1,nilC=cols-1;
+  const hl=new Set(),vt=new Set();let tgtIdx=-2;
+  const tgt=state.pathT!=null&&z.has(state.pathT)?{m:state.pathT,s:z.get(state.pathT)}:null;
+  if(tgt){tgtIdx=asc.findIndex(e=>e.m===tgt.m);let cur=-1;
+    for(let l=MAXL;l>=1;l--){for(;;){let j=cur+1;while(j<asc.length&&lv[j]<l)j++;if(j<asc.length&&cmp(asc[j],tgt)<0){hl.add(l+':'+cur);cur=j;}else break;}if(l>1)vt.add(cur+':'+l);}
+    hl.add('1:'+cur);}
+  let s=`<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0 L8,4 L0,8 z"/></marker><marker id="ahp" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path class="ahp" d="M0,0 L8,4 L0,8 z"/></marker></defs>`;
+  for(let l=1;l<=MAXL;l++){
+    const idx=[-1];asc.forEach((e,i)=>{if(lv[i]>=l)idx.push(i);});
+    idx.forEach((from,k)=>{const toC=k+1<idx.length?col(idx[k+1]):nilC;const on=hl.has(l+':'+from);const y=Y(l)+12;
+      s+=`<line class="e${on?' on':''}" x1="${X(col(from))+BW}" y1="${y}" x2="${X(toC)-2}" y2="${y}" marker-end="url(#${on?'ahp':'ah'})"/>`;});
+  }
+  for(const v of vt){const [i,l]=v.split(':').map(Number);const x=X(col(i))+BW/2;s+=`<line class="v" x1="${x}" y1="${Y(l)+24}" x2="${x}" y2="${Y(l-1)}"/>`;}
+  for(let l=1;l<=MAXL;l++){s+=`<rect class="hd" x="${X(0)}" y="${Y(l)}" width="${BW}" height="24" rx="4"/><text class="dim" x="${X(0)+BW/2}" y="${Y(l)+16}" text-anchor="middle">tầng ${l}</text>`;
+    s+=`<rect class="nil" x="${X(nilC)}" y="${Y(l)}" width="${BW}" height="24" rx="4"/><text class="dim" x="${X(nilC)+BW/2}" y="${Y(l)+16}" text-anchor="middle">NIL</text>`;}
+  const ly=Y(1)+24+15;
+  s+=`<text class="dim b" x="${X(0)+BW/2}" y="${ly}" text-anchor="middle">HEAD</text>`;
+  asc.forEach((e,i)=>{const x=X(col(i));const tg=i===tgtIdx;
+    for(let l=1;l<=lv[i];l++){s+=`<rect class="nd${tg?' tg':''}" x="${x}" y="${Y(l)}" width="${BW}" height="24" rx="4"/>`;}
+    s+=`<text x="${x+BW/2}" y="${Y(1)+16}" text-anchor="middle" class="b">${esc(fmt(e.s))}</text>`;
+    const nm=e.m.length>11?e.m.slice(0,10)+'…':e.m;
+    s+=`<text x="${x+BW/2}" y="${ly}" text-anchor="middle"${tg?' class="b"':''}><title>${esc(e.m)}</title>${esc(nm)}</text>`;});
+  box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Skip list gồm ${asc.length} phần tử">${s}</svg>`;
+  if(tgt){const steps=hl.size+vt.size;cap.innerHTML=`Tìm <b>"${esc(tgt.m)}"</b> (điểm ${esc(fmt(tgt.s))}): bắt đầu ở HEAD tầng cao nhất, đi ngang khi phần tử kế tiếp còn nhỏ hơn, gặp lớn hơn thì xuống tầng. Mất <b>${steps} bước</b> với ${asc.length} phần tử. Tập càng lớn, khoảng cách với việc duyệt từng phần tử càng xa: một triệu phần tử chỉ cần khoảng 20 tầng.`;}
+  else cap.textContent='Số trong ô là score, chữ bên dưới là member. Chạy ZINCRBY, ZADD hoặc ZREVRANK để xem đường tìm kiếm.';
+}
+
+/* ---------- kịch bản ---------- */
+const steps=[
+ {t:'00:00',title:'Đầu ngày: nạp top của hôm qua với điểm 0',cmd:'ZADD hotwords NX 0 iphone 0 ipad 0 airpods',note:'Để ô "từ khoá hot" không trống khi chưa ai tìm. NX: chỉ thêm, không ghi đè điểm đã có.'},
+ {t:'08:12',title:'Khách tìm "iphone"',cmd:'ZINCRBY hotwords 1 iphone',note:'Mỗi lượt tìm hợp lệ cộng 1 điểm.'},
+ {t:'09:30',title:'Một từ khoá mới xuất hiện',cmd:'ZINCRBY hotwords 1 "galaxy s26"',note:'Chưa có thì ZINCRBY tự thêm, code không cần kiểm tra trước.'},
+ {t:'10:00',title:'Galaxy S26 ra mắt, nhiều người tìm',cmd:'ZINCRBY hotwords 6 "galaxy s26"',note:'Gộp 6 lượt cho nhanh; thực tế là 6 lần cộng 1. Để ý nó vượt lên đầu bảng.'},
+ {t:'10:45',title:'Thêm vài lượt tìm "ipad"',cmd:'ZINCRBY hotwords 3 ipad',note:'Thứ tự tự đổi theo điểm.'},
+ {t:'11:00',title:'Trang chủ hiển thị top 3',cmd:'ZREVRANGE hotwords 0 2 WITHSCORES',note:'REV là giảm dần, "0 2" là ba vị trí đầu. Top 5 thì dùng "0 4".'},
+ {t:'11:05',title:'"iphone" đang đứng hạng mấy?',cmd:'ZREVRANK hotwords iphone',note:'Hạng đếm từ 0, nên kết quả 2 nghĩa là đứng thứ ba.'},
+ {t:'11:06',title:'Điểm của "ipad" là bao nhiêu?',cmd:'ZSCORE hotwords ipad',note:'Tra hash table, O(1). Xem ô bucket sáng lên ở phần bên dưới.'},
+ {t:'12:00',title:'Thử nạp lại với NX',cmd:'ZADD hotwords NX 0 iphone 0 "op lung"',note:'"iphone" giữ nguyên điểm, chỉ "op lung" được thêm. Kết quả (integer) 1.'},
+ {t:'15:00',title:'Lọc theo khoảng điểm',cmd:'ZRANGEBYSCORE hotwords 1 5 WITHSCORES',note:'Rate limit sliding window lọc theo khoảng thời gian theo đúng cách này.'},
+ {t:'00:05',title:'Hôm sau: job lưu top xuống DB rồi xoá key',cmd:'DEL hotwords',note:'Trong thiết kế thật, key đặt theo ngày (hotwords:2026-10-09), job đọc key hôm qua đã ngừng ghi rồi mới xoá.'}
+];
+function renderStory(){
+  const el=$('#story');const i=state.step;
+  $('#story-count').textContent=i<steps.length?`Bước ${i+1}/${steps.length}`:`Đã chạy hết ${steps.length} bước`;
+  $('#dots').innerHTML=steps.map((_,k)=>`<i class="${k<i?'done':''}"></i>`).join('');
+  if(i>=steps.length){el.innerHTML=`<div class="clock">✓</div><div><h3>Hết kịch bản</h3><p>Bạn có thể tự gõ lệnh ở console, hoặc chạy lại từ đầu.</p></div><div class="story-btns"><button class="btn primary" type="button" id="reset">Chạy lại từ đầu</button></div>`;return;}
+  const s=steps[i];
+  el.innerHTML=`<div class="clock">${s.t}</div><div style="min-width:0"><h3>${esc(s.title)}</h3><code class="cmdline">${esc(s.cmd)}</code><p>${esc(s.note)}</p></div><div class="story-btns"><button class="btn primary" type="button" id="next">Chạy bước này</button><button class="btn" type="button" id="reset">Làm lại từ đầu</button></div>`;
+}
+function render(){renderBoard();renderExplain();renderBuckets();renderSkip();renderStory();}
+function reset(){state.keys.clear();state.hits=new Set();state.changed=null;state.pathT=null;state.hashT=null;state.last=null;state.step=0;state.current='hotwords';
+  $('#log').innerHTML='<div class="p">// Đã xoá dữ liệu. Bấm "Chạy bước này" hoặc gõ lệnh.</div>';render();}
+
+$('#story').addEventListener('click',e=>{
+  if(e.target.id==='next'&&state.step<steps.length){run(steps[state.step].cmd,{quiet:true});state.step++;render();}
+  else if(e.target.id==='reset')reset();
+});
+$('#keys').addEventListener('click',e=>{const b=e.target.closest('button[data-k]');if(!b)return;state.current=b.dataset.k;state.hits=new Set();state.changed=null;render();});
+
+const input=$('#cmd');
+$('#cmdform').addEventListener('submit',e=>{e.preventDefault();const v=input.value.trim();if(!v)return;state.hist.push(v);state.hp=state.hist.length;run(v);input.value='';});
+input.addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp'&&state.hist.length){e.preventDefault();state.hp=Math.max(0,state.hp-1);input.value=state.hist[state.hp];}
+  else if(e.key==='ArrowDown'&&state.hist.length){e.preventDefault();state.hp=Math.min(state.hist.length,state.hp+1);input.value=state.hist[state.hp]??'';}
+});
+const examples=['ZINCRBY hotwords 1 ipad','ZREVRANGE hotwords 0 -1 WITHSCORES','ZRANGE hotwords 0 -1 WITHSCORES','ZSCORE hotwords iphone','ZREVRANK hotwords "galaxy s26"','ZADD hotwords 10 macbook','ZREM hotwords airpods','ZCARD hotwords','HELP'];
+$('#chips').innerHTML=examples.map(x=>`<button type="button">${esc(x)}</button>`).join('');
+$('#chips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state.hist.push(b.textContent);state.hp=state.hist.length;run(b.textContent);});
+
+/* trạng thái ban đầu: chạy sẵn 5 bước đầu của kịch bản */
+$('#log').innerHTML='<div class="p">// Đã chạy sẵn 5 bước đầu của kịch bản. Gõ HELP để xem các lệnh.</div>';
+for(let k=0;k<5;k++){run(steps[k].cmd,{quiet:true});}
+state.step=5;
+render();
+})();
+</script>
+</body>
+</html>
